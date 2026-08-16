@@ -1,0 +1,28 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: #faf6f0;
+  color: #2b2420;
+}
+
+.container-shop {
+  @apply mx-auto w-full max-w-7xl px-5 sm:px-8 lg:px-10;
+}
+
+.btn-primary {
+  @apply inline-flex items-center justify-center rounded-full bg-walnut-500 px-6 py-3 text-sm font-medium tracking-wide text-cream transition-colors hover:bg-walnut-600 disabled:cursor-not-allowed disabled:opacity-50;
+}
+
+.btn-secondary {
+  @apply inline-flex items-center justify-center rounded-full border border-walnut-500 px-6 py-3 text-sm font-medium tracking-wide text-walnut-500 transition-colors hover:bg-walnut-500 hover:text-cream;
+}
+
+.section-label {
+  @apply text-xs font-semibold uppercase tracking-[0.2em] text-terracotta-400;
+}
