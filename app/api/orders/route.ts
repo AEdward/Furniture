@@ -2,6 +2,9 @@ import { NextResponse } from "next/server";
 import { createOrder, OrderError } from "@/lib/db";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+// Permissive on purpose — accepts local (09...) and international
+// (+2519...) formats without forcing a specific country pattern.
+const PHONE_RE = /^\+?[0-9 ()-]{7,20}$/;
 
 export async function POST(request: Request) {
   let body: unknown;
@@ -18,6 +21,7 @@ export async function POST(request: Request) {
   const b = body as Record<string, unknown>;
   const customerName = typeof b.customerName === "string" ? b.customerName.trim() : "";
   const customerEmail = typeof b.customerEmail === "string" ? b.customerEmail.trim() : "";
+  const customerPhone = typeof b.customerPhone === "string" ? b.customerPhone.trim() : "";
   const address = typeof b.address === "string" ? b.address.trim() : "";
   const city = typeof b.city === "string" ? b.city.trim() : "";
   const postalCode = typeof b.postalCode === "string" ? b.postalCode.trim() : "";
@@ -28,6 +32,9 @@ export async function POST(request: Request) {
   }
   if (!EMAIL_RE.test(customerEmail)) {
     return NextResponse.json({ error: "Please enter a valid email address." }, { status: 400 });
+  }
+  if (!PHONE_RE.test(customerPhone)) {
+    return NextResponse.json({ error: "Please enter a valid phone number." }, { status: 400 });
   }
 
   const items = rawItems
@@ -53,6 +60,7 @@ export async function POST(request: Request) {
     const order = await createOrder({
       customerName,
       customerEmail,
+      customerPhone,
       address,
       city,
       postalCode,

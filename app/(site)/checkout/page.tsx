@@ -2,20 +2,20 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useCart } from "@/lib/cart-context";
 import { formatPrice } from "@/lib/products";
 import { useT } from "@/lib/i18n/context";
 
 export default function CheckoutPage() {
   const { lines, subtotal, clearCart, isReady } = useCart();
-  const router = useRouter();
   const t = useT();
   const [submitting, setSubmitting] = useState(false);
+  const [redirecting, setRedirecting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState({
     customerName: "",
     customerEmail: "",
+    customerPhone: "",
     address: "",
     city: "",
     postalCode: "",
@@ -54,11 +54,31 @@ export default function CheckoutPage() {
         setSubmitting(false);
         return;
       }
+
+      const orderId = data.order.id;
+      setRedirecting(true);
+
+      const payRes = await fetch("/api/checkout/chapa", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderId }),
+      });
+      const payData = await payRes.json();
+      if (!payRes.ok) {
+        // Order exists either way — just couldn't start the Chapa
+        // payment step (e.g. not configured yet in this environment).
+        setError(payData.error ?? "Could not start payment. Please try again.");
+        setSubmitting(false);
+        setRedirecting(false);
+        return;
+      }
+
       clearCart();
-      router.push(`/order-confirmation/${data.order.id}`);
+      window.location.href = payData.checkoutUrl;
     } catch {
       setError("Network error — please try again.");
       setSubmitting(false);
+      setRedirecting(false);
     }
   }
 
@@ -94,6 +114,18 @@ export default function CheckoutPage() {
                   value={form.customerEmail}
                   onChange={(e) =>
                     setForm((f) => ({ ...f, customerEmail: e.target.value }))
+                  }
+                  className="rounded-lg border border-walnut-200 px-3 py-2.5 focus:border-walnut-400 focus:outline-none"
+                />
+              </label>
+              <label className="flex flex-col gap-1.5 text-sm sm:col-span-2">
+                {t("Phone number")}
+                <input
+                  required
+                  type="tel"
+                  value={form.customerPhone}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, customerPhone: e.target.value }))
                   }
                   className="rounded-lg border border-walnut-200 px-3 py-2.5 focus:border-walnut-400 focus:outline-none"
                 />
@@ -135,9 +167,7 @@ export default function CheckoutPage() {
           </div>
 
           <div className="rounded-2xl border border-dashed border-walnut-300 bg-walnut-50/50 p-6 text-sm text-ink/60">
-            {t(
-              "Payment is a placeholder for this build — no card is charged. Placing an order records it for real; wire up a payment processor here when ready to go live."
-            )}
+            {t("You'll be redirected to Chapa to pay securely — your order is recorded once payment is confirmed.")}
           </div>
 
           {error && (
@@ -147,9 +177,11 @@ export default function CheckoutPage() {
           )}
 
           <button type="submit" disabled={submitting} className="btn-primary">
-            {submitting
-              ? t("Placing order…")
-              : t("Place order — {price}", { price: formatPrice(subtotal) })}
+            {redirecting
+              ? t("Redirecting to payment…")
+              : submitting
+                ? t("Placing order…")
+                : t("Place order — {price}", { price: formatPrice(subtotal) })}
           </button>
         </form>
 

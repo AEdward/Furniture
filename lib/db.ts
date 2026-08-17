@@ -145,6 +145,7 @@ export async function getCompleteTheRoomProducts(
 export type OrderInput = {
   customerName: string;
   customerEmail: string;
+  customerPhone: string;
   address: string;
   city: string;
   postalCode: string;
@@ -159,6 +160,10 @@ export type OrderResult = {
 
 export class OrderError extends Error {}
 
+// Stock is validated here (so checkout fails fast if something sold
+// out) but NOT decremented — that happens in confirmOrderPayment, once
+// Chapa actually confirms the money was paid. Otherwise an abandoned or
+// failed checkout would hold stock hostage indefinitely.
 export async function createOrder(input: OrderInput): Promise<OrderResult> {
   if (input.items.length === 0) {
     throw new OrderError("Cart is empty.");
@@ -189,16 +194,10 @@ export async function createOrder(input: OrderInput): Promise<OrderResult> {
       }
 
       // Made-to-order items aren't tracked against a stock count.
-      if (product.availability === "in_stock") {
-        if (product.stock < item.quantity) {
-          throw new OrderError(
-            `Only ${product.stock} left of "${product.name}" — please update your cart.`
-          );
-        }
-        await conn.query("UPDATE products SET stock = stock - ? WHERE slug = ?", [
-          item.quantity,
-          item.slug,
-        ]);
+      if (product.availability === "in_stock" && product.stock < item.quantity) {
+        throw new OrderError(
+          `Only ${product.stock} left of "${product.name}" — please update your cart.`
+        );
       }
 
       lineItems.push({
@@ -216,11 +215,13 @@ export async function createOrder(input: OrderInput): Promise<OrderResult> {
     }
 
     const [orderResult] = await conn.query<mysql.ResultSetHeader>(
-      `INSERT INTO orders (customer_name, customer_email, address, city, postal_code, subtotal, status)
-       VALUES (?, ?, ?, ?, ?, ?, 'placed')`,
+      `INSERT INTO orders
+        (customer_name, customer_email, customer_phone, address, city, postal_code, subtotal, status, payment_status)
+       VALUES (?, ?, ?, ?, ?, ?, ?, 'placed', 'pending')`,
       [
         input.customerName,
         input.customerEmail,
+        input.customerPhone,
         input.address,
         input.city,
         input.postalCode,
@@ -247,18 +248,58 @@ export async function createOrder(input: OrderInput): Promise<OrderResult> {
   }
 }
 
+export type PaymentStatus = "pending" | "paid" | "failed";
+
 export type Order = {
   id: number;
   customerName: string;
   customerEmail: string;
+  customerPhone: string;
   address: string;
   city: string;
   postalCode: string;
   subtotal: number;
   status: string;
+  paymentStatus: PaymentStatus;
+  paymentProvider: string | null;
+  paymentRef: string | null;
   createdAt: string;
   items: { slug: string; name: string; price: number; quantity: number; variant?: string }[];
 };
+
+function rowToOrder(order: mysql.RowDataPacket, items: Order["items"]): Order {
+  return {
+    id: order.id,
+    customerName: order.customer_name,
+    customerEmail: order.customer_email,
+    customerPhone: order.customer_phone,
+    address: order.address,
+    city: order.city,
+    postalCode: order.postal_code,
+    subtotal: order.subtotal,
+    status: order.status,
+    paymentStatus: order.payment_status as PaymentStatus,
+    paymentProvider: order.payment_provider ?? null,
+    paymentRef: order.payment_ref ?? null,
+    createdAt: order.created_at,
+    items,
+  };
+}
+
+async function getOrderItems(id: number): Promise<Order["items"]> {
+  const db = getPool();
+  const [itemRows] = await db.query<mysql.RowDataPacket[]>(
+    "SELECT product_slug, name, price, quantity, variant_label FROM order_items WHERE order_id = ?",
+    [id]
+  );
+  return (itemRows as mysql.RowDataPacket[]).map((r) => ({
+    slug: r.product_slug,
+    name: r.name,
+    price: r.price,
+    quantity: r.quantity,
+    variant: r.variant_label ?? undefined,
+  }));
+}
 
 export async function getOrderById(id: number): Promise<Order | undefined> {
   const db = getPool();
@@ -268,30 +309,102 @@ export async function getOrderById(id: number): Promise<Order | undefined> {
   );
   const order = orderRows[0];
   if (!order) return undefined;
+  return rowToOrder(order, await getOrderItems(id));
+}
 
-  const [itemRows] = await db.query<mysql.RowDataPacket[]>(
-    "SELECT product_slug, name, price, quantity, variant_label FROM order_items WHERE order_id = ?",
-    [id]
+export async function getOrderByPaymentRef(paymentRef: string): Promise<Order | undefined> {
+  const db = getPool();
+  const [orderRows] = await db.query<mysql.RowDataPacket[]>(
+    "SELECT * FROM orders WHERE payment_ref = ? LIMIT 1",
+    [paymentRef]
   );
+  const order = orderRows[0];
+  if (!order) return undefined;
+  return rowToOrder(order, await getOrderItems(order.id));
+}
 
-  return {
-    id: order.id,
-    customerName: order.customer_name,
-    customerEmail: order.customer_email,
-    address: order.address,
-    city: order.city,
-    postalCode: order.postal_code,
-    subtotal: order.subtotal,
-    status: order.status,
-    createdAt: order.created_at,
-    items: (itemRows as mysql.RowDataPacket[]).map((r) => ({
-      slug: r.product_slug,
-      name: r.name,
-      price: r.price,
-      quantity: r.quantity,
-      variant: r.variant_label ?? undefined,
-    })),
-  };
+// Called right before redirecting the customer to Chapa's hosted
+// checkout, so the webhook (which only carries tx_ref) can look up
+// which order it belongs to.
+export async function setOrderPaymentRef(
+  orderId: number,
+  provider: string,
+  paymentRef: string
+): Promise<void> {
+  const db = getPool();
+  const [result] = await db.query<mysql.ResultSetHeader>(
+    "UPDATE orders SET payment_provider = ?, payment_ref = ? WHERE id = ?",
+    [provider, paymentRef, orderId]
+  );
+  if (result.affectedRows === 0) {
+    throw new OrderError("Order not found.");
+  }
+}
+
+// Idempotent: safe to call more than once for the same order (the
+// return-URL page and the webhook can both race to confirm the same
+// payment — whichever gets there first wins, the other is a no-op).
+// Stock is decremented here, floored at zero rather than re-validated
+// strictly, since the money has already been captured by this point —
+// an oversell caught here is a rare edge case for manual follow-up, not
+// something to bounce a paid customer over.
+export async function confirmOrderPayment(
+  orderId: number,
+  provider: string,
+  paymentRef: string
+): Promise<{ alreadyConfirmed: boolean }> {
+  const db = getPool();
+  const conn = await db.getConnection();
+  try {
+    await conn.beginTransaction();
+
+    const [orderRows] = await conn.query<mysql.RowDataPacket[]>(
+      "SELECT id, payment_status FROM orders WHERE id = ? FOR UPDATE",
+      [orderId]
+    );
+    const order = orderRows[0];
+    if (!order) throw new OrderError("Order not found.");
+
+    if (order.payment_status === "paid") {
+      await conn.commit();
+      return { alreadyConfirmed: true };
+    }
+
+    const [itemRows] = await conn.query<mysql.RowDataPacket[]>(
+      "SELECT product_slug, quantity FROM order_items WHERE order_id = ?",
+      [orderId]
+    );
+    for (const item of itemRows) {
+      await conn.query(
+        `UPDATE products
+         SET stock = GREATEST(stock - ?, 0)
+         WHERE slug = ? AND availability = 'in_stock'`,
+        [item.quantity, item.product_slug]
+      );
+    }
+
+    await conn.query(
+      "UPDATE orders SET payment_status = 'paid', payment_provider = ?, payment_ref = ? WHERE id = ?",
+      [provider, paymentRef, orderId]
+    );
+
+    await conn.commit();
+    return { alreadyConfirmed: false };
+  } catch (err) {
+    await conn.rollback();
+    throw err;
+  } finally {
+    conn.release();
+  }
+}
+
+export async function markOrderPaymentFailed(orderId: number, paymentRef: string): Promise<void> {
+  const db = getPool();
+  // Only downgrades from 'pending' — never overwrites an already-paid order.
+  await db.query(
+    "UPDATE orders SET payment_status = 'failed', payment_ref = ? WHERE id = ? AND payment_status = 'pending'",
+    [paymentRef, orderId]
+  );
 }
 
 // ---------------------------------------------------------------------
@@ -304,6 +417,7 @@ export type OrderSummary = {
   customerEmail: string;
   subtotal: number;
   status: string;
+  paymentStatus: PaymentStatus;
   createdAt: string;
   itemCount: number;
 };
@@ -311,7 +425,7 @@ export type OrderSummary = {
 export async function getAllOrders(): Promise<OrderSummary[]> {
   const db = getPool();
   const [rows] = await db.query<mysql.RowDataPacket[]>(
-    `SELECT o.id, o.customer_name, o.customer_email, o.subtotal, o.status, o.created_at,
+    `SELECT o.id, o.customer_name, o.customer_email, o.subtotal, o.status, o.payment_status, o.created_at,
             COALESCE(SUM(oi.quantity), 0) AS item_count
      FROM orders o
      LEFT JOIN order_items oi ON oi.order_id = o.id
@@ -324,6 +438,7 @@ export async function getAllOrders(): Promise<OrderSummary[]> {
     customerEmail: r.customer_email,
     subtotal: r.subtotal,
     status: r.status,
+    paymentStatus: r.payment_status as PaymentStatus,
     createdAt: r.created_at,
     itemCount: Number(r.item_count),
   }));
@@ -520,7 +635,7 @@ export async function getDashboardStats(): Promise<DashboardStats> {
     "SELECT COUNT(*) AS count FROM products"
   );
   const [[orderStatsRow]] = await db.query<mysql.RowDataPacket[]>(
-    "SELECT COUNT(*) AS count, COALESCE(SUM(subtotal), 0) AS revenue FROM orders WHERE status != 'cancelled'"
+    "SELECT COUNT(*) AS count, COALESCE(SUM(subtotal), 0) AS revenue FROM orders WHERE status != 'cancelled' AND payment_status = 'paid'"
   );
   const [lowStockRows] = await db.query<mysql.RowDataPacket[]>(
     "SELECT * FROM products WHERE availability = 'in_stock' AND stock <= ? ORDER BY stock ASC LIMIT 8",
@@ -667,29 +782,33 @@ export async function getAnalytics(): Promise<Analytics> {
       `SELECT DATE_FORMAT(created_at, '%Y-%m-%d') AS day,
               COALESCE(SUM(subtotal), 0) AS revenue, COUNT(*) AS orders
        FROM orders
-       WHERE status != 'cancelled' AND created_at >= ?
+       WHERE status != 'cancelled' AND payment_status = 'paid' AND created_at >= ?
        GROUP BY day`,
       [since]
     ),
     db.query<mysql.RowDataPacket[]>(
-      "SELECT status, COUNT(*) AS count FROM orders GROUP BY status"
+      "SELECT status, COUNT(*) AS count FROM orders WHERE payment_status = 'paid' GROUP BY status"
     ),
     db.query<mysql.RowDataPacket[]>(
-      `SELECT product_slug AS slug, name, SUM(quantity) AS units, SUM(price * quantity) AS revenue
-       FROM order_items
-       GROUP BY product_slug, name
+      `SELECT oi.product_slug AS slug, oi.name, SUM(oi.quantity) AS units, SUM(oi.price * oi.quantity) AS revenue
+       FROM order_items oi
+       JOIN orders o ON o.id = oi.order_id
+       WHERE o.payment_status = 'paid'
+       GROUP BY oi.product_slug, oi.name
        ORDER BY revenue DESC
        LIMIT 5`
     ),
     db.query<mysql.RowDataPacket[]>(
       `SELECT COALESCE(p.category, 'Other') AS category, SUM(oi.price * oi.quantity) AS revenue
        FROM order_items oi
+       JOIN orders o ON o.id = oi.order_id
        LEFT JOIN products p ON p.slug = oi.product_slug
+       WHERE o.payment_status = 'paid'
        GROUP BY category
        ORDER BY revenue DESC`
     ),
     db.query<mysql.RowDataPacket[]>(
-      "SELECT COUNT(*) AS count, COALESCE(SUM(subtotal), 0) AS revenue FROM orders WHERE status != 'cancelled'"
+      "SELECT COUNT(*) AS count, COALESCE(SUM(subtotal), 0) AS revenue FROM orders WHERE status != 'cancelled' AND payment_status = 'paid'"
     ),
     db.query<mysql.RowDataPacket[]>(
       `SELECT DATE_FORMAT(created_at, '%Y-%m-%d') AS day, COUNT(*) AS views

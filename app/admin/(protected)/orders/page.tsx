@@ -12,6 +12,12 @@ const statusStyles: Record<string, string> = {
   cancelled: "bg-ink/10 text-ink/50",
 };
 
+const paymentStyles: Record<string, string> = {
+  paid: "bg-walnut-500 text-cream",
+  pending: "bg-terracotta-100 text-terracotta-500",
+  failed: "bg-danger-50 text-danger-500",
+};
+
 export default async function AdminOrdersPage() {
   const orders = await getAllOrders();
 
@@ -31,13 +37,14 @@ export default async function AdminOrdersPage() {
               <th className="px-5 py-3 font-medium">Items</th>
               <th className="px-5 py-3 font-medium">Total</th>
               <th className="px-5 py-3 font-medium">Status</th>
+              <th className="px-5 py-3 font-medium">Payment</th>
               <th className="px-5 py-3 font-medium">Date</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-walnut-100">
             {orders.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-5 py-8 text-center text-ink/50">
+                <td colSpan={7} className="px-5 py-8 text-center text-ink/50">
                   No orders yet.
                 </td>
               </tr>
@@ -65,6 +72,15 @@ export default async function AdminOrdersPage() {
                       }`}
                     >
                       {order.status}
+                    </span>
+                  </td>
+                  <td className="px-5 py-3">
+                    <span
+                      className={`rounded-full px-2.5 py-1 text-xs font-medium capitalize ${
+                        paymentStyles[order.paymentStatus] ?? "bg-walnut-100 text-walnut-600"
+                      }`}
+                    >
+                      {order.paymentStatus}
                     </span>
                   </td>
                   <td className="px-5 py-3 text-ink/50">

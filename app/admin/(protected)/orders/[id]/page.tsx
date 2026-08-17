@@ -3,6 +3,12 @@ import { getOrderById } from "@/lib/db";
 import { formatPrice } from "@/lib/products";
 import OrderStatusSelect from "@/components/OrderStatusSelect";
 
+const paymentStyles: Record<string, string> = {
+  paid: "bg-walnut-500 text-cream",
+  pending: "bg-terracotta-100 text-terracotta-500",
+  failed: "bg-danger-50 text-danger-500",
+};
+
 export default async function AdminOrderDetailPage({
   params,
 }: {
@@ -49,10 +55,28 @@ export default async function AdminOrderDetailPage({
             </div>
           </div>
 
+          <div className="rounded-2xl border border-walnut-100 bg-white/60 p-6">
+            <h2 className="font-serif text-lg font-semibold text-ink">Payment</h2>
+            <p
+              className={`mt-3 inline-block rounded-full px-2.5 py-1 text-xs font-medium capitalize ${
+                paymentStyles[order.paymentStatus] ?? "bg-walnut-100 text-walnut-600"
+              }`}
+            >
+              {order.paymentStatus}
+            </p>
+            {order.paymentProvider && (
+              <p className="mt-2 text-xs text-ink/50">
+                Via {order.paymentProvider}
+                {order.paymentRef && ` · ${order.paymentRef}`}
+              </p>
+            )}
+          </div>
+
           <div className="rounded-2xl border border-walnut-100 bg-white/60 p-6 text-sm">
             <h2 className="font-serif text-lg font-semibold text-ink">Customer</h2>
             <p className="mt-3 text-ink/70">{order.customerName}</p>
             <p className="text-ink/70">{order.customerEmail}</p>
+            <p className="text-ink/70">{order.customerPhone}</p>
             <p className="mt-3 font-medium text-ink">Shipping to</p>
             <p className="text-ink/70">{order.address}</p>
             <p className="text-ink/70">

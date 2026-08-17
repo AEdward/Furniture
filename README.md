@@ -230,18 +230,50 @@ automatic bundle discount pricing for "Complete the project".
   is intentionally separate — it's the error/warning red, not a brand
   accent, so error states never confuse a customer regardless of theme.)
 
+## Payment
+
+Checkout charges real money through [Chapa](https://chapa.co), the
+Ethiopian payment gateway — no placeholder, no fake "order placed" until
+payment actually clears.
+
+- **Flow**: `POST /api/orders` creates the order with `payment_status =
+  'pending'` and validates stock (fails fast if something's sold out),
+  but does **not** decrement stock yet. `POST /api/checkout/chapa`
+  then starts a Chapa transaction and the browser is redirected to
+  Chapa's hosted checkout page to pay. Stock is only decremented once
+  payment is confirmed (see below) — an abandoned or failed checkout
+  never holds stock hostage.
+- **Confirmation, two independent paths**: (1) Chapa calls
+  `POST /api/webhooks/chapa` server-to-server after the payment
+  attempt, and (2) the customer's browser lands back on
+  `/order-confirmation/[id]` via Chapa's `return_url`, which also
+  actively checks the result — so the customer sees an accurate status
+  immediately rather than waiting on the async webhook. Both paths call
+  the same `confirmOrderPayment()` in `lib/db.ts`, which is idempotent
+  (safe if both fire) and **always independently re-verifies with
+  Chapa's API** before trusting a "success" — a webhook payload or
+  return-URL query string is only ever treated as a hint to check, never
+  as proof of payment on its own.
+- **If payment fails or is left pending**, the order confirmation page
+  shows that clearly and offers a "Try payment again" button
+  (`components/RetryPaymentButton.tsx`), which re-starts a fresh Chapa
+  transaction for the same order.
+- **Setup**: get a secret key from your
+  [Chapa dashboard](https://dashboard.chapa.co) (test or live) and set
+  `CHAPA_SECRET_KEY` in `.env.local`. Without it, checkout still records
+  the order for real but shows a clear "payment isn't set up yet" error
+  instead of redirecting to pay — it never silently pretends a payment
+  succeeded. Set `APP_BASE_URL` too if you're not on `localhost:3000`
+  (used to build the callback/return URLs Chapa redirects to).
+- **Admin**: `/admin/orders` shows a Payment column (pending/paid/failed)
+  alongside fulfillment status; the order detail page shows the payment
+  provider and transaction reference.
+
 ## What's real vs. placeholder
 
 - **Products, inventory, settings, and pages** — all real, stored in
-  MySQL. Stock is decremented transactionally when an order is placed.
-- **Orders** — real. `POST /api/orders` validates stock against the
-  database (inside a transaction, so two people can't both buy the last
-  unit) and persists the order + line items. `/order-confirmation/[id]`
-  reads it back.
-- **Checkout payment** — placeholder. No payment processor is wired up;
-  "Place order" records the order for real but doesn't charge a card.
-  Wire up Stripe (or similar) in `app/api/orders/route.ts` when ready to
-  go live.
+  MySQL. Stock is decremented once payment is confirmed (see "Payment").
+- **Orders and payment** — real, via Chapa (see "Payment" above).
 - **Cart** — client-side only, persisted to the browser's `localStorage`
   (`lib/cart-context.tsx`). Not tied to a user account.
 - **Contact form** — client-side only for now; shows a success state but
@@ -261,14 +293,15 @@ app/
   admin/
     login/               Public login page
     (protected)/         Dashboard, products, orders, pages, analytics, settings — gated by middleware.ts
-  api/                 products, orders, track (public page-view logging),
+  api/                 products, orders, checkout/chapa + webhooks/chapa
+                       (payment), track (public page-view logging),
                        locale (language switcher), admin/* route handlers
 components/           Shared UI — Header, Footer, ProductCard, admin forms,
                        ImageUpload, PageBlockEditor, BlockRenderer,
                        PageViewTracker, BarChart, HorizontalBars,
-                       LanguageSwitcher, etc.
+                       LanguageSwitcher, RetryPaymentButton, etc.
 lib/                  Product types/seed data, db access, settings, pages/blocks,
-                       cart context, admin auth, validation, translate.ts
+                       cart context, admin auth, validation, translate.ts, chapa.ts
   i18n/                Locale/dictionary/context (see "Language" above)
 db/                   schema.sql + seed script (products, settings, About page)
 middleware.ts          Protects /admin and /api/admin routes

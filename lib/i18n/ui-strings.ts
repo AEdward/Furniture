@@ -161,11 +161,13 @@ export const UI_STRINGS = [
   "Shipping details",
   "Full name",
   "Email",
+  "Phone number",
   "Address",
   "City",
   "Postal code",
-  "Payment is a placeholder for this build — no card is charged. Placing an order records it for real; wire up a payment processor here when ready to go live.",
+  "You'll be redirected to Chapa to pay securely — your order is recorded once payment is confirmed.",
   "Placing order…",
+  "Redirecting to payment…",
   "Place order — {price}",
 
   // Order confirmation
@@ -174,6 +176,14 @@ export const UI_STRINGS = [
   "Order #{id}",
   "Total",
   "Shipping to",
+  "Confirming your payment…",
+  "This usually takes just a moment.",
+  "Payment pending",
+  "We haven't received payment confirmation for this order yet. If you completed payment, this can take a minute to update — refresh the page, or try the button below.",
+  "Payment failed",
+  "The payment for this order wasn't completed. You can try again below, or contact us if you were charged.",
+  "Try payment again",
+  "Check payment status",
 
   // Contact
   "Visit the showroom",

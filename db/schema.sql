@@ -45,12 +45,24 @@ CREATE TABLE IF NOT EXISTS orders (
   id INT AUTO_INCREMENT PRIMARY KEY,
   customer_name VARCHAR(191) NOT NULL,
   customer_email VARCHAR(191) NOT NULL,
+  customer_phone VARCHAR(32) NOT NULL DEFAULT '',
   address VARCHAR(191) NOT NULL,
   city VARCHAR(191) NOT NULL,
   postal_code VARCHAR(32) NOT NULL,
   subtotal INT NOT NULL,
   status VARCHAR(32) NOT NULL DEFAULT 'placed',
-  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+
+  -- Payment (Chapa). Separate from `status` above, which tracks
+  -- fulfillment (placed/processing/shipped/...) — payment_status tracks
+  -- whether money actually changed hands. Stock is only decremented once
+  -- payment_status becomes 'paid' (see confirmOrderPayment in lib/db.ts),
+  -- so an abandoned/failed checkout never holds stock hostage.
+  payment_status VARCHAR(32) NOT NULL DEFAULT 'pending',
+  payment_provider VARCHAR(32) NULL,
+  payment_ref VARCHAR(191) NULL,
+
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_orders_payment_ref (payment_ref)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS order_items (
