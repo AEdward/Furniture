@@ -41,33 +41,50 @@ export type InitializeInput = {
 export async function initializeChapaTransaction(
   input: InitializeInput
 ): Promise<{ checkoutUrl: string }> {
-  const res = await fetch(`${CHAPA_API_BASE}/transaction/initialize`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${secretKey()}`,
-      "Content-Type": "application/json",
+  const payload = {
+    amount: String(input.amount),
+    currency: "ETB",
+    email: input.email,
+    first_name: input.firstName,
+    last_name: input.lastName,
+    phone_number: input.phone,
+    tx_ref: input.txRef,
+    callback_url: input.callbackUrl,
+    return_url: input.returnUrl,
+    // Chapa caps title at 16 chars and rejects most punctuation in it.
+    customization: {
+      title: input.title.slice(0, 16),
+      description: input.description.slice(0, 60),
     },
-    body: JSON.stringify({
-      amount: String(input.amount),
-      currency: "ETB",
-      email: input.email,
-      first_name: input.firstName,
-      last_name: input.lastName,
-      phone_number: input.phone,
-      tx_ref: input.txRef,
-      callback_url: input.callbackUrl,
-      return_url: input.returnUrl,
-      // Chapa caps title at 16 chars and rejects most punctuation in it.
-      customization: {
-        title: input.title.slice(0, 16),
-        description: input.description.slice(0, 60),
+  };
+
+  let res: Response;
+  try {
+    res = await fetch(`${CHAPA_API_BASE}/transaction/initialize`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${secretKey()}`,
+        "Content-Type": "application/json",
       },
-    }),
-  });
+      body: JSON.stringify(payload),
+    });
+  } catch (err) {
+    // The request itself never reached Chapa — DNS/network/proxy/TLS
+    // issue on this server, not a Chapa API error.
+    console.error("[chapa] initialize: fetch failed before getting a response", err);
+    throw new ChapaError(
+      "Could not reach Chapa — check this server's network/internet connection."
+    );
+  }
 
   const data = await res.json().catch(() => null);
   const checkoutUrl = data?.data?.checkout_url;
   if (!res.ok || data?.status !== "success" || typeof checkoutUrl !== "string") {
+    console.error("[chapa] initialize failed", {
+      httpStatus: res.status,
+      sentPayload: { ...payload, callback_url: input.callbackUrl, return_url: input.returnUrl },
+      chapaResponse: data,
+    });
     throw new ChapaError(
       typeof data?.message === "string" ? data.message : "Could not start payment with Chapa."
     );
@@ -83,11 +100,19 @@ export type VerifyResult = {
 };
 
 export async function verifyChapaTransaction(txRef: string): Promise<VerifyResult> {
-  const res = await fetch(
-    `${CHAPA_API_BASE}/transaction/verify/${encodeURIComponent(txRef)}`,
-    { headers: { Authorization: `Bearer ${secretKey()}` } }
-  );
+  let res: Response;
+  try {
+    res = await fetch(`${CHAPA_API_BASE}/transaction/verify/${encodeURIComponent(txRef)}`, {
+      headers: { Authorization: `Bearer ${secretKey()}` },
+    });
+  } catch (err) {
+    console.error("[chapa] verify: fetch failed before getting a response", { txRef, err });
+    throw new ChapaError("Could not reach Chapa to verify payment.");
+  }
   const data = await res.json().catch(() => null);
+  if (!res.ok) {
+    console.error("[chapa] verify failed", { txRef, httpStatus: res.status, chapaResponse: data });
+  }
   const status: string | undefined = data?.data?.status ?? data?.status;
 
   return {
