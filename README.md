@@ -41,7 +41,7 @@ You need [Node.js](https://nodejs.org) 18+ and a MySQL-compatible server
    docker compose up -d
    ```
 
-   This starts MySQL 8.4 on `localhost:3306` with a `furniture` database
+   This starts MySQL 8.4 on `localhost:3306` with a `zemenay` database
    already created.
 
 2. Install dependencies and configure environment variables:
