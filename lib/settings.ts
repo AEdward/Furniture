@@ -56,6 +56,13 @@ export type SiteSettings = {
   };
 
   paymentMethods: string[];
+
+  contact: {
+    heading: string;
+    subheading: string;
+    hoursWeekday: string;
+    hoursWeekend: string;
+  };
 };
 
 export const DEFAULT_SETTINGS: SiteSettings = {
@@ -126,6 +133,13 @@ export const DEFAULT_SETTINGS: SiteSettings = {
   },
 
   paymentMethods: ["Telebirr", "Chapa", "CBE Birr", "Bank transfer", "Card", "Cash on delivery"],
+
+  contact: {
+    heading: "Contact us",
+    subheading: "Get in touch",
+    hoursWeekday: "Mon–Fri: 10am–6pm",
+    hoursWeekend: "Sat–Sun: 11am–5pm",
+  },
 };
 
 export function mergeSettings(partial: Partial<SiteSettings>): SiteSettings {
@@ -137,5 +151,6 @@ export function mergeSettings(partial: Partial<SiteSettings>): SiteSettings {
     assembly: { ...DEFAULT_SETTINGS.assembly, ...partial.assembly },
     warranty: { ...DEFAULT_SETTINGS.warranty, ...partial.warranty },
     returns: { ...DEFAULT_SETTINGS.returns, ...partial.returns },
+    contact: { ...DEFAULT_SETTINGS.contact, ...partial.contact },
   };
 }

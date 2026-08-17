@@ -11,9 +11,9 @@ export default async function ContactPage() {
   return (
     <div className="container-shop py-16">
       <div className="mb-10 text-center">
-        <p className="section-label">Get in touch</p>
+        <p className="section-label">{settings.contact.subheading}</p>
         <h1 className="mt-2 font-serif text-3xl font-semibold text-ink sm:text-4xl">
-          Contact us
+          {settings.contact.heading}
         </h1>
       </div>
 
@@ -44,8 +44,8 @@ export default async function ContactPage() {
             <h2 className="font-serif text-lg font-semibold text-ink">
               Hours
             </h2>
-            <p className="text-ink/70">Mon–Fri: 10am–6pm</p>
-            <p className="text-ink/70">Sat–Sun: 11am–5pm</p>
+            <p className="text-ink/70">{settings.contact.hoursWeekday}</p>
+            <p className="text-ink/70">{settings.contact.hoursWeekend}</p>
           </div>
         </div>
       </div>

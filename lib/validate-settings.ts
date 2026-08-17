@@ -103,5 +103,12 @@ export function parseSettingsInput(body: unknown): Partial<SiteSettings> {
     },
 
     paymentMethods: list(b.paymentMethods),
+
+    contact: {
+      heading: str((b.contact as Record<string, unknown>)?.heading, "Contact page heading"),
+      subheading: str((b.contact as Record<string, unknown>)?.subheading, "Contact page subheading"),
+      hoursWeekday: str((b.contact as Record<string, unknown>)?.hoursWeekday, "Weekday hours", false),
+      hoursWeekend: str((b.contact as Record<string, unknown>)?.hoursWeekend, "Weekend hours", false),
+    },
   };
 }

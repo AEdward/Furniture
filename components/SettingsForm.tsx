@@ -66,6 +66,11 @@ export default function SettingsForm({ initial }: { initial: SiteSettings }) {
 
   const [paymentMethods, setPaymentMethods] = useState(initial.paymentMethods.join("\n"));
 
+  const [contactHeading, setContactHeading] = useState(initial.contact.heading);
+  const [contactSubheading, setContactSubheading] = useState(initial.contact.subheading);
+  const [contactHoursWeekday, setContactHoursWeekday] = useState(initial.contact.hoursWeekday);
+  const [contactHoursWeekend, setContactHoursWeekend] = useState(initial.contact.hoursWeekend);
+
   const inputClass =
     "rounded-lg border border-walnut-200 px-3 py-2.5 focus:border-walnut-400 focus:outline-none";
   const labelClass = "flex flex-col gap-1.5 text-sm";
@@ -122,6 +127,12 @@ export default function SettingsForm({ initial }: { initial: SiteSettings }) {
         damagedProcedure: returnsDamaged,
       },
       paymentMethods,
+      contact: {
+        heading: contactHeading,
+        subheading: contactSubheading,
+        hoursWeekday: contactHoursWeekday,
+        hoursWeekend: contactHoursWeekend,
+      },
     };
 
     try {
@@ -324,6 +335,28 @@ export default function SettingsForm({ initial }: { initial: SiteSettings }) {
           One per line
           <textarea rows={4} value={paymentMethods} onChange={(e) => setPaymentMethods(e.target.value)} className={`${inputClass} resize-none`} />
         </label>
+      </div>
+
+      <div className={sectionClass}>
+        <h2 className={sectionTitleClass}>Contact page</h2>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <label className={labelClass}>
+            Subheading (small label above title)
+            <input required value={contactSubheading} onChange={(e) => setContactSubheading(e.target.value)} className={inputClass} />
+          </label>
+          <label className={labelClass}>
+            Heading
+            <input required value={contactHeading} onChange={(e) => setContactHeading(e.target.value)} className={inputClass} />
+          </label>
+          <label className={labelClass}>
+            Weekday hours
+            <input value={contactHoursWeekday} onChange={(e) => setContactHoursWeekday(e.target.value)} className={inputClass} />
+          </label>
+          <label className={labelClass}>
+            Weekend hours
+            <input value={contactHoursWeekend} onChange={(e) => setContactHoursWeekend(e.target.value)} className={inputClass} />
+          </label>
+        </div>
       </div>
 
       {error && (
