@@ -2,7 +2,7 @@ import Link from "next/link";
 import FurnitureIcon from "@/components/FurnitureIcon";
 import ProductCard from "@/components/ProductCard";
 import { getFeaturedProducts } from "@/lib/db";
-import { categories } from "@/lib/products";
+import { categories, formatPrice } from "@/lib/products";
 import { siteConfig } from "@/lib/site-config";
 
 export const dynamic = "force-dynamic";
@@ -17,7 +17,7 @@ const categoryIcon = {
 
 const valueProps = [
   {
-    title: "Free shipping over $" + siteConfig.freeShippingThreshold,
+    title: `Free shipping over ${formatPrice(siteConfig.freeShippingThreshold)}`,
     body: "Delivered to your door, no surprise fees at checkout.",
   },
   {

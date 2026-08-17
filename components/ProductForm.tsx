@@ -144,7 +144,7 @@ export default function ProductForm({ mode, initial }: Props) {
             </label>
 
             <label className="flex flex-col gap-1.5 text-sm">
-              Price (USD)
+              Price (ETB)
               <input
                 required
                 type="number"

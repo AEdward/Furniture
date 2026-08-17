@@ -9,5 +9,5 @@ export const siteConfig = {
   email: "hello@example.com",
   phone: "(555) 555-0148",
   address: ["123 Placeholder Street", "Your City, ST 00000"],
-  freeShippingThreshold: 75,
+  freeShippingThreshold: 5000,
 };

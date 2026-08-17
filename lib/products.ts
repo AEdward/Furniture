@@ -48,8 +48,8 @@ export const PRODUCT_SEED: Product[] = [
     slug: "haven-3-seat-sofa",
     name: "Haven 3-Seat Sofa",
     category: "Living Room",
-    price: 1249,
-    compareAtPrice: 1499,
+    price: 74900,
+    compareAtPrice: 89900,
     description:
       "A deep, cloud-soft sofa built for long weekends. Kiln-dried hardwood frame, high-resilience foam, and a boucle weave that only gets better with age.",
     details: [
@@ -70,7 +70,7 @@ export const PRODUCT_SEED: Product[] = [
     slug: "orbit-lounge-armchair",
     name: "Orbit Lounge Armchair",
     category: "Living Room",
-    price: 589,
+    price: 35300,
     description:
       "A gently curved armchair that cradles you from every angle, on a solid walnut swivel base.",
     details: [
@@ -90,7 +90,7 @@ export const PRODUCT_SEED: Product[] = [
     slug: "drift-coffee-table",
     name: "Drift Coffee Table",
     category: "Living Room",
-    price: 349,
+    price: 20900,
     description:
       "Live-edge inspired coffee table with a hand-rubbed oil finish that highlights the natural grain.",
     details: [
@@ -109,7 +109,7 @@ export const PRODUCT_SEED: Product[] = [
     slug: "solstice-dining-table",
     name: "Solstice Dining Table",
     category: "Dining",
-    price: 1099,
+    price: 65900,
     description:
       "Seats six comfortably. A single-slab silhouette in solid oak, finished to resist everyday wear.",
     details: [
@@ -129,7 +129,7 @@ export const PRODUCT_SEED: Product[] = [
     slug: "wicker-dining-chair",
     name: "Marsh Woven Dining Chair",
     category: "Dining",
-    price: 179,
+    price: 10700,
     description:
       "Hand-woven natural rush seating on a solid beech frame — light, sturdy, and quietly elegant.",
     details: [
@@ -149,7 +149,7 @@ export const PRODUCT_SEED: Product[] = [
     slug: "canopy-upholstered-bed",
     name: "Canopy Upholstered Bed",
     category: "Bedroom",
-    price: 899,
+    price: 53900,
     description:
       "A tall, channel-tufted headboard wrapped in bouclé, built on a noise-free slatted base.",
     details: [
@@ -169,7 +169,7 @@ export const PRODUCT_SEED: Product[] = [
     slug: "hollow-nightstand",
     name: "Hollow Nightstand",
     category: "Bedroom",
-    price: 249,
+    price: 14900,
     description:
       "A single floating drawer and open shelf in warm walnut veneer — quiet storage with a light footprint.",
     details: ["One soft-close drawer", "Open lower shelf", "Wall-mount or freestanding"],
@@ -184,7 +184,7 @@ export const PRODUCT_SEED: Product[] = [
     slug: "atlas-wardrobe",
     name: "Atlas 3-Door Wardrobe",
     category: "Bedroom",
-    price: 1199,
+    price: 71900,
     description:
       "Generous hanging and shelf space behind three solid doors, in a deep matte walnut finish.",
     details: [
@@ -203,7 +203,7 @@ export const PRODUCT_SEED: Product[] = [
     slug: "meridian-writing-desk",
     name: "Meridian Writing Desk",
     category: "Office",
-    price: 429,
+    price: 25700,
     description:
       "A slim, cable-managed desk with a single drawer — enough surface for a monitor, notebook, and a good lamp.",
     details: [
@@ -223,7 +223,7 @@ export const PRODUCT_SEED: Product[] = [
     slug: "pivot-task-chair",
     name: "Pivot Task Chair",
     category: "Office",
-    price: 379,
+    price: 22700,
     description:
       "All-day ergonomic support with a breathable woven back and a base that adjusts to how you actually sit.",
     details: [
@@ -243,7 +243,7 @@ export const PRODUCT_SEED: Product[] = [
     slug: "linear-bookshelf",
     name: "Linear 5-Tier Bookshelf",
     category: "Office",
-    price: 329,
+    price: 19700,
     description:
       "Open, modular shelving in solid birch — equally at home holding books or displayed objects.",
     details: ["5 fixed shelves", "Solid birch construction", "Anti-tip wall strap included"],
@@ -258,7 +258,7 @@ export const PRODUCT_SEED: Product[] = [
     slug: "harbor-outdoor-lounge-chair",
     name: "Harbor Outdoor Lounge Chair",
     category: "Outdoor",
-    price: 449,
+    price: 26900,
     description:
       "Weatherproof teak and all-weather rope, built to live outside through every season.",
     details: [
@@ -277,7 +277,7 @@ export const PRODUCT_SEED: Product[] = [
     slug: "grove-outdoor-dining-table",
     name: "Grove Outdoor Dining Table",
     category: "Outdoor",
-    price: 799,
+    price: 47900,
     description:
       "A rust-proof aluminum base under a slatted teak top, seating six under open sky.",
     details: [
@@ -297,7 +297,7 @@ export const PRODUCT_SEED: Product[] = [
     slug: "arc-floor-lamp",
     name: "Arc Floor Lamp",
     category: "Living Room",
-    price: 219,
+    price: 13100,
     description:
       "A sweeping brushed-brass arc that casts warm, directional light over a sofa or reading chair.",
     details: [
@@ -316,7 +316,7 @@ export const PRODUCT_SEED: Product[] = [
     slug: "birch-entry-bench",
     name: "Birch Entry Bench",
     category: "Living Room",
-    price: 259,
+    price: 15500,
     description:
       "A simple, sturdy bench for the entryway — lace up boots, drop your bag, keep moving.",
     details: ["Solid birch seat and legs", "Holds up to 300 lbs", "Felt floor pads included"],
@@ -331,7 +331,7 @@ export const PRODUCT_SEED: Product[] = [
     slug: "cove-outdoor-bench",
     name: "Cove Outdoor Bench",
     category: "Outdoor",
-    price: 299,
+    price: 17900,
     description:
       "Weatherproof teak slats over a rust-proof frame — built for a porch, garden, or patio edge.",
     details: ["FSC-certified teak slats", "Rust-proof steel frame", "No cushion needed"],
@@ -389,9 +389,7 @@ export const gradientOptions = [
 ];
 
 export function formatPrice(price: number): string {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
+  return `ETB ${new Intl.NumberFormat("en-US", {
     maximumFractionDigits: 0,
-  }).format(price);
+  }).format(price)}`;
 }

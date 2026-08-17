@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { formatPrice } from "@/lib/products";
 import { siteConfig } from "@/lib/site-config";
 
 export default function Footer() {
@@ -61,7 +62,7 @@ export default function Footer() {
         <div className="container-shop flex flex-col items-center justify-between gap-2 py-5 text-xs text-walnut-100/60 sm:flex-row">
           <p>&copy; {new Date().getFullYear()} {siteConfig.name}. All rights reserved.</p>
           <div className="flex items-center gap-4">
-            <p>Free shipping on orders over ${siteConfig.freeShippingThreshold}.</p>
+            <p>Free shipping on orders over {formatPrice(siteConfig.freeShippingThreshold)}.</p>
             <Link href="/admin" className="hover:text-cream">
               Admin
             </Link>
