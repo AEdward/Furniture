@@ -3,25 +3,9 @@ import type { Availability, Category, IconName, Product } from "@/lib/products";
 import { ORDER_STATUSES, type OrderStatus } from "@/lib/order-status";
 import { DEFAULT_SETTINGS, mergeSettings, type SiteSettings } from "@/lib/settings";
 import type { PageBlock } from "@/lib/pages";
+import { getPool } from "@/lib/db-pool";
 
 export { ORDER_STATUSES, type OrderStatus };
-
-let pool: mysql.Pool | null = null;
-
-function getPool(): mysql.Pool {
-  if (!pool) {
-    pool = mysql.createPool({
-      host: process.env.DB_HOST || "localhost",
-      port: Number(process.env.DB_PORT) || 3306,
-      user: process.env.DB_USER || "furniture_app",
-      password: process.env.DB_PASSWORD || "",
-      database: process.env.DB_NAME || "furniture",
-      waitForConnections: true,
-      connectionLimit: 10,
-    });
-  }
-  return pool;
-}
 
 type ProductRow = {
   id: string;

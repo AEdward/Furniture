@@ -1,5 +1,6 @@
 import crypto from "node:crypto";
 import mysql from "mysql2/promise";
+import { getPool } from "@/lib/db-pool";
 
 // Machine translation, cached in the `translations` table so the same
 // English string is only sent to the API once per target language —
@@ -14,23 +15,6 @@ const GOOGLE_TRANSLATE_ENDPOINT = "https://translation.googleapis.com/language/t
 
 function hashFor(lang: string, text: string): string {
   return crypto.createHash("sha1").update(`${lang}::${text}`).digest("hex");
-}
-
-let pool: mysql.Pool | null = null;
-
-function getPool(): mysql.Pool {
-  if (!pool) {
-    pool = mysql.createPool({
-      host: process.env.DB_HOST || "localhost",
-      port: Number(process.env.DB_PORT) || 3306,
-      user: process.env.DB_USER || "furniture_app",
-      password: process.env.DB_PASSWORD || "",
-      database: process.env.DB_NAME || "furniture",
-      waitForConnections: true,
-      connectionLimit: 5,
-    });
-  }
-  return pool;
 }
 
 async function getCached(lang: string, texts: string[]): Promise<Map<string, string>> {
