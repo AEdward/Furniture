@@ -1,8 +1,6 @@
+import Image from "next/image";
 import { siteConfig } from "@/lib/site-config";
 
-// Placeholder logo mark styled after the real Zemenay logo (bold Z
-// monogram, wide-tracked serif wordmark, charcoal + gold). Swap the
-// <span> mark below for a real <Image> once the logo file is available.
 export default function Logo({
   className,
   variant = "horizontal",
@@ -10,40 +8,34 @@ export default function Logo({
   className?: string;
   variant?: "horizontal" | "stacked";
 }) {
-  const mark = (
-    <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-md border-2 border-dashed border-terracotta-400 bg-ink font-serif text-lg font-bold text-terracotta-300">
-      {siteConfig.shortName}
-    </span>
-  );
-
-  const wordmark = (
-    <span className="font-serif font-semibold uppercase tracking-[0.15em] text-ink">
-      {siteConfig.name.replace(" Furniture", "")}
-    </span>
-  );
-
   if (variant === "stacked") {
     return (
-      <span className={`inline-flex flex-col items-center gap-3 ${className ?? ""}`}>
-        <span className="flex h-16 w-16 items-center justify-center rounded-lg border-2 border-dashed border-terracotta-400 bg-ink font-serif text-3xl font-bold text-terracotta-300">
-          {siteConfig.shortName}
-        </span>
-        <span className="text-center">
-          <span className="block font-serif text-2xl font-semibold uppercase tracking-[0.15em] text-ink">
-            {siteConfig.name.replace(" Furniture", "")}
-          </span>
-          <span className="mt-1 block text-xs font-medium uppercase tracking-[0.3em] text-ink/50">
-            Furniture
-          </span>
-        </span>
+      <span className={`inline-flex items-center justify-center ${className ?? ""}`}>
+        <Image
+          src="/brand/zemenay-logo-full-transparent.png"
+          alt={siteConfig.name}
+          width={645}
+          height={452}
+          priority
+          className="h-32 w-auto"
+        />
       </span>
     );
   }
 
   return (
     <span className={`inline-flex items-center gap-2.5 ${className ?? ""}`}>
-      {mark}
-      {wordmark}
+      <Image
+        src="/brand/zemenay-mark-transparent.png"
+        alt=""
+        width={352}
+        height={352}
+        priority
+        className="h-9 w-9"
+      />
+      <span className="font-serif text-2xl font-semibold uppercase tracking-[0.15em] text-ink">
+        {siteConfig.shortName === "Z" ? "Zemenay" : siteConfig.name}
+      </span>
     </span>
   );
 }

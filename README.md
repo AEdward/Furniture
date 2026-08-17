@@ -8,13 +8,15 @@ re-skinned per client without touching page code. This branch
 specifically; `main` stays the generic, unbranded template for other
 clients.
 
-**Still placeholder on this branch:** the logo is a text-based
-approximation of the real Zemenay mark (charcoal box, gold "Z", serif
-wordmark) — swap `components/Logo.tsx` for the real logo file when it's
-available. Contact email/phone in `lib/site-config.ts` are also
-unconfirmed placeholders. The product catalog itself is still the
-generic starter catalog (`lib/products.ts`), not Zemenay's real
-inventory.
+The real logo, mark, and full favicon/app-icon set are in place
+(`public/brand/`, `public/favicon*`, `public/apple-touch-icon.png`,
+`public/android-chrome-*.png`, `public/site.webmanifest`), wired up via
+`app/layout.tsx` metadata and `components/Logo.tsx`.
+
+**Still placeholder on this branch:** contact email/phone in
+`lib/site-config.ts` are unconfirmed placeholders. The product catalog
+itself is still the generic starter catalog (`lib/products.ts`), not
+Zemenay's real inventory.
 
 ## Stack
 
@@ -121,8 +123,10 @@ Everything client-specific lives in two places:
 - **`lib/site-config.ts`** — shop name, tagline, description, contact
   info, free-shipping threshold. Update these values and every page
   (header, footer, metadata) picks them up automatically.
-- **`components/Logo.tsx`** — currently a placeholder monogram. Swap the
-  inner `<span>` for a real `<Image>` once a logo file is available.
+- **`components/Logo.tsx`** — renders the real logo files from
+  `public/brand/`. For a different client, swap those PNGs and update
+  the `src` paths (and re-run the favicon generator for `public/favicon*`
+  etc. if they need their own icon set).
 - **`lib/products.ts`** (`PRODUCT_SEED`) — the starter product catalog.
   Replace with the real catalog, then run `npm run seed` again.
 - **`lib/policies.ts`** — delivery fees/times, assembly, warranty tiers,

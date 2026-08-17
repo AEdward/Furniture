@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { formatPrice } from "@/lib/products";
 import { siteConfig } from "@/lib/site-config";
@@ -8,8 +9,16 @@ export default function Footer() {
       <div className="container-shop grid gap-10 py-14 md:grid-cols-4">
         <div>
           <span className="inline-flex items-center gap-2.5">
-            <span className="flex h-9 w-9 items-center justify-center rounded-lg border-2 border-dashed border-terracotta-200 text-[11px] font-bold uppercase tracking-wider text-terracotta-200">
-              {siteConfig.shortName}
+            {/* Light chip behind the mark — its strokes are dark and
+                would disappear directly on this dark footer background. */}
+            <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-cream p-1">
+              <Image
+                src="/brand/zemenay-mark-transparent.png"
+                alt=""
+                width={352}
+                height={352}
+                className="h-full w-full object-contain"
+              />
             </span>
             <span className="font-serif text-xl font-semibold uppercase tracking-[0.1em] text-cream">
               {siteConfig.name}
