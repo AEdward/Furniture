@@ -34,7 +34,7 @@ export default function CartPage() {
       <div className="grid gap-10 lg:grid-cols-[1fr_320px]">
         <div className="flex flex-col divide-y divide-walnut-100 rounded-2xl border border-walnut-100">
           {lines.map((line) => (
-            <div key={line.slug} className="flex gap-4 p-4 sm:p-5">
+            <div key={`${line.slug}::${line.variant ?? ""}`} className="flex gap-4 p-4 sm:p-5">
               <Link
                 href={`/shop/${line.slug}`}
                 className={`flex h-20 w-20 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br ${line.gradient}`}
@@ -47,15 +47,20 @@ export default function CartPage() {
 
               <div className="flex flex-1 flex-col justify-between">
                 <div className="flex items-start justify-between gap-3">
-                  <Link
-                    href={`/shop/${line.slug}`}
-                    className="font-medium text-ink hover:text-walnut-600"
-                  >
-                    {line.name}
-                  </Link>
+                  <div>
+                    <Link
+                      href={`/shop/${line.slug}`}
+                      className="font-medium text-ink hover:text-walnut-600"
+                    >
+                      {line.name}
+                    </Link>
+                    {line.variant && (
+                      <p className="text-xs text-ink/50">{line.variant}</p>
+                    )}
+                  </div>
                   <button
                     type="button"
-                    onClick={() => removeItem(line.slug)}
+                    onClick={() => removeItem(line.slug, line.variant)}
                     className="text-xs font-medium text-ink/40 hover:text-terracotta-500"
                   >
                     Remove
@@ -66,7 +71,7 @@ export default function CartPage() {
                   <div className="flex items-center rounded-full border border-walnut-200">
                     <button
                       type="button"
-                      onClick={() => updateQuantity(line.slug, line.quantity - 1)}
+                      onClick={() => updateQuantity(line.slug, line.quantity - 1, line.variant)}
                       className="flex h-8 w-8 items-center justify-center text-walnut-600"
                       aria-label="Decrease quantity"
                     >
@@ -75,7 +80,7 @@ export default function CartPage() {
                     <span className="w-6 text-center text-sm">{line.quantity}</span>
                     <button
                       type="button"
-                      onClick={() => updateQuantity(line.slug, line.quantity + 1)}
+                      onClick={() => updateQuantity(line.slug, line.quantity + 1, line.variant)}
                       className="flex h-8 w-8 items-center justify-center text-walnut-600"
                       aria-label="Increase quantity"
                     >

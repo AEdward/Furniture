@@ -22,6 +22,32 @@ export type IconName =
   | "lamp"
   | "bench";
 
+export type Availability = "in_stock" | "made_to_order" | "out_of_stock";
+
+export const availabilityLabels: Record<Availability, string> = {
+  in_stock: "In Stock",
+  made_to_order: "Made to Order",
+  out_of_stock: "Out of Stock",
+};
+
+export type Dimensions = {
+  widthCm: number;
+  depthCm: number;
+  heightCm: number;
+  seatHeightCm?: number;
+  seatDepthCm?: number;
+  armHeightCm?: number;
+  legHeightCm?: number;
+  weightKg?: number;
+};
+
+export type Materials = {
+  frame: string;
+  upholstery?: string;
+  legs?: string;
+  foamDensity?: string;
+};
+
 export type Product = {
   id: string;
   slug: string;
@@ -31,14 +57,37 @@ export type Product = {
   compareAtPrice?: number;
   description: string;
   details: string[];
-  material: string;
-  dimensions: string;
+  materials: Materials;
+  dimensions: Dimensions;
   icon: IconName;
   gradient: string;
   featured?: boolean;
   new?: boolean;
   stock: number;
+  sku: string;
+  availability: Availability;
+  leadTimeDays?: number;
+  rating: number;
+  reviewCount: number;
+  colors: string[];
+  materialOptions: string[];
+  woodOptions: string[];
 };
+
+export function formatDimensionsSummary(d: Dimensions): string {
+  return `${d.widthCm} × ${d.depthCm} × ${d.heightCm} cm`;
+}
+
+export function availabilityMessage(product: Product): string {
+  if (product.availability === "made_to_order") {
+    return product.leadTimeDays
+      ? `Made to order — available in ${product.leadTimeDays} working days`
+      : "Made to order";
+  }
+  if (product.availability === "out_of_stock") return "Out of stock";
+  if (product.stock > 0 && product.stock <= 5) return `Only ${product.stock} left in stock`;
+  return "In stock";
+}
 
 // Seed data only — loaded into the database by `npm run seed`.
 // At runtime, pages read products from MySQL via lib/db.ts, not from here.
@@ -56,14 +105,35 @@ export const PRODUCT_SEED: Product[] = [
       "Solid kiln-dried hardwood frame",
       "High-resilience foam with down-wrapped cushions",
       "Removable, machine-washable covers",
-      "Assembly required (approx. 20 min)",
+      "Reinforced corner-block joints",
     ],
-    material: "Boucle upholstery, oak legs",
-    dimensions: '86"W x 36"D x 33"H',
+    materials: {
+      frame: "Kiln-dried hardwood",
+      foamDensity: "32kg/m³ high-resilience foam",
+      upholstery: "Boucle fabric",
+      legs: "Solid oak",
+    },
+    dimensions: {
+      widthCm: 218,
+      depthCm: 91,
+      heightCm: 84,
+      seatHeightCm: 45,
+      seatDepthCm: 58,
+      armHeightCm: 63,
+      legHeightCm: 12,
+      weightKg: 62,
+    },
     icon: "sofa",
     gradient: "from-terracotta-100 to-walnut-100",
     stock: 24,
     featured: true,
+    sku: "SOF-HVN-3S",
+    availability: "in_stock",
+    rating: 4.8,
+    reviewCount: 126,
+    colors: ["Beige", "Charcoal", "Terracotta"],
+    materialOptions: ["Boucle", "Performance Linen", "Velvet"],
+    woodOptions: ["Oak", "Walnut"],
   },
   {
     id: "p2",
@@ -78,12 +148,32 @@ export const PRODUCT_SEED: Product[] = [
       "Solid walnut frame",
       "Water-repellent performance fabric",
     ],
-    material: "Performance weave, solid walnut",
-    dimensions: '32"W x 34"D x 30"H',
+    materials: {
+      frame: "Solid walnut",
+      foamDensity: "30kg/m³ foam",
+      upholstery: "Performance weave fabric",
+      legs: "Solid walnut swivel base",
+    },
+    dimensions: {
+      widthCm: 81,
+      depthCm: 86,
+      heightCm: 76,
+      seatHeightCm: 43,
+      seatDepthCm: 55,
+      armHeightCm: 60,
+      weightKg: 28,
+    },
     icon: "armchair",
     gradient: "from-walnut-100 to-sand",
     stock: 24,
     featured: true,
+    sku: "ARM-ORB-01",
+    availability: "in_stock",
+    rating: 4.6,
+    reviewCount: 58,
+    colors: ["Grey", "Rust", "Cream"],
+    materialOptions: ["Performance Weave", "Velvet"],
+    woodOptions: ["Walnut"],
   },
   {
     id: "p3",
@@ -98,11 +188,21 @@ export const PRODUCT_SEED: Product[] = [
       "Hand-rubbed oil finish",
       "Tapered black steel legs",
     ],
-    material: "Solid acacia, powder-coated steel",
-    dimensions: '48"W x 24"D x 17"H',
+    materials: {
+      frame: "Solid acacia wood",
+      legs: "Powder-coated steel",
+    },
+    dimensions: { widthCm: 122, depthCm: 61, heightCm: 43, weightKg: 18 },
     icon: "coffee-table",
     gradient: "from-sand to-walnut-100",
     stock: 24,
+    sku: "TBL-DFT-CF",
+    availability: "in_stock",
+    rating: 4.7,
+    reviewCount: 41,
+    colors: ["Natural Acacia", "Black Steel"],
+    materialOptions: [],
+    woodOptions: ["Acacia", "Walnut"],
   },
   {
     id: "p4",
@@ -117,12 +217,23 @@ export const PRODUCT_SEED: Product[] = [
       "Seats up to 6",
       "Scratch and heat resistant finish",
     ],
-    material: "Solid oak",
-    dimensions: '72"W x 38"D x 30"H',
+    materials: {
+      frame: "Solid oak",
+      legs: "Solid oak",
+    },
+    dimensions: { widthCm: 183, depthCm: 97, heightCm: 76, weightKg: 54 },
     icon: "dining-table",
     gradient: "from-walnut-100 to-terracotta-100",
     stock: 24,
     featured: true,
+    sku: "TBL-SOL-DN",
+    availability: "made_to_order",
+    leadTimeDays: 14,
+    rating: 4.9,
+    reviewCount: 33,
+    colors: ["Natural Oak", "Espresso"],
+    materialOptions: [],
+    woodOptions: ["Oak", "Walnut", "Teak"],
   },
   {
     id: "p5",
@@ -137,12 +248,22 @@ export const PRODUCT_SEED: Product[] = [
       "Solid beech frame",
       "Sold individually",
     ],
-    material: "Rush weave, solid beech",
-    dimensions: '19"W x 21"D x 32"H',
+    materials: {
+      frame: "Solid beech",
+      upholstery: "Hand-woven natural rush",
+    },
+    dimensions: { widthCm: 48, depthCm: 53, heightCm: 81, seatHeightCm: 46, weightKg: 6 },
     icon: "dining-chair",
     gradient: "from-sand to-terracotta-100",
     stock: 24,
     new: true,
+    sku: "CHR-MRS-DN",
+    availability: "in_stock",
+    rating: 4.5,
+    reviewCount: 19,
+    colors: ["Natural"],
+    materialOptions: ["Natural Rush"],
+    woodOptions: ["Beech", "Oak"],
   },
   {
     id: "p6",
@@ -157,12 +278,23 @@ export const PRODUCT_SEED: Product[] = [
       "Slatted base, no box spring needed",
       "Queen and King available",
     ],
-    material: "Boucle upholstery, solid pine base",
-    dimensions: 'Queen: 64"W x 86"D x 51"H',
+    materials: {
+      frame: "Solid pine base",
+      upholstery: "Boucle fabric headboard",
+    },
+    dimensions: { widthCm: 163, depthCm: 218, heightCm: 130, weightKg: 71 },
     icon: "bed",
     gradient: "from-terracotta-100 to-sand",
     stock: 24,
     featured: true,
+    sku: "BED-CNP-QN",
+    availability: "made_to_order",
+    leadTimeDays: 10,
+    rating: 4.8,
+    reviewCount: 87,
+    colors: ["Beige", "Charcoal", "Sage"],
+    materialOptions: ["Boucle", "Linen", "Velvet"],
+    woodOptions: [],
   },
   {
     id: "p7",
@@ -173,11 +305,21 @@ export const PRODUCT_SEED: Product[] = [
     description:
       "A single floating drawer and open shelf in warm walnut veneer — quiet storage with a light footprint.",
     details: ["One soft-close drawer", "Open lower shelf", "Wall-mount or freestanding"],
-    material: "Walnut veneer, engineered wood",
-    dimensions: '20"W x 16"D x 22"H',
+    materials: {
+      frame: "Walnut veneer",
+      legs: "Engineered wood",
+    },
+    dimensions: { widthCm: 51, depthCm: 41, heightCm: 56, weightKg: 14 },
     icon: "nightstand",
     gradient: "from-walnut-100 to-sand",
     stock: 3,
+    sku: "NST-HLW-01",
+    availability: "in_stock",
+    rating: 4.4,
+    reviewCount: 22,
+    colors: ["Walnut", "White"],
+    materialOptions: [],
+    woodOptions: ["Walnut", "Oak"],
   },
   {
     id: "p8",
@@ -192,11 +334,22 @@ export const PRODUCT_SEED: Product[] = [
       "Full-length hanging rail",
       "Soft-close hardware throughout",
     ],
-    material: "Solid walnut, engineered wood",
-    dimensions: '70"W x 22"D x 78"H',
+    materials: {
+      frame: "Solid walnut",
+      legs: "Engineered wood panels",
+    },
+    dimensions: { widthCm: 178, depthCm: 56, heightCm: 198, weightKg: 96 },
     icon: "wardrobe",
     gradient: "from-walnut-100 to-walnut-100",
     stock: 24,
+    sku: "WRD-ATL-3D",
+    availability: "made_to_order",
+    leadTimeDays: 21,
+    rating: 4.7,
+    reviewCount: 15,
+    colors: ["Walnut", "Charcoal"],
+    materialOptions: [],
+    woodOptions: ["Walnut", "Oak", "MDF"],
   },
   {
     id: "p9",
@@ -211,12 +364,22 @@ export const PRODUCT_SEED: Product[] = [
       "One soft-close drawer",
       "Solid ash legs",
     ],
-    material: "Ash veneer top, solid ash legs",
-    dimensions: '48"W x 24"D x 29"H',
+    materials: {
+      frame: "Ash veneer top",
+      legs: "Solid ash",
+    },
+    dimensions: { widthCm: 122, depthCm: 61, heightCm: 74, weightKg: 24 },
     icon: "desk",
     gradient: "from-sand to-walnut-100",
     stock: 24,
     new: true,
+    sku: "DSK-MRD-01",
+    availability: "in_stock",
+    rating: 4.6,
+    reviewCount: 29,
+    colors: ["Natural Ash", "Black"],
+    materialOptions: [],
+    woodOptions: ["Ash", "Oak", "Walnut"],
   },
   {
     id: "p10",
@@ -231,12 +394,29 @@ export const PRODUCT_SEED: Product[] = [
       "Breathable woven backrest",
       "5-year mechanism warranty",
     ],
-    material: "Woven mesh, aluminum base",
-    dimensions: '26"W x 25"D x 38-42"H',
+    materials: {
+      frame: "Aluminum base",
+      upholstery: "Breathable woven mesh",
+    },
+    dimensions: {
+      widthCm: 66,
+      depthCm: 64,
+      heightCm: 107,
+      seatHeightCm: 48,
+      armHeightCm: 22,
+      weightKg: 17,
+    },
     icon: "office-chair",
     gradient: "from-walnut-100 to-terracotta-100",
     stock: 24,
     featured: true,
+    sku: "CHR-PVT-TK",
+    availability: "in_stock",
+    rating: 4.5,
+    reviewCount: 64,
+    colors: ["Black", "Grey"],
+    materialOptions: ["Mesh", "Leather"],
+    woodOptions: [],
   },
   {
     id: "p11",
@@ -247,11 +427,20 @@ export const PRODUCT_SEED: Product[] = [
     description:
       "Open, modular shelving in solid birch — equally at home holding books or displayed objects.",
     details: ["5 fixed shelves", "Solid birch construction", "Anti-tip wall strap included"],
-    material: "Solid birch",
-    dimensions: '32"W x 12"D x 72"H',
+    materials: {
+      frame: "Solid birch",
+    },
+    dimensions: { widthCm: 81, depthCm: 30, heightCm: 183, weightKg: 38 },
     icon: "bookshelf",
     gradient: "from-sand to-sand",
     stock: 0,
+    sku: "BSH-LNR-5T",
+    availability: "out_of_stock",
+    rating: 4.6,
+    reviewCount: 12,
+    colors: ["Natural Birch"],
+    materialOptions: [],
+    woodOptions: ["Birch", "Oak"],
   },
   {
     id: "p12",
@@ -266,11 +455,21 @@ export const PRODUCT_SEED: Product[] = [
       "All-weather rope weave",
       "Quick-dry cushion included",
     ],
-    material: "Teak, all-weather rope",
-    dimensions: '27"W x 32"D x 30"H',
+    materials: {
+      frame: "FSC-certified teak",
+      upholstery: "All-weather rope",
+    },
+    dimensions: { widthCm: 69, depthCm: 81, heightCm: 76, seatHeightCm: 40, weightKg: 16 },
     icon: "outdoor-chair",
     gradient: "from-terracotta-100 to-walnut-100",
     stock: 24,
+    sku: "CHR-HRB-OD",
+    availability: "in_stock",
+    rating: 4.7,
+    reviewCount: 24,
+    colors: ["Natural Teak", "Grey Rope"],
+    materialOptions: [],
+    woodOptions: ["Teak"],
   },
   {
     id: "p13",
@@ -285,12 +484,23 @@ export const PRODUCT_SEED: Product[] = [
       "Powder-coated aluminum base",
       "Seats up to 6",
     ],
-    material: "Teak, powder-coated aluminum",
-    dimensions: '70"W x 36"D x 29"H',
+    materials: {
+      frame: "Slatted FSC teak top",
+      legs: "Powder-coated aluminum",
+    },
+    dimensions: { widthCm: 178, depthCm: 91, heightCm: 74, weightKg: 48 },
     icon: "outdoor-table",
     gradient: "from-walnut-100 to-terracotta-100",
     stock: 24,
     new: true,
+    sku: "TBL-GRV-OD",
+    availability: "made_to_order",
+    leadTimeDays: 12,
+    rating: 4.8,
+    reviewCount: 9,
+    colors: ["Natural Teak"],
+    materialOptions: [],
+    woodOptions: ["Teak"],
   },
   {
     id: "p14",
@@ -305,11 +515,21 @@ export const PRODUCT_SEED: Product[] = [
       "Marble weighted base",
       "In-line foot dimmer switch",
     ],
-    material: "Brushed brass, marble base",
-    dimensions: '58"W arc reach x 78"H',
+    materials: {
+      frame: "Brushed brass",
+      legs: "Marble base",
+    },
+    dimensions: { widthCm: 147, depthCm: 33, heightCm: 198, weightKg: 15 },
     icon: "lamp",
     gradient: "from-sand to-terracotta-100",
     stock: 24,
+    sku: "LMP-ARC-FL",
+    availability: "in_stock",
+    rating: 4.6,
+    reviewCount: 37,
+    colors: ["Brass / Black Marble", "Brass / White Marble"],
+    materialOptions: [],
+    woodOptions: [],
   },
   {
     id: "p15",
@@ -319,12 +539,21 @@ export const PRODUCT_SEED: Product[] = [
     price: 15500,
     description:
       "A simple, sturdy bench for the entryway — lace up boots, drop your bag, keep moving.",
-    details: ["Solid birch seat and legs", "Holds up to 300 lbs", "Felt floor pads included"],
-    material: "Solid birch",
-    dimensions: '42"W x 14"D x 18"H',
+    details: ["Solid birch seat and legs", "Holds up to 135 kg", "Felt floor pads included"],
+    materials: {
+      frame: "Solid birch",
+    },
+    dimensions: { widthCm: 107, depthCm: 36, heightCm: 46, seatHeightCm: 46, weightKg: 12 },
     icon: "bench",
     gradient: "from-walnut-100 to-sand",
     stock: 24,
+    sku: "BNC-BRC-EN",
+    availability: "in_stock",
+    rating: 4.5,
+    reviewCount: 16,
+    colors: ["Natural Birch"],
+    materialOptions: [],
+    woodOptions: ["Birch", "Oak"],
   },
   {
     id: "p16",
@@ -335,11 +564,21 @@ export const PRODUCT_SEED: Product[] = [
     description:
       "Weatherproof teak slats over a rust-proof frame — built for a porch, garden, or patio edge.",
     details: ["FSC-certified teak slats", "Rust-proof steel frame", "No cushion needed"],
-    material: "Teak, powder-coated steel",
-    dimensions: '48"W x 16"D x 17"H',
+    materials: {
+      frame: "FSC teak slats",
+      legs: "Powder-coated steel",
+    },
+    dimensions: { widthCm: 122, depthCm: 41, heightCm: 43, seatHeightCm: 43, weightKg: 22 },
     icon: "bench",
     gradient: "from-terracotta-100 to-sand",
     stock: 24,
+    sku: "BNC-CV-OD",
+    availability: "in_stock",
+    rating: 4.4,
+    reviewCount: 11,
+    colors: ["Natural Teak"],
+    materialOptions: [],
+    woodOptions: ["Teak"],
   },
 ];
 

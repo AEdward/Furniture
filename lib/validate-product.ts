@@ -1,7 +1,36 @@
-import { categories, iconNames, slugify, type Category, type IconName } from "@/lib/products";
+import {
+  categories,
+  iconNames,
+  slugify,
+  type Availability,
+  type Category,
+  type IconName,
+} from "@/lib/products";
 import type { ProductInput } from "@/lib/db";
 
 export class ValidationError extends Error {}
+
+const AVAILABILITIES: Availability[] = ["in_stock", "made_to_order", "out_of_stock"];
+
+function parseList(value: unknown): string[] {
+  if (Array.isArray(value)) {
+    return value.filter((v): v is string => typeof v === "string" && v.trim().length > 0).map((v) => v.trim());
+  }
+  if (typeof value === "string") {
+    return value
+      .split(/[\n,]/)
+      .map((v) => v.trim())
+      .filter(Boolean);
+  }
+  return [];
+}
+
+function parseOptionalNumber(value: unknown): number | null {
+  if (value === undefined || value === null || value === "") return null;
+  const n = Number(value);
+  if (!Number.isFinite(n)) throw new ValidationError("Expected a number.");
+  return Math.round(n);
+}
 
 export function parseProductInput(body: unknown): ProductInput {
   if (typeof body !== "object" || body === null) {
@@ -40,23 +69,7 @@ export function parseProductInput(body: unknown): ProductInput {
   const description = typeof b.description === "string" ? b.description.trim() : "";
   if (!description) throw new ValidationError("Description is required.");
 
-  const detailsRaw = b.details;
-  const details = Array.isArray(detailsRaw)
-    ? detailsRaw
-        .filter((d): d is string => typeof d === "string" && d.trim().length > 0)
-        .map((d) => d.trim())
-    : typeof detailsRaw === "string"
-      ? detailsRaw
-          .split("\n")
-          .map((d) => d.trim())
-          .filter(Boolean)
-      : [];
-
-  const material = typeof b.material === "string" ? b.material.trim() : "";
-  if (!material) throw new ValidationError("Material is required.");
-
-  const dimensions = typeof b.dimensions === "string" ? b.dimensions.trim() : "";
-  if (!dimensions) throw new ValidationError("Dimensions is required.");
+  const details = parseList(b.details);
 
   const icon = b.icon as IconName;
   if (!iconNames.includes(icon)) throw new ValidationError("Please choose a valid icon.");
@@ -69,6 +82,38 @@ export function parseProductInput(body: unknown): ProductInput {
     throw new ValidationError("Stock must be zero or a positive number.");
   }
 
+  const sku = typeof b.sku === "string" ? b.sku.trim() : "";
+  if (!sku) throw new ValidationError("SKU is required.");
+
+  const availability = b.availability as Availability;
+  if (!AVAILABILITIES.includes(availability)) {
+    throw new ValidationError("Please choose a valid availability status.");
+  }
+
+  const leadTimeDays = parseOptionalNumber(b.leadTimeDays);
+  if (availability === "made_to_order" && !leadTimeDays) {
+    throw new ValidationError("Lead time (days) is required for made-to-order items.");
+  }
+
+  const rating = Number(b.rating);
+  if (!Number.isFinite(rating) || rating < 0 || rating > 5) {
+    throw new ValidationError("Rating must be between 0 and 5.");
+  }
+  const reviewCount = Number(b.reviewCount);
+  if (!Number.isFinite(reviewCount) || reviewCount < 0) {
+    throw new ValidationError("Review count must be zero or a positive number.");
+  }
+
+  const widthCm = Number(b.widthCm);
+  const depthCm = Number(b.depthCm);
+  const heightCm = Number(b.heightCm);
+  if (![widthCm, depthCm, heightCm].every((n) => Number.isFinite(n) && n > 0)) {
+    throw new ValidationError("Width, depth, and height must be positive numbers (cm).");
+  }
+
+  const frameMaterial = typeof b.frameMaterial === "string" ? b.frameMaterial.trim() : "";
+  if (!frameMaterial) throw new ValidationError("Frame material is required.");
+
   return {
     slug,
     name,
@@ -77,12 +122,30 @@ export function parseProductInput(body: unknown): ProductInput {
     compareAtPrice,
     description,
     details,
-    material,
-    dimensions,
     icon,
     gradient,
     featured: Boolean(b.featured),
     new: Boolean(b.new),
     stock: Math.round(stock),
+    sku,
+    availability,
+    leadTimeDays,
+    rating: Math.round(rating * 10) / 10,
+    reviewCount: Math.round(reviewCount),
+    widthCm: Math.round(widthCm),
+    depthCm: Math.round(depthCm),
+    heightCm: Math.round(heightCm),
+    seatHeightCm: parseOptionalNumber(b.seatHeightCm),
+    seatDepthCm: parseOptionalNumber(b.seatDepthCm),
+    armHeightCm: parseOptionalNumber(b.armHeightCm),
+    legHeightCm: parseOptionalNumber(b.legHeightCm),
+    weightKg: parseOptionalNumber(b.weightKg),
+    frameMaterial,
+    upholsteryMaterial: typeof b.upholsteryMaterial === "string" && b.upholsteryMaterial.trim() ? b.upholsteryMaterial.trim() : null,
+    legsMaterial: typeof b.legsMaterial === "string" && b.legsMaterial.trim() ? b.legsMaterial.trim() : null,
+    foamDensity: typeof b.foamDensity === "string" && b.foamDensity.trim() ? b.foamDensity.trim() : null,
+    colors: parseList(b.colors),
+    materialOptions: parseList(b.materialOptions),
+    woodOptions: parseList(b.woodOptions),
   };
 }

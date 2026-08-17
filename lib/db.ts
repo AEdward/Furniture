@@ -1,5 +1,5 @@
 import mysql from "mysql2/promise";
-import type { Category, IconName, Product } from "@/lib/products";
+import type { Availability, Category, IconName, Product } from "@/lib/products";
 import { ORDER_STATUSES, type OrderStatus } from "@/lib/order-status";
 
 export { ORDER_STATUSES, type OrderStatus };
@@ -30,13 +30,31 @@ type ProductRow = {
   compare_at_price: number | null;
   description: string;
   details_json: string;
-  material: string;
-  dimensions: string;
   icon: string;
   gradient: string;
   featured: number;
   is_new: number;
   stock: number;
+  sku: string;
+  availability: string;
+  lead_time_days: number | null;
+  rating: number | string;
+  review_count: number;
+  width_cm: number;
+  depth_cm: number;
+  height_cm: number;
+  seat_height_cm: number | null;
+  seat_depth_cm: number | null;
+  arm_height_cm: number | null;
+  leg_height_cm: number | null;
+  weight_kg: number | null;
+  frame_material: string;
+  upholstery_material: string | null;
+  legs_material: string | null;
+  foam_density: string | null;
+  colors_json: string;
+  material_options_json: string;
+  wood_options_json: string;
 };
 
 function rowToProduct(row: ProductRow): Product {
@@ -49,13 +67,35 @@ function rowToProduct(row: ProductRow): Product {
     compareAtPrice: row.compare_at_price ?? undefined,
     description: row.description,
     details: JSON.parse(row.details_json),
-    material: row.material,
-    dimensions: row.dimensions,
     icon: row.icon as Product["icon"],
     gradient: row.gradient,
     featured: !!row.featured,
     new: !!row.is_new,
     stock: row.stock,
+    sku: row.sku,
+    availability: row.availability as Availability,
+    leadTimeDays: row.lead_time_days ?? undefined,
+    rating: Number(row.rating),
+    reviewCount: row.review_count,
+    dimensions: {
+      widthCm: row.width_cm,
+      depthCm: row.depth_cm,
+      heightCm: row.height_cm,
+      seatHeightCm: row.seat_height_cm ?? undefined,
+      seatDepthCm: row.seat_depth_cm ?? undefined,
+      armHeightCm: row.arm_height_cm ?? undefined,
+      legHeightCm: row.leg_height_cm ?? undefined,
+      weightKg: row.weight_kg ?? undefined,
+    },
+    materials: {
+      frame: row.frame_material,
+      upholstery: row.upholstery_material ?? undefined,
+      legs: row.legs_material ?? undefined,
+      foamDensity: row.foam_density ?? undefined,
+    },
+    colors: JSON.parse(row.colors_json),
+    materialOptions: JSON.parse(row.material_options_json),
+    woodOptions: JSON.parse(row.wood_options_json),
   };
 }
 
@@ -100,19 +140,33 @@ export async function getRelatedProducts(
   return (rows as ProductRow[]).map(rowToProduct);
 }
 
+// "Complete the room": a handful of products from other categories, for
+// cross-selling on the product detail page.
+export async function getCompleteTheRoomProducts(
+  product: Product,
+  count = 4
+): Promise<Product[]> {
+  const db = getPool();
+  const [rows] = await db.query<mysql.RowDataPacket[]>(
+    "SELECT * FROM products WHERE category != ? AND id != ? ORDER BY RAND() LIMIT ?",
+    [product.category, product.id, count]
+  );
+  return (rows as ProductRow[]).map(rowToProduct);
+}
+
 export type OrderInput = {
   customerName: string;
   customerEmail: string;
   address: string;
   city: string;
   postalCode: string;
-  items: { slug: string; quantity: number }[];
+  items: { slug: string; quantity: number; variant?: string }[];
 };
 
 export type OrderResult = {
   id: number;
   subtotal: number;
-  items: { slug: string; name: string; price: number; quantity: number }[];
+  items: { slug: string; name: string; price: number; quantity: number; variant?: string }[];
 };
 
 export class OrderError extends Error {}
@@ -141,22 +195,30 @@ export async function createOrder(input: OrderInput): Promise<OrderResult> {
       if (!product) {
         throw new OrderError(`Product "${item.slug}" no longer exists.`);
       }
-      if (product.stock < item.quantity) {
-        throw new OrderError(
-          `Only ${product.stock} left of "${product.name}" — please update your cart.`
-        );
+
+      if (product.availability === "out_of_stock") {
+        throw new OrderError(`"${product.name}" is out of stock.`);
       }
 
-      await conn.query("UPDATE products SET stock = stock - ? WHERE slug = ?", [
-        item.quantity,
-        item.slug,
-      ]);
+      // Made-to-order items aren't tracked against a stock count.
+      if (product.availability === "in_stock") {
+        if (product.stock < item.quantity) {
+          throw new OrderError(
+            `Only ${product.stock} left of "${product.name}" — please update your cart.`
+          );
+        }
+        await conn.query("UPDATE products SET stock = stock - ? WHERE slug = ?", [
+          item.quantity,
+          item.slug,
+        ]);
+      }
 
       lineItems.push({
         slug: product.slug,
         name: product.name,
         price: product.price,
         quantity: item.quantity,
+        variant: item.variant,
       });
       subtotal += product.price * item.quantity;
     }
@@ -181,9 +243,9 @@ export async function createOrder(input: OrderInput): Promise<OrderResult> {
 
     for (const item of lineItems) {
       await conn.query(
-        `INSERT INTO order_items (order_id, product_slug, name, price, quantity)
-         VALUES (?, ?, ?, ?, ?)`,
-        [orderId, item.slug, item.name, item.price, item.quantity]
+        `INSERT INTO order_items (order_id, product_slug, name, price, quantity, variant_label)
+         VALUES (?, ?, ?, ?, ?, ?)`,
+        [orderId, item.slug, item.name, item.price, item.quantity, item.variant ?? null]
       );
     }
 
@@ -207,7 +269,7 @@ export type Order = {
   subtotal: number;
   status: string;
   createdAt: string;
-  items: { slug: string; name: string; price: number; quantity: number }[];
+  items: { slug: string; name: string; price: number; quantity: number; variant?: string }[];
 };
 
 export async function getOrderById(id: number): Promise<Order | undefined> {
@@ -220,7 +282,7 @@ export async function getOrderById(id: number): Promise<Order | undefined> {
   if (!order) return undefined;
 
   const [itemRows] = await db.query<mysql.RowDataPacket[]>(
-    "SELECT product_slug, name, price, quantity FROM order_items WHERE order_id = ?",
+    "SELECT product_slug, name, price, quantity, variant_label FROM order_items WHERE order_id = ?",
     [id]
   );
 
@@ -239,6 +301,7 @@ export async function getOrderById(id: number): Promise<Order | undefined> {
       name: r.name,
       price: r.price,
       quantity: r.quantity,
+      variant: r.variant_label ?? undefined,
     })),
   };
 }
@@ -304,16 +367,72 @@ export type ProductInput = {
   compareAtPrice?: number | null;
   description: string;
   details: string[];
-  material: string;
-  dimensions: string;
   icon: IconName;
   gradient: string;
   featured: boolean;
   new: boolean;
   stock: number;
+  sku: string;
+  availability: Availability;
+  leadTimeDays?: number | null;
+  rating: number;
+  reviewCount: number;
+  widthCm: number;
+  depthCm: number;
+  heightCm: number;
+  seatHeightCm?: number | null;
+  seatDepthCm?: number | null;
+  armHeightCm?: number | null;
+  legHeightCm?: number | null;
+  weightKg?: number | null;
+  frameMaterial: string;
+  upholsteryMaterial?: string | null;
+  legsMaterial?: string | null;
+  foamDensity?: string | null;
+  colors: string[];
+  materialOptions: string[];
+  woodOptions: string[];
 };
 
 export class ProductError extends Error {}
+
+function productInputParams(input: ProductInput): unknown[] {
+  return [
+    input.name,
+    input.category,
+    input.price,
+    input.compareAtPrice ?? null,
+    input.description,
+    JSON.stringify(input.details),
+    input.icon,
+    input.gradient,
+    input.featured ? 1 : 0,
+    input.new ? 1 : 0,
+    input.stock,
+    input.sku,
+    input.availability,
+    input.leadTimeDays ?? null,
+    input.rating,
+    input.reviewCount,
+    input.widthCm,
+    input.depthCm,
+    input.heightCm,
+    input.seatHeightCm ?? null,
+    input.seatDepthCm ?? null,
+    input.armHeightCm ?? null,
+    input.legHeightCm ?? null,
+    input.weightKg ?? null,
+    input.frameMaterial,
+    input.upholsteryMaterial ?? null,
+    input.legsMaterial ?? null,
+    input.foamDensity ?? null,
+    JSON.stringify(input.colors),
+    JSON.stringify(input.materialOptions),
+    JSON.stringify(input.woodOptions),
+  ];
+}
+
+const PRODUCT_INSERT_PLACEHOLDERS = Array(31).fill("?").join(", ");
 
 export async function createProduct(input: ProductInput): Promise<Product> {
   const db = getPool();
@@ -327,25 +446,14 @@ export async function createProduct(input: ProductInput): Promise<Product> {
 
   await db.query(
     `INSERT INTO products
-      (id, slug, name, category, price, compare_at_price, description, details_json, material, dimensions, icon, gradient, featured, is_new, stock)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    [
-      input.slug,
-      input.slug,
-      input.name,
-      input.category,
-      input.price,
-      input.compareAtPrice ?? null,
-      input.description,
-      JSON.stringify(input.details),
-      input.material,
-      input.dimensions,
-      input.icon,
-      input.gradient,
-      input.featured ? 1 : 0,
-      input.new ? 1 : 0,
-      input.stock,
-    ]
+      (id, slug, name, category, price, compare_at_price, description, details_json,
+       icon, gradient, featured, is_new, stock,
+       sku, availability, lead_time_days, rating, review_count,
+       width_cm, depth_cm, height_cm, seat_height_cm, seat_depth_cm, arm_height_cm, leg_height_cm, weight_kg,
+       frame_material, upholstery_material, legs_material, foam_density,
+       colors_json, material_options_json, wood_options_json)
+     VALUES (?, ?, ${PRODUCT_INSERT_PLACEHOLDERS})`,
+    [input.slug, input.slug, ...productInputParams(input)]
   );
 
   const created = await getProductBySlug(input.slug);
@@ -372,27 +480,14 @@ export async function updateProduct(
   const [result] = await db.query<mysql.ResultSetHeader>(
     `UPDATE products SET
       id = ?, slug = ?, name = ?, category = ?, price = ?, compare_at_price = ?,
-      description = ?, details_json = ?, material = ?, dimensions = ?, icon = ?,
-      gradient = ?, featured = ?, is_new = ?, stock = ?
+      description = ?, details_json = ?, icon = ?, gradient = ?, featured = ?, is_new = ?, stock = ?,
+      sku = ?, availability = ?, lead_time_days = ?, rating = ?, review_count = ?,
+      width_cm = ?, depth_cm = ?, height_cm = ?, seat_height_cm = ?, seat_depth_cm = ?,
+      arm_height_cm = ?, leg_height_cm = ?, weight_kg = ?,
+      frame_material = ?, upholstery_material = ?, legs_material = ?, foam_density = ?,
+      colors_json = ?, material_options_json = ?, wood_options_json = ?
      WHERE slug = ?`,
-    [
-      input.slug,
-      input.slug,
-      input.name,
-      input.category,
-      input.price,
-      input.compareAtPrice ?? null,
-      input.description,
-      JSON.stringify(input.details),
-      input.material,
-      input.dimensions,
-      input.icon,
-      input.gradient,
-      input.featured ? 1 : 0,
-      input.new ? 1 : 0,
-      input.stock,
-      slug,
-    ]
+    [input.slug, input.slug, ...productInputParams(input), slug]
   );
   if (result.affectedRows === 0) {
     throw new ProductError("Product not found.");
@@ -438,7 +533,7 @@ export async function getDashboardStats(): Promise<DashboardStats> {
     "SELECT COUNT(*) AS count, COALESCE(SUM(subtotal), 0) AS revenue FROM orders WHERE status != 'cancelled'"
   );
   const [lowStockRows] = await db.query<mysql.RowDataPacket[]>(
-    "SELECT * FROM products WHERE stock <= ? ORDER BY stock ASC LIMIT 8",
+    "SELECT * FROM products WHERE availability = 'in_stock' AND stock <= ? ORDER BY stock ASC LIMIT 8",
     [LOW_STOCK_THRESHOLD]
   );
   const allOrders = await getAllOrders();

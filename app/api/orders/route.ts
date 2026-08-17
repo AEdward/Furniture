@@ -32,12 +32,16 @@ export async function POST(request: Request) {
 
   const items = rawItems
     .filter(
-      (item): item is { slug: unknown; quantity: unknown } =>
+      (item): item is { slug: unknown; quantity: unknown; variant?: unknown } =>
         typeof item === "object" && item !== null
     )
     .map((item) => ({
       slug: String((item as { slug: unknown }).slug),
       quantity: Number((item as { quantity: unknown }).quantity),
+      variant:
+        typeof (item as { variant?: unknown }).variant === "string"
+          ? ((item as { variant?: string }).variant as string)
+          : undefined,
     }))
     .filter((item) => item.slug && Number.isFinite(item.quantity) && item.quantity > 0);
 

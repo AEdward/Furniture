@@ -7,7 +7,7 @@ import type { Product } from "@/lib/products";
 export default function QuickAddButton({ product }: { product: Product }) {
   const { addItem } = useCart();
   const [added, setAdded] = useState(false);
-  const outOfStock = product.stock <= 0;
+  const outOfStock = product.availability === "out_of_stock";
 
   return (
     <button

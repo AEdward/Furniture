@@ -43,7 +43,7 @@ export default function CheckoutPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...form,
-          items: lines.map((l) => ({ slug: l.slug, quantity: l.quantity })),
+          items: lines.map((l) => ({ slug: l.slug, quantity: l.quantity, variant: l.variant })),
         }),
       });
       const data = await res.json();
@@ -155,9 +155,11 @@ export default function CheckoutPage() {
           </h2>
           <ul className="mt-4 flex flex-col gap-3 text-sm">
             {lines.map((line) => (
-              <li key={line.slug} className="flex justify-between text-ink/70">
+              <li key={`${line.slug}::${line.variant ?? ""}`} className="flex justify-between text-ink/70">
                 <span>
-                  {line.name} × {line.quantity}
+                  {line.name}
+                  {line.variant && <span className="text-ink/40"> — {line.variant}</span>} ×{" "}
+                  {line.quantity}
                 </span>
                 <span>{formatPrice(line.price * line.quantity)}</span>
               </li>

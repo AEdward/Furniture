@@ -62,14 +62,46 @@ single shared password (no per-user accounts), meant for the shop owner /
 small team, not a multi-role permission system.
 
 - **Dashboard** — product/order counts, revenue, low-stock list, recent orders
-- **Products** — add, edit, delete; set price, stock, category, the
-  icon/background used for its card, and the Featured/New flags
+- **Products** — add, edit, delete; set price, availability (in stock /
+  made to order / out of stock), dimensions, materials, colors/fabric/wood
+  options, rating, SKU, icon/background, and the Featured/New flags
 - **Orders** — view line items and shipping info, update status
   (placed → processing → shipped → delivered, or cancelled)
 
 Access is a signed, httpOnly cookie (`middleware.ts` guards every
 `/admin` and `/api/admin` route) — there's no separate user table, so
 "logging in" just means presenting the correct `ADMIN_PASSWORD`.
+
+## Product pages
+
+Each product page (`/shop/[slug]`) is a full furniture PDP, not a generic
+e-commerce template:
+
+- Rating + review count, SKU, and one of three availability states —
+  **In Stock** (tracked by a numeric `stock` count), **Made to Order**
+  (skips stock tracking entirely, shows a lead-time message, checkout
+  never blocks it), or **Out of Stock** (checkout always rejects it,
+  regardless of the `stock` number)
+- Structured dimensions (width/depth/height/seat height/seat depth/arm
+  height/leg height/weight) rendered as a table, plus a **room-fit
+  calculator** that compares a customer's entered room/door size against
+  them
+- Structured materials & construction (frame/upholstery/legs/foam density)
+- Color / fabric / wood **selector chips** — informational (single SKU,
+  doesn't fork price or stock), but the selection follows the item into
+  the cart, the order record, and the confirmation page as a variant label
+- Delivery, assembly, warranty, returns, and payment-method info pulled
+  from `lib/policies.ts` (shop-wide, not per-product)
+- Two cross-sell rails: same-category "You may also like" and
+  cross-category "Complete the room"
+
+**Deferred** (would need infrastructure this project doesn't have yet):
+multi-photo galleries / 360° / AR — blocked on real product photos
+existing at all, still using placeholder icons; a full submittable review
+system with sub-ratings and customer photos — `rating`/`reviewCount` are
+admin-set aggregate numbers, not a live review feed; installment/split
+payments — needs the real payment processor first; automatic bundle
+discount pricing for "Complete the room".
 
 ## Rebranding for a client
 
@@ -82,6 +114,8 @@ Everything client-specific lives in two places:
   inner `<span>` for a real `<Image>` once a logo file is available.
 - **`lib/products.ts`** (`PRODUCT_SEED`) — the starter product catalog.
   Replace with the real catalog, then run `npm run seed` again.
+- **`lib/policies.ts`** — delivery fees/times, assembly, warranty tiers,
+  returns policy, and payment methods shown on every product page.
 - **`tailwind.config.ts`** — the `walnut` / `terracotta` / `sand` color
   scale. Swap the hex values to match brand colors; every component
   already references these tokens rather than hardcoded colors.

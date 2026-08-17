@@ -33,9 +33,11 @@ export default async function OrderConfirmationPage({
         </h2>
         <ul className="mt-4 flex flex-col gap-3 text-sm">
           {order.items.map((item) => (
-            <li key={item.slug} className="flex justify-between text-ink/70">
+            <li key={`${item.slug}::${item.variant ?? ""}`} className="flex justify-between text-ink/70">
               <span>
-                {item.name} × {item.quantity}
+                {item.name}
+                {item.variant && <span className="text-ink/40"> — {item.variant}</span>} ×{" "}
+                {item.quantity}
               </span>
               <span>{formatPrice(item.price * item.quantity)}</span>
             </li>

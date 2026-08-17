@@ -12,6 +12,7 @@ import type { Product } from "@/lib/products";
 
 export type CartLine = {
   slug: string;
+  variant?: string;
   name: string;
   price: number;
   icon: Product["icon"];
@@ -19,13 +20,17 @@ export type CartLine = {
   quantity: number;
 };
 
+function lineKey(slug: string, variant?: string): string {
+  return variant ? `${slug}::${variant}` : slug;
+}
+
 type CartContextValue = {
   lines: CartLine[];
   itemCount: number;
   subtotal: number;
-  addItem: (product: Product, quantity?: number) => void;
-  removeItem: (slug: string) => void;
-  updateQuantity: (slug: string, quantity: number) => void;
+  addItem: (product: Product, quantity?: number, variant?: string) => void;
+  removeItem: (slug: string, variant?: string) => void;
+  updateQuantity: (slug: string, quantity: number, variant?: string) => void;
   clearCart: () => void;
   isReady: boolean;
 };
@@ -54,12 +59,13 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(lines));
   }, [lines, isReady]);
 
-  const addItem = useCallback((product: Product, quantity = 1) => {
+  const addItem = useCallback((product: Product, quantity = 1, variant?: string) => {
     setLines((prev) => {
-      const existing = prev.find((l) => l.slug === product.slug);
+      const key = lineKey(product.slug, variant);
+      const existing = prev.find((l) => lineKey(l.slug, l.variant) === key);
       if (existing) {
         return prev.map((l) =>
-          l.slug === product.slug
+          lineKey(l.slug, l.variant) === key
             ? { ...l, quantity: l.quantity + quantity }
             : l
         );
@@ -68,6 +74,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         ...prev,
         {
           slug: product.slug,
+          variant,
           name: product.name,
           price: product.price,
           icon: product.icon,
@@ -78,15 +85,17 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
-  const removeItem = useCallback((slug: string) => {
-    setLines((prev) => prev.filter((l) => l.slug !== slug));
+  const removeItem = useCallback((slug: string, variant?: string) => {
+    const key = lineKey(slug, variant);
+    setLines((prev) => prev.filter((l) => lineKey(l.slug, l.variant) !== key));
   }, []);
 
-  const updateQuantity = useCallback((slug: string, quantity: number) => {
+  const updateQuantity = useCallback((slug: string, quantity: number, variant?: string) => {
+    const key = lineKey(slug, variant);
     setLines((prev) =>
       quantity <= 0
-        ? prev.filter((l) => l.slug !== slug)
-        : prev.map((l) => (l.slug === slug ? { ...l, quantity } : l))
+        ? prev.filter((l) => lineKey(l.slug, l.variant) !== key)
+        : prev.map((l) => (lineKey(l.slug, l.variant) === key ? { ...l, quantity } : l))
     );
   }, []);
 

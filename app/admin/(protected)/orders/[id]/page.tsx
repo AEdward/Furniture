@@ -23,9 +23,11 @@ export default async function AdminOrderDetailPage({
           <h2 className="font-serif text-lg font-semibold text-ink">Items</h2>
           <ul className="mt-4 flex flex-col divide-y divide-walnut-100">
             {order.items.map((item) => (
-              <li key={item.slug} className="flex justify-between py-3 text-sm">
+              <li key={`${item.slug}::${item.variant ?? ""}`} className="flex justify-between py-3 text-sm">
                 <span className="text-ink/70">
-                  {item.name} × {item.quantity}
+                  {item.name}
+                  {item.variant && <span className="text-ink/40"> — {item.variant}</span>} ×{" "}
+                  {item.quantity}
                 </span>
                 <span className="font-medium text-ink">
                   {formatPrice(item.price * item.quantity)}

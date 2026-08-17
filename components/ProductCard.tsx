@@ -1,11 +1,14 @@
 import Link from "next/link";
 import FurnitureIcon from "@/components/FurnitureIcon";
 import QuickAddButton from "@/components/QuickAddButton";
+import StarRating from "@/components/StarRating";
 import { formatPrice, type Product } from "@/lib/products";
 
 export default function ProductCard({ product }: { product: Product }) {
-  const lowStock = product.stock > 0 && product.stock <= 5;
-  const outOfStock = product.stock <= 0;
+  const lowStock =
+    product.availability === "in_stock" && product.stock > 0 && product.stock <= 5;
+  const outOfStock = product.availability === "out_of_stock";
+  const madeToOrder = product.availability === "made_to_order";
 
   return (
     <div className="group relative flex flex-col overflow-hidden rounded-2xl border border-walnut-100 bg-white/60 transition-shadow hover:shadow-soft">
@@ -28,6 +31,11 @@ export default function ProductCard({ product }: { product: Product }) {
                 Sale
               </span>
             )}
+            {madeToOrder && (
+              <span className="rounded-full bg-walnut-500 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-cream">
+                Made to Order
+              </span>
+            )}
           </div>
           {outOfStock && (
             <div className="absolute inset-0 flex items-center justify-center bg-ink/40">
@@ -46,6 +54,8 @@ export default function ProductCard({ product }: { product: Product }) {
             {product.name}
           </h3>
         </Link>
+
+        <StarRating rating={product.rating} />
 
         <div className="flex items-baseline gap-2">
           <span className="text-base font-semibold text-walnut-600">
