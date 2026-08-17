@@ -86,3 +86,15 @@ CREATE TABLE IF NOT EXISTS pages (
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- One row per storefront page load, logged by the client-side tracker in
+-- app/(site)/layout.tsx. No IP address, user agent, or cookie/session id
+-- is stored — just enough to show admin traffic analytics.
+CREATE TABLE IF NOT EXISTS page_views (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  path VARCHAR(255) NOT NULL,
+  referrer VARCHAR(255) NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_page_views_created_at (created_at),
+  INDEX idx_page_views_path (path)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

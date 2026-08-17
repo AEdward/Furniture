@@ -554,6 +554,256 @@ export async function getDashboardStats(): Promise<DashboardStats> {
 }
 
 // ---------------------------------------------------------------------
+// Admin: analytics (sales, traffic, site health)
+// ---------------------------------------------------------------------
+
+const ANALYTICS_DAYS = 30;
+
+// Builds the last N calendar days (oldest first) as "YYYY-MM-DD" strings,
+// so charts show a continuous series with zeros for days with no rows —
+// rather than gaps wherever a day happens to have no orders/views.
+function lastNDays(n: number): string[] {
+  const days: string[] = [];
+  const today = new Date();
+  for (let i = n - 1; i >= 0; i--) {
+    const d = new Date(today);
+    d.setDate(d.getDate() - i);
+    days.push(d.toISOString().slice(0, 10));
+  }
+  return days;
+}
+
+export type SalesByDay = { day: string; revenue: number; orders: number };
+export type OrdersByStatus = { status: string; count: number };
+export type TopProduct = { slug: string; name: string; units: number; revenue: number };
+export type SalesByCategory = { category: string; revenue: number };
+
+export type PageViewsByDay = { day: string; views: number };
+export type TopPage = { path: string; views: number };
+export type TopReferrer = { referrer: string; views: number };
+
+export type SiteHealth = {
+  dbOk: boolean;
+  dbLatencyMs: number;
+  uptimeSeconds: number;
+  nodeVersion: string;
+  env: string;
+  productCount: number;
+  orderCount: number;
+  pageViewCount: number;
+  lastOrderAt: string | null;
+};
+
+export type Analytics = {
+  salesByDay: SalesByDay[];
+  ordersByStatus: OrdersByStatus[];
+  topProducts: TopProduct[];
+  salesByCategory: SalesByCategory[];
+  revenueLast30: number;
+  ordersLast30: number;
+  avgOrderValue: number;
+  totalRevenue: number;
+  totalOrders: number;
+
+  pageViewsByDay: PageViewsByDay[];
+  topPages: TopPage[];
+  topReferrers: TopReferrer[];
+  viewsLast30: number;
+  viewsAllTime: number;
+
+  health: SiteHealth;
+};
+
+export async function recordPageView(path: string, referrer: string | null): Promise<void> {
+  const db = getPool();
+  await db.query("INSERT INTO page_views (path, referrer) VALUES (?, ?)", [path, referrer]);
+}
+
+function emptyAnalytics(days: string[], health: SiteHealth): Analytics {
+  return {
+    salesByDay: days.map((day) => ({ day, revenue: 0, orders: 0 })),
+    ordersByStatus: [],
+    topProducts: [],
+    salesByCategory: [],
+    revenueLast30: 0,
+    ordersLast30: 0,
+    avgOrderValue: 0,
+    totalRevenue: 0,
+    totalOrders: 0,
+    pageViewsByDay: days.map((day) => ({ day, views: 0 })),
+    topPages: [],
+    topReferrers: [],
+    viewsLast30: 0,
+    viewsAllTime: 0,
+    health,
+  };
+}
+
+// Pings the database first, independent of the rest of the queries below —
+// so a DB outage surfaces as a health-panel warning instead of crashing
+// the whole analytics page (the queries below would all fail together
+// anyway if the DB were actually down).
+export async function getAnalytics(): Promise<Analytics> {
+  const db = getPool();
+  const days = lastNDays(ANALYTICS_DAYS);
+  const since = days[0];
+
+  const dbStart = Date.now();
+  try {
+    await db.query("SELECT 1");
+  } catch {
+    return emptyAnalytics(days, {
+      dbOk: false,
+      dbLatencyMs: Date.now() - dbStart,
+      uptimeSeconds: Math.round(process.uptime()),
+      nodeVersion: process.version,
+      env: process.env.NODE_ENV ?? "development",
+      productCount: 0,
+      orderCount: 0,
+      pageViewCount: 0,
+      lastOrderAt: null,
+    });
+  }
+  const dbLatencyMs = Date.now() - dbStart;
+
+  const [
+    [salesByDayRows],
+    [ordersByStatusRows],
+    [topProductRows],
+    [salesByCategoryRows],
+    [[totalsRow]],
+    [pageViewsByDayRows],
+    [topPageRows],
+    [topReferrerRows],
+    [[viewsRow]],
+    [[healthCountsRow]],
+    [[lastOrderRow]],
+  ] = await Promise.all([
+    db.query<mysql.RowDataPacket[]>(
+      `SELECT DATE_FORMAT(created_at, '%Y-%m-%d') AS day,
+              COALESCE(SUM(subtotal), 0) AS revenue, COUNT(*) AS orders
+       FROM orders
+       WHERE status != 'cancelled' AND created_at >= ?
+       GROUP BY day`,
+      [since]
+    ),
+    db.query<mysql.RowDataPacket[]>(
+      "SELECT status, COUNT(*) AS count FROM orders GROUP BY status"
+    ),
+    db.query<mysql.RowDataPacket[]>(
+      `SELECT product_slug AS slug, name, SUM(quantity) AS units, SUM(price * quantity) AS revenue
+       FROM order_items
+       GROUP BY product_slug, name
+       ORDER BY revenue DESC
+       LIMIT 5`
+    ),
+    db.query<mysql.RowDataPacket[]>(
+      `SELECT COALESCE(p.category, 'Other') AS category, SUM(oi.price * oi.quantity) AS revenue
+       FROM order_items oi
+       LEFT JOIN products p ON p.slug = oi.product_slug
+       GROUP BY category
+       ORDER BY revenue DESC`
+    ),
+    db.query<mysql.RowDataPacket[]>(
+      "SELECT COUNT(*) AS count, COALESCE(SUM(subtotal), 0) AS revenue FROM orders WHERE status != 'cancelled'"
+    ),
+    db.query<mysql.RowDataPacket[]>(
+      `SELECT DATE_FORMAT(created_at, '%Y-%m-%d') AS day, COUNT(*) AS views
+       FROM page_views
+       WHERE created_at >= ?
+       GROUP BY day`,
+      [since]
+    ),
+    db.query<mysql.RowDataPacket[]>(
+      `SELECT path, COUNT(*) AS views FROM page_views
+       WHERE created_at >= ?
+       GROUP BY path ORDER BY views DESC LIMIT 8`,
+      [since]
+    ),
+    db.query<mysql.RowDataPacket[]>(
+      `SELECT referrer, COUNT(*) AS views FROM page_views
+       WHERE created_at >= ? AND referrer IS NOT NULL AND referrer != ''
+       GROUP BY referrer ORDER BY views DESC LIMIT 8`,
+      [since]
+    ),
+    db.query<mysql.RowDataPacket[]>("SELECT COUNT(*) AS count FROM page_views"),
+    db.query<mysql.RowDataPacket[]>(
+      `SELECT
+        (SELECT COUNT(*) FROM products) AS product_count,
+        (SELECT COUNT(*) FROM orders) AS order_count,
+        (SELECT COUNT(*) FROM page_views) AS page_view_count`
+    ),
+    db.query<mysql.RowDataPacket[]>(
+      "SELECT created_at FROM orders ORDER BY created_at DESC LIMIT 1"
+    ),
+  ]);
+
+  const revenueByDay = new Map(
+    salesByDayRows.map((r) => [r.day as string, { revenue: Number(r.revenue), orders: Number(r.orders) }])
+  );
+  const salesByDay: SalesByDay[] = days.map((day) => ({
+    day,
+    revenue: revenueByDay.get(day)?.revenue ?? 0,
+    orders: revenueByDay.get(day)?.orders ?? 0,
+  }));
+
+  const viewsByDay = new Map(pageViewsByDayRows.map((r) => [r.day as string, Number(r.views)]));
+  const pageViewsByDay: PageViewsByDay[] = days.map((day) => ({
+    day,
+    views: viewsByDay.get(day) ?? 0,
+  }));
+
+  const revenueLast30 = salesByDay.reduce((sum, d) => sum + d.revenue, 0);
+  const ordersLast30 = salesByDay.reduce((sum, d) => sum + d.orders, 0);
+  const totalRevenue = Number(totalsRow.revenue);
+  const totalOrders = Number(totalsRow.count);
+
+  return {
+    salesByDay,
+    ordersByStatus: ordersByStatusRows.map((r) => ({
+      status: r.status as string,
+      count: Number(r.count),
+    })),
+    topProducts: topProductRows.map((r) => ({
+      slug: r.slug as string,
+      name: r.name as string,
+      units: Number(r.units),
+      revenue: Number(r.revenue),
+    })),
+    salesByCategory: salesByCategoryRows.map((r) => ({
+      category: r.category as string,
+      revenue: Number(r.revenue),
+    })),
+    revenueLast30,
+    ordersLast30,
+    avgOrderValue: totalOrders > 0 ? Math.round(totalRevenue / totalOrders) : 0,
+    totalRevenue,
+    totalOrders,
+
+    pageViewsByDay,
+    topPages: topPageRows.map((r) => ({ path: r.path as string, views: Number(r.views) })),
+    topReferrers: topReferrerRows.map((r) => ({
+      referrer: r.referrer as string,
+      views: Number(r.views),
+    })),
+    viewsLast30: pageViewsByDay.reduce((sum, d) => sum + d.views, 0),
+    viewsAllTime: Number(viewsRow.count),
+
+    health: {
+      dbOk: true,
+      dbLatencyMs,
+      uptimeSeconds: Math.round(process.uptime()),
+      nodeVersion: process.version,
+      env: process.env.NODE_ENV ?? "development",
+      productCount: Number(healthCountsRow.product_count),
+      orderCount: Number(healthCountsRow.order_count),
+      pageViewCount: Number(healthCountsRow.page_view_count),
+      lastOrderAt: lastOrderRow ? (lastOrderRow.created_at as string) : null,
+    },
+  };
+}
+
+// ---------------------------------------------------------------------
 // Settings (site name/tagline/contact, home hero, policies)
 // ---------------------------------------------------------------------
 

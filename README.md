@@ -89,9 +89,34 @@ route).
 - **Orders** — view line items and shipping info, update status
   (placed → processing → shipped → delivered, or cancelled)
 - **Pages** — create, edit, and delete arbitrary pages (see below)
+- **Analytics** — sales (revenue over time, top products, sales by
+  category, orders by status), storefront traffic (page views over time,
+  top pages, top referrers), and a site health panel (database
+  connectivity/latency, app uptime, last order); see below
 - **Settings** — site name/tagline/contact info, the home page hero
   (heading, subheading, image, button), and delivery/assembly/warranty/
   returns/payment-method policy shown across the site
+
+## Analytics
+
+**http://localhost:3000/admin/analytics** — three self-hosted panels, no
+third-party account or API key required:
+
+- **Sales** — computed directly from `orders`/`order_items`: revenue and
+  order count for the last 30 days, average order value, all-time
+  revenue, a daily revenue chart, top products by revenue, sales by
+  category, and orders broken down by status.
+- **Traffic** — a lightweight first-party page-view tracker
+  (`components/PageViewTracker.tsx`) posts to `POST /api/track` on every
+  storefront page load and logs to a `page_views` table. Only the path,
+  referrer, and timestamp are stored — no IP address, user agent,
+  fingerprint, or cookie/session id, so there's no cookie-consent banner
+  to build. The panel shows page views over time, top pages, and top
+  referrers.
+- **Site health** — pings the database and reports latency, app uptime,
+  Node version, environment, and the most recent order. If the database
+  is unreachable, this panel reports it instead of the whole analytics
+  page crashing.
 
 ## Content management
 
@@ -204,10 +229,11 @@ app/
     [slug]/              Dynamic renderer for admin-created CMS pages
   admin/
     login/               Public login page
-    (protected)/         Dashboard, products, orders, pages, settings — gated by middleware.ts
-  api/                 products, orders, admin/* route handlers (incl. upload, settings, pages)
+    (protected)/         Dashboard, products, orders, pages, analytics, settings — gated by middleware.ts
+  api/                 products, orders, track (public page-view logging), admin/* route handlers
 components/           Shared UI — Header, Footer, ProductCard, admin forms,
-                       ImageUpload, PageBlockEditor, BlockRenderer, etc.
+                       ImageUpload, PageBlockEditor, BlockRenderer,
+                       PageViewTracker, BarChart, HorizontalBars, etc.
 lib/                  Product types/seed data, db access, settings, pages/blocks,
                        cart context, admin auth, validation
 db/                   schema.sql + seed script (products, settings, About page)
