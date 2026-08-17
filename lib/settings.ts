@@ -68,18 +68,18 @@ export type SiteSettings = {
 export const DEFAULT_SETTINGS: SiteSettings = {
   name: "Zemenay Furniture",
   shortName: "Z",
-  tagline: "Custom doors, cabinets & closets, built to fit.",
+  tagline: "Custom furniture, doors, cabinets & closets, built to fit.",
   description:
-    "Zemenay Furniture — solid materials, honest prices, and doors, kitchen cabinets, and closets built to last a lifetime.",
+    "Zemenay Furniture — solid materials, honest prices, and doors, kitchen cabinets, closets, sofas, dining sets, and beds built to last a lifetime.",
   email: "hello@zemenayfurniture.com",
   phone: "(555) 555-0148",
   address: ["Addis Ababa, Ethiopia"],
   freeShippingThreshold: 50000,
 
   hero: {
-    heading: "Doors, cabinets, and closets built to fit your space.",
+    heading: "Furniture, doors, and cabinetry built to fit your space.",
     subheading:
-      "Solid materials, honest prices, and joinery built to be lived with — not just looked at. Browse the collection or ask about a custom build.",
+      "Solid materials, honest prices, and craftsmanship built to be lived with — not just looked at. Browse the collection or ask about a custom build.",
     imageUrl: null,
     ctaLabel: "Shop the collection",
     ctaHref: "/shop",

@@ -37,6 +37,9 @@ export default function Footer({ settings }: { settings: SiteSettings }) {
             <li><Link href="/shop?category=Doors" className="hover:text-cream">Doors</Link></li>
             <li><Link href="/shop?category=Kitchen+Cabinets" className="hover:text-cream">Kitchen Cabinets</Link></li>
             <li><Link href="/shop?category=Closets" className="hover:text-cream">Closets</Link></li>
+            <li><Link href="/shop?category=Sofas" className="hover:text-cream">Sofas</Link></li>
+            <li><Link href="/shop?category=Dining+Tables+%26+Chairs" className="hover:text-cream">Dining Tables &amp; Chairs</Link></li>
+            <li><Link href="/shop?category=Beds" className="hover:text-cream">Beds</Link></li>
           </ul>
         </div>
 

@@ -1,7 +1,8 @@
 # Zemenay Furniture
 
-A site for a custom joinery business — doors, kitchen cabinets, and
-closets — with a real catalog, cart, and checkout, plus a genuine
+A site for a custom furniture and joinery business — doors, kitchen
+cabinets, closets, sofas, dining tables & chairs, and beds — with a real
+catalog, cart, and checkout, plus a genuine
 content-management layer: everything is admin-editable and stored in
 MySQL, not baked into code. Built from a reusable template; `main` stays
 the generic, unbranded version for other clients, and this branch
@@ -15,8 +16,9 @@ The real logo, mark, and full favicon/app-icon set are in place
 
 **Still placeholder:** contact email/phone (editable at `/admin/settings`,
 just not confirmed real numbers yet). The product catalog is a
-representative starter set (16 doors/cabinets/closets), not Zemenay's
-actual current inventory — replace it product-by-product in `/admin/products`
+representative starter set (28 products across doors, kitchen cabinets,
+closets, sofas, dining tables & chairs, and beds), not Zemenay's actual
+current inventory — replace it product-by-product in `/admin/products`
 or wholesale via `lib/products.ts` + `npm run seed`.
 
 ## Stack

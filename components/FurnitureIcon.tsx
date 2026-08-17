@@ -74,6 +74,54 @@ const paths: Record<IconName, JSX.Element> = {
       <path d="M6.5 1.5h3M14.5 1.5h3" />
     </>
   ),
+  sofa: (
+    <>
+      <rect x="2" y="7" width="20" height="9" rx="2" />
+      <rect x="0.8" y="12" width="3.2" height="7" rx="1" />
+      <rect x="20" y="12" width="3.2" height="7" rx="1" />
+      <path d="M2 16h20" />
+      <path d="M5 21v1M19 21v1" />
+    </>
+  ),
+  "sectional-sofa": (
+    <>
+      <rect x="2" y="7" width="14" height="9" rx="2" />
+      <rect x="0.8" y="12" width="3.2" height="7" rx="1" />
+      <rect x="14" y="10" width="8" height="11" rx="2" />
+      <path d="M2 16h14" />
+      <path d="M5 21v1M19 21v1" />
+    </>
+  ),
+  "dining-table": (
+    <>
+      <rect x="2" y="5" width="20" height="3" rx="0.5" />
+      <path d="M4 8v11M20 8v11" />
+      <path d="M7 8v8M17 8v8" />
+    </>
+  ),
+  "dining-chair": (
+    <>
+      <rect x="6" y="3" width="12" height="9" rx="1" />
+      <path d="M6 12h12v3a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1v-3" />
+      <path d="M7 16v5M17 16v5" />
+    </>
+  ),
+  bed: (
+    <>
+      <rect x="2" y="9" width="20" height="8" rx="1" />
+      <rect x="2" y="4" width="4" height="13" rx="1" />
+      <path d="M2 13h20" />
+      <path d="M4 17v3M20 17v3" />
+    </>
+  ),
+  "bunk-bed": (
+    <>
+      <rect x="2" y="3" width="18" height="4" rx="0.5" />
+      <rect x="2" y="11" width="18" height="4" rx="0.5" />
+      <path d="M3 7v12M20 3v16" />
+      <path d="M3 19h1M19 19h2" />
+    </>
+  ),
 };
 
 export default function FurnitureIcon({

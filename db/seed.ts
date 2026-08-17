@@ -14,7 +14,7 @@ const ABOUT_PAGE_BLOCKS: PageBlock[] = [
     type: "hero",
     heading: "Built by hand, fitted to your space.",
     subheading:
-      "Zemenay Furniture builds custom doors, kitchen cabinets, and closets for homes across Addis Ababa.",
+      "Zemenay Furniture builds custom doors, kitchen cabinets, closets, sofas, dining sets, and beds for homes across Addis Ababa.",
     imageUrl: null,
     ctaLabel: "Shop the collection",
     ctaHref: "/shop",
@@ -22,7 +22,7 @@ const ABOUT_PAGE_BLOCKS: PageBlock[] = [
   {
     type: "richtext",
     heading: "Our story",
-    body: "Zemenay Furniture started as a small joinery workshop and grew into a name people trust for doors, kitchen cabinets, and closets that are actually built to fit. Every piece starts with a measurement of your space, not a factory template.\n\nWe work in solid wood, engineered cores, and steel where it matters — fire-rated doors, load-bearing cabinetry, hardware that holds up to daily use.",
+    body: "Zemenay Furniture started as a small joinery workshop and grew into a name people trust for doors, kitchen cabinets, closets, sofas, dining sets, and beds that are actually built to fit. Every piece starts with a measurement of your space, not a factory template.\n\nWe work in solid wood, engineered cores, and steel where it matters — fire-rated doors, load-bearing cabinetry, hand-built upholstery, hardware that holds up to daily use.",
   },
   {
     type: "imagetext",
@@ -122,7 +122,7 @@ async function main() {
     [
       "about",
       "Our Story",
-      "How Zemenay Furniture builds custom doors, kitchen cabinets, and closets.",
+      "How Zemenay Furniture builds custom doors, kitchen cabinets, closets, sofas, dining sets, and beds.",
       JSON.stringify(ABOUT_PAGE_BLOCKS),
       1,
       "About",
