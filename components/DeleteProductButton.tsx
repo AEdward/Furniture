@@ -25,7 +25,7 @@ export default function DeleteProductButton({ slug, name }: { slug: string; name
       type="button"
       onClick={handleDelete}
       disabled={deleting}
-      className="text-sm font-medium text-terracotta-500 hover:underline disabled:opacity-50"
+      className="text-sm font-medium text-danger-500 hover:underline disabled:opacity-50"
     >
       {deleting ? "Deleting…" : "Delete"}
     </button>

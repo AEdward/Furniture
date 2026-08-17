@@ -306,7 +306,7 @@ export default async function ProductPage({
             {product.availability === "made_to_order" && " — with an exception for this item"}
           </p>
           {product.availability === "made_to_order" && (
-            <p className="mt-1 text-terracotta-500">{returnsPolicy.customExclusion}</p>
+            <p className="mt-1 text-danger-500">{returnsPolicy.customExclusion}</p>
           )}
           <ul className="mt-3 space-y-1.5">
             {returnsPolicy.conditions.map((c) => (

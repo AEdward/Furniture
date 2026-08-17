@@ -49,9 +49,9 @@ export default async function AdminProductsPage() {
                   <span
                     className={
                       product.stock === 0
-                        ? "font-medium text-terracotta-500"
+                        ? "font-medium text-danger-500"
                         : product.stock <= 5
-                          ? "font-medium text-terracotta-500"
+                          ? "font-medium text-danger-500"
                           : "text-ink/70"
                     }
                   >

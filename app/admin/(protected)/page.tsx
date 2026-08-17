@@ -88,7 +88,7 @@ export default async function AdminDashboardPage() {
                   </Link>
                   <span
                     className={`font-medium ${
-                      product.stock === 0 ? "text-terracotta-500" : "text-ink/70"
+                      product.stock === 0 ? "text-danger-500" : "text-ink/70"
                     }`}
                   >
                     {product.stock === 0 ? "Sold out" : `${product.stock} left`}

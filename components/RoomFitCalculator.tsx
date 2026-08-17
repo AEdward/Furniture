@@ -106,7 +106,7 @@ export default function RoomFitCalculator({ dimensions }: { dimensions: Dimensio
           className={`rounded-lg px-4 py-3 text-sm ${
             result.ok
               ? "bg-walnut-50 text-walnut-600"
-              : "bg-terracotta-50 text-terracotta-500"
+              : "bg-danger-50 text-danger-500"
           }`}
         >
           <p className="font-medium">{result.ok ? "✅ Should fit" : "⚠️ Check the numbers"}</p>

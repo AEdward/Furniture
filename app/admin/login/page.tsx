@@ -62,7 +62,7 @@ function LoginForm() {
       </label>
 
       {error && (
-        <p className="mt-3 rounded-lg bg-terracotta-50 px-3 py-2 text-sm text-terracotta-500">
+        <p className="mt-3 rounded-lg bg-danger-50 px-3 py-2 text-sm text-danger-500">
           {error}
         </p>
       )}
@@ -78,7 +78,7 @@ export default function AdminLoginPage() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-cream px-4">
       <div className="mb-8">
-        <Logo />
+        <Logo variant="stacked" />
       </div>
       <Suspense fallback={null}>
         <LoginForm />

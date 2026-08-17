@@ -61,7 +61,7 @@ export default function CartPage() {
                   <button
                     type="button"
                     onClick={() => removeItem(line.slug, line.variant)}
-                    className="text-xs font-medium text-ink/40 hover:text-terracotta-500"
+                    className="text-xs font-medium text-ink/40 hover:text-danger-500"
                   >
                     Remove
                   </button>

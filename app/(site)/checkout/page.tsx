@@ -139,7 +139,7 @@ export default function CheckoutPage() {
           </div>
 
           {error && (
-            <p className="rounded-lg bg-terracotta-50 px-4 py-3 text-sm text-terracotta-500">
+            <p className="rounded-lg bg-danger-50 px-4 py-3 text-sm text-danger-500">
               {error}
             </p>
           )}

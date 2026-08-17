@@ -8,30 +8,42 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        cream: "#FAF6F0",
-        sand: "#F1E9DD",
+        cream: "#FAF8F4",
+        sand: "#EFEBE3",
+        // Zemenay brand: charcoal/black primary. Token kept as "walnut"
+        // for compatibility with existing component classes, but the
+        // scale itself is now near-black rather than wood-toned.
         walnut: {
-          50: "#F6EFE7",
-          100: "#E9D9C4",
-          200: "#D2B491",
-          300: "#B98F65",
-          400: "#8F6339",
-          500: "#6B4423",
-          600: "#553419",
-          700: "#3F2612",
-          800: "#2B1A0C",
-          900: "#1A0F07",
+          50: "#F5F4F2",
+          100: "#E7E4DF",
+          200: "#CDC8C0",
+          300: "#A29A8E",
+          400: "#6E655A",
+          500: "#2A2622",
+          600: "#1C1916",
+          700: "#141210",
+          800: "#0D0B0A",
+          900: "#060505",
         },
+        // Gold accent, matching the logo's Z monogram.
         terracotta: {
+          50: "#FBF6E9",
+          100: "#F3E4B8",
+          200: "#E8CE85",
+          300: "#DCB758",
+          400: "#C9A227",
+          500: "#B08A1F",
+          600: "#8C6D18",
+        },
+        // True error/warning red — kept separate from the gold accent
+        // scale above so low-stock/validation messaging still reads as
+        // a warning rather than brand gold.
+        danger: {
           50: "#FBEEE8",
-          100: "#F3D2C1",
-          200: "#E6AC8C",
-          300: "#D8815A",
           400: "#C1663F",
           500: "#A85332",
-          600: "#864128",
         },
-        ink: "#2B2420",
+        ink: "#1A1918",
       },
       fontFamily: {
         serif: [
@@ -52,7 +64,7 @@ const config: Config = {
         ],
       },
       boxShadow: {
-        soft: "0 10px 30px -12px rgba(43, 26, 12, 0.25)",
+        soft: "0 10px 30px -12px rgba(26, 25, 24, 0.3)",
       },
       borderRadius: {
         xl2: "1.25rem",

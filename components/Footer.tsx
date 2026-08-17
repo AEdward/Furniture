@@ -11,7 +11,7 @@ export default function Footer() {
             <span className="flex h-9 w-9 items-center justify-center rounded-lg border-2 border-dashed border-terracotta-200 text-[11px] font-bold uppercase tracking-wider text-terracotta-200">
               {siteConfig.shortName}
             </span>
-            <span className="font-serif text-xl font-semibold text-cream">
+            <span className="font-serif text-xl font-semibold uppercase tracking-[0.1em] text-cream">
               {siteConfig.name}
             </span>
           </span>

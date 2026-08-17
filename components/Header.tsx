@@ -67,7 +67,7 @@ export default function Header() {
               <circle cx="17" cy="20" r="1.2" />
             </svg>
             {isReady && itemCount > 0 && (
-              <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-terracotta-400 text-[11px] font-semibold text-white">
+              <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-ink text-[11px] font-semibold text-terracotta-200">
                 {itemCount}
               </span>
             )}

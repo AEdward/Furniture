@@ -53,7 +53,7 @@ export default function OrderStatusSelect({
           </option>
         ))}
       </select>
-      {error && <p className="text-xs text-terracotta-500">{error}</p>}
+      {error && <p className="text-xs text-danger-500">{error}</p>}
     </div>
   );
 }

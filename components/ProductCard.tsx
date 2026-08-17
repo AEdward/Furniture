@@ -27,7 +27,7 @@ export default function ProductCard({ product }: { product: Product }) {
               </span>
             )}
             {product.compareAtPrice && (
-              <span className="rounded-full bg-terracotta-400 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-white">
+              <span className="rounded-full bg-ink px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-terracotta-200">
                 Sale
               </span>
             )}
@@ -69,7 +69,7 @@ export default function ProductCard({ product }: { product: Product }) {
         </div>
 
         {lowStock && (
-          <p className="text-xs font-medium text-terracotta-500">
+          <p className="text-xs font-medium text-danger-500">
             Only {product.stock} left
           </p>
         )}

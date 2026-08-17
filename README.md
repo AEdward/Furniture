@@ -1,9 +1,20 @@
-# Furniture Shop
+# Zemenay Furniture
 
 A furniture e-commerce site: browse by category, view product details,
-add to cart, and check out. Built as a reusable template — all branding
+add to cart, and check out. Built from a reusable template — all branding
 (name, logo, tagline, contact info) lives in one config file so it can be
-re-skinned per client without touching page code.
+re-skinned per client without touching page code. This branch
+(`company/zemenay-furniture`) is rebranded for **Zemenay Furniture**
+specifically; `main` stays the generic, unbranded template for other
+clients.
+
+**Still placeholder on this branch:** the logo is a text-based
+approximation of the real Zemenay mark (charcoal box, gold "Z", serif
+wordmark) — swap `components/Logo.tsx` for the real logo file when it's
+available. Contact email/phone in `lib/site-config.ts` are also
+unconfirmed placeholders. The product catalog itself is still the
+generic starter catalog (`lib/products.ts`), not Zemenay's real
+inventory.
 
 ## Stack
 

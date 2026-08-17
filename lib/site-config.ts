@@ -1,13 +1,14 @@
-// Placeholder brand content. Replace every value here with the real
-// company's name, tagline, logo, and contact details when available.
+// Zemenay Furniture brand content. Contact details below are still
+// placeholders (not yet provided) — swap them for the real address,
+// phone, and email when available.
 export const siteConfig = {
-  name: "Your Furniture Co.",
-  shortName: "YFC",
-  tagline: "Furniture for rooms you actually live in.",
+  name: "Zemenay Furniture",
+  shortName: "Z",
+  tagline: "Timeless furniture, made for modern living.",
   description:
-    "Placeholder description — replace with the real company's positioning. Solid materials, honest prices, built to last.",
-  email: "hello@example.com",
+    "Zemenay Furniture — solid materials, honest prices, and pieces built to last a lifetime.",
+  email: "hello@zemenayfurniture.com",
   phone: "(555) 555-0148",
-  address: ["123 Placeholder Street", "Your City, ST 00000"],
+  address: ["Addis Ababa, Ethiopia"],
   freeShippingThreshold: 5000,
 };
