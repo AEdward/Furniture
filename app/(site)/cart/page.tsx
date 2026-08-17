@@ -4,22 +4,23 @@ import Link from "next/link";
 import FurnitureIcon from "@/components/FurnitureIcon";
 import { useCart } from "@/lib/cart-context";
 import { formatPrice } from "@/lib/products";
+import { useT } from "@/lib/i18n/context";
 
 export default function CartPage() {
   const { lines, subtotal, updateQuantity, removeItem, isReady } = useCart();
+  const t = useT();
 
   if (isReady && lines.length === 0) {
     return (
       <div className="container-shop flex flex-col items-center py-24 text-center">
         <h1 className="font-serif text-3xl font-semibold text-ink">
-          Your cart is empty
+          {t("Your cart is empty")}
         </h1>
         <p className="mt-3 max-w-sm text-ink/60">
-          Looks like you haven&apos;t added anything yet. Go find something
-          you&apos;ll actually want to sit on.
+          {t("Looks like you haven't added anything yet. Go find something you'll actually want to sit on.")}
         </p>
         <Link href="/shop" className="btn-primary mt-8">
-          Continue shopping
+          {t("Continue shopping")}
         </Link>
       </div>
     );
@@ -28,7 +29,7 @@ export default function CartPage() {
   return (
     <div className="container-shop py-12">
       <h1 className="mb-8 font-serif text-3xl font-semibold text-ink">
-        Your Cart
+        {t("Your Cart")}
       </h1>
 
       <div className="grid gap-10 lg:grid-cols-[1fr_320px]">
@@ -63,7 +64,7 @@ export default function CartPage() {
                     onClick={() => removeItem(line.slug, line.variant)}
                     className="text-xs font-medium text-ink/40 hover:text-danger-500"
                   >
-                    Remove
+                    {t("Remove")}
                   </button>
                 </div>
 
@@ -73,7 +74,7 @@ export default function CartPage() {
                       type="button"
                       onClick={() => updateQuantity(line.slug, line.quantity - 1, line.variant)}
                       className="flex h-8 w-8 items-center justify-center text-walnut-600"
-                      aria-label="Decrease quantity"
+                      aria-label={t("Decrease quantity")}
                     >
                       −
                     </button>
@@ -82,7 +83,7 @@ export default function CartPage() {
                       type="button"
                       onClick={() => updateQuantity(line.slug, line.quantity + 1, line.variant)}
                       className="flex h-8 w-8 items-center justify-center text-walnut-600"
-                      aria-label="Increase quantity"
+                      aria-label={t("Increase quantity")}
                     >
                       +
                     </button>
@@ -98,26 +99,26 @@ export default function CartPage() {
 
         <div className="h-fit rounded-2xl border border-walnut-100 p-6">
           <h2 className="font-serif text-lg font-semibold text-ink">
-            Order Summary
+            {t("Order Summary")}
           </h2>
           <div className="mt-4 flex justify-between text-sm text-ink/70">
-            <span>Subtotal</span>
+            <span>{t("Subtotal")}</span>
             <span>{formatPrice(subtotal)}</span>
           </div>
           <p className="mt-1 text-xs text-ink/50">
-            Shipping and any applicable tax are calculated at checkout.
+            {t("Shipping and any applicable tax are calculated at checkout.")}
           </p>
           <Link
             href="/checkout"
             className="btn-primary mt-6 block w-full text-center"
           >
-            Checkout
+            {t("Checkout")}
           </Link>
           <Link
             href="/shop"
             className="mt-3 block text-center text-sm font-medium text-walnut-600 hover:underline"
           >
-            Continue shopping
+            {t("Continue shopping")}
           </Link>
         </div>
       </div>

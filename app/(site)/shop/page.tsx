@@ -4,6 +4,10 @@ import ProductCard from "@/components/ProductCard";
 import SortSelect from "@/components/SortSelect";
 import { getAllProducts } from "@/lib/db";
 import { categories, type Category, type Product } from "@/lib/products";
+import { getLocale } from "@/lib/i18n/get-locale";
+import { getDictionary } from "@/lib/i18n/get-dictionary";
+import { createT } from "@/lib/i18n/t";
+import { translateProducts } from "@/lib/i18n/translate-content";
 
 export const metadata: Metadata = { title: "Shop" };
 
@@ -30,17 +34,20 @@ export default async function ShopPage({
     ? (searchParams.category as Category)
     : undefined;
 
-  const products = sortProducts(
-    await getAllProducts(activeCategory),
-    searchParams.sort
-  );
+  const locale = getLocale();
+  const [productsRaw, dict] = await Promise.all([
+    getAllProducts(activeCategory).then((p) => sortProducts(p, searchParams.sort)),
+    getDictionary(locale),
+  ]);
+  const t = createT(dict);
+  const products = await translateProducts(productsRaw, locale);
 
   return (
     <div className="container-shop py-12">
       <div className="mb-8">
-        <p className="section-label">Shop</p>
+        <p className="section-label">{t("Shop")}</p>
         <h1 className="mt-2 font-serif text-3xl font-semibold text-ink sm:text-4xl">
-          {activeCategory ?? "All Furniture"}
+          {activeCategory ? t(activeCategory) : t("All Furniture")}
         </h1>
       </div>
 
@@ -54,7 +61,7 @@ export default async function ShopPage({
                 : "border-walnut-200 text-ink/70 hover:border-walnut-400"
             }`}
           >
-            All
+            {t("All")}
           </Link>
           {categories.map((category) => (
             <Link
@@ -66,7 +73,7 @@ export default async function ShopPage({
                   : "border-walnut-200 text-ink/70 hover:border-walnut-400"
               }`}
             >
-              {category}
+              {t(category)}
             </Link>
           ))}
         </div>
@@ -76,7 +83,7 @@ export default async function ShopPage({
 
       {products.length === 0 ? (
         <p className="py-16 text-center text-ink/60">
-          No products found in this category yet.
+          {t("No products found in this category yet.")}
         </p>
       ) : (
         <div className="grid grid-cols-2 gap-5 sm:grid-cols-3 lg:grid-cols-4">

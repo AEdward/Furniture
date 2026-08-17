@@ -4,6 +4,10 @@ import FurnitureIcon from "@/components/FurnitureIcon";
 import ProductCard from "@/components/ProductCard";
 import { getFeaturedProducts, getSettings } from "@/lib/db";
 import { categories, formatPrice, type IconName } from "@/lib/products";
+import { getLocale } from "@/lib/i18n/get-locale";
+import { getDictionary } from "@/lib/i18n/get-dictionary";
+import { createT } from "@/lib/i18n/t";
+import { translateProducts, translateSettings } from "@/lib/i18n/translate-content";
 
 export const dynamic = "force-dynamic";
 
@@ -17,21 +21,31 @@ const categoryIcon: Record<(typeof categories)[number], IconName> = {
 };
 
 export default async function HomePage() {
-  const [featured, settings] = await Promise.all([getFeaturedProducts(), getSettings()]);
+  const locale = getLocale();
+  const [featuredRaw, settingsRaw, dict] = await Promise.all([
+    getFeaturedProducts(),
+    getSettings(),
+    getDictionary(locale),
+  ]);
+  const t = createT(dict);
+  const [featured, settings] = await Promise.all([
+    translateProducts(featuredRaw, locale),
+    translateSettings(settingsRaw, locale),
+  ]);
   const { hero } = settings;
 
   const valueProps = [
     {
-      title: `Free delivery over ${formatPrice(settings.freeShippingThreshold)}`,
-      body: "Delivered and installed, no surprise fees at checkout.",
+      title: t("Free delivery over {amount}", { amount: formatPrice(settings.freeShippingThreshold) }),
+      body: t("Delivered and installed, no surprise fees at checkout."),
     },
     {
-      title: `${settings.returns.periodDays}-day returns`,
-      body: "Not the right fit? Send it back for a full refund.",
+      title: t("{days}-day returns", { days: settings.returns.periodDays }),
+      body: t("Not the right fit? Send it back for a full refund."),
     },
     {
-      title: `${settings.warranty.tiers[0]?.years ?? 5}-year warranty`,
-      body: "Every piece is built to last and backed to match.",
+      title: t("{years}-year warranty", { years: settings.warranty.tiers[0]?.years ?? 5 }),
+      body: t("Every piece is built to last and backed to match."),
     },
   ];
 
@@ -52,7 +66,7 @@ export default async function HomePage() {
                 {hero.ctaLabel}
               </Link>
               <Link href="/about" className="btn-secondary">
-                Our story
+                {t("Our story")}
               </Link>
             </div>
           </div>
@@ -99,9 +113,9 @@ export default async function HomePage() {
       <section className="container-shop py-16">
         <div className="mb-8 flex items-end justify-between">
           <div>
-            <p className="section-label">Browse</p>
+            <p className="section-label">{t("Browse")}</p>
             <h2 className="mt-2 font-serif text-3xl font-semibold text-ink">
-              Shop by category
+              {t("Shop by category")}
             </h2>
           </div>
         </div>
@@ -116,7 +130,7 @@ export default async function HomePage() {
                 name={categoryIcon[category]}
                 className="h-10 w-10 text-walnut-500 transition-transform group-hover:scale-110"
               />
-              <span className="text-sm font-medium text-ink">{category}</span>
+              <span className="text-sm font-medium text-ink">{t(category)}</span>
             </Link>
           ))}
         </div>
@@ -126,16 +140,16 @@ export default async function HomePage() {
         <div className="container-shop">
           <div className="mb-8 flex items-end justify-between">
             <div>
-              <p className="section-label">Featured</p>
+              <p className="section-label">{t("Featured")}</p>
               <h2 className="mt-2 font-serif text-3xl font-semibold text-ink">
-                Customer favorites
+                {t("Customer favorites")}
               </h2>
             </div>
             <Link
               href="/shop"
               className="hidden text-sm font-medium text-walnut-600 hover:underline sm:block"
             >
-              View all products →
+              {t("View all products →")}
             </Link>
           </div>
           <div className="grid grid-cols-2 gap-5 sm:grid-cols-3 lg:grid-cols-4">
@@ -147,7 +161,7 @@ export default async function HomePage() {
             href="/shop"
             className="mt-8 block text-center text-sm font-medium text-walnut-600 hover:underline sm:hidden"
           >
-            View all products →
+            {t("View all products →")}
           </Link>
         </div>
       </section>

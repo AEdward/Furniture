@@ -1,3 +1,7 @@
+"use client";
+
+import { useT } from "@/lib/i18n/context";
+
 function Star({ fill }: { fill: number }) {
   const id = `star-clip-${Math.round(fill * 100)}`;
   return (
@@ -34,6 +38,7 @@ export default function StarRating({
   size?: "sm" | "md";
 }) {
   const starSize = size === "sm" ? "h-3.5 w-3.5" : "h-5 w-5";
+  const t = useT();
   return (
     <div className="flex items-center gap-1.5">
       <div className="flex gap-0.5">
@@ -45,7 +50,7 @@ export default function StarRating({
       </div>
       <span className="text-sm text-ink/60">
         {rating.toFixed(1)}
-        {reviewCount !== undefined && ` (${reviewCount} reviews)`}
+        {reviewCount !== undefined && ` (${t("{count} reviews", { count: reviewCount })})`}
       </span>
     </div>
   );

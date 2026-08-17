@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/lib/cart-context";
 import type { Product } from "@/lib/products";
+import { useT } from "@/lib/i18n/context";
 
 function VariantGroup({
   label,
@@ -45,6 +46,7 @@ function VariantGroup({
 export default function AddToCartPanel({ product }: { product: Product }) {
   const { addItem } = useCart();
   const router = useRouter();
+  const t = useT();
   const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);
   const [color, setColor] = useState(product.colors[0] ?? "");
@@ -61,17 +63,17 @@ export default function AddToCartPanel({ product }: { product: Product }) {
 
   return (
     <div className="flex flex-col gap-5">
-      <VariantGroup label="Color" options={product.colors} selected={color} onSelect={setColor} />
+      <VariantGroup label={t("Color")} options={product.colors} selected={color} onSelect={setColor} />
       <VariantGroup
-        label="Fabric / material"
+        label={t("Fabric / material")}
         options={product.materialOptions}
         selected={material}
         onSelect={setMaterial}
       />
-      <VariantGroup label="Wood" options={product.woodOptions} selected={wood} onSelect={setWood} />
+      <VariantGroup label={t("Wood")} options={product.woodOptions} selected={wood} onSelect={setWood} />
       {product.colors.length > 0 && (
         <p className="-mt-3 text-xs text-ink/40">
-          Actual color may vary slightly from what's shown on screen.
+          {t("Actual color may vary slightly from what's shown on screen.")}
         </p>
       )}
 
@@ -82,7 +84,7 @@ export default function AddToCartPanel({ product }: { product: Product }) {
             onClick={() => setQuantity((q) => Math.max(1, q - 1))}
             className="flex h-11 w-11 items-center justify-center text-lg text-walnut-600 disabled:opacity-30"
             disabled={outOfStock}
-            aria-label="Decrease quantity"
+            aria-label={t("Decrease quantity")}
           >
             −
           </button>
@@ -92,7 +94,7 @@ export default function AddToCartPanel({ product }: { product: Product }) {
             onClick={() => setQuantity((q) => Math.min(maxQuantity || 1, q + 1))}
             className="flex h-11 w-11 items-center justify-center text-lg text-walnut-600 disabled:opacity-30"
             disabled={outOfStock || quantity >= maxQuantity}
-            aria-label="Increase quantity"
+            aria-label={t("Increase quantity")}
           >
             +
           </button>
@@ -108,7 +110,7 @@ export default function AddToCartPanel({ product }: { product: Product }) {
           }}
           className="btn-primary flex-1 disabled:bg-ink/20"
         >
-          {outOfStock ? "Sold out" : added ? "Added to cart ✓" : "Add to cart"}
+          {outOfStock ? t("Sold out") : added ? t("Added to cart ✓") : t("Add to cart")}
         </button>
       </div>
 
@@ -118,7 +120,7 @@ export default function AddToCartPanel({ product }: { product: Product }) {
           onClick={() => router.push("/cart")}
           className="text-sm font-medium text-walnut-600 hover:underline"
         >
-          View cart →
+          {t("View cart →")}
         </button>
       )}
     </div>

@@ -98,3 +98,17 @@ CREATE TABLE IF NOT EXISTS page_views (
   INDEX idx_page_views_created_at (created_at),
   INDEX idx_page_views_path (path)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Cache of machine-translated strings (see lib/translate.ts), keyed by a
+-- hash of (target language + source text) so repeat page loads reuse a
+-- translation instead of re-calling the translation API. TEXT columns
+-- can't be uniquely indexed directly in MySQL, hence the hash column.
+CREATE TABLE IF NOT EXISTS translations (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  source_hash CHAR(40) NOT NULL,
+  lang VARCHAR(8) NOT NULL,
+  source_text MEDIUMTEXT NOT NULL,
+  translated_text MEDIUMTEXT NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY uniq_translations_hash (source_hash)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

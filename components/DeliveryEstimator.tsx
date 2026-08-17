@@ -3,12 +3,14 @@
 import { useState } from "react";
 import { formatPrice } from "@/lib/products";
 import type { SiteSettings } from "@/lib/settings";
+import { useT } from "@/lib/i18n/context";
 
 export default function DeliveryEstimator({
   delivery,
 }: {
   delivery: SiteSettings["delivery"];
 }) {
+  const t = useT();
   const [location, setLocation] = useState<"addis" | "other">("addis");
   const minDays = location === "addis" ? delivery.addisMinDays : delivery.otherMinDays;
   const maxDays = location === "addis" ? delivery.addisMaxDays : delivery.otherMaxDays;
@@ -26,7 +28,7 @@ export default function DeliveryEstimator({
               : "border-walnut-200 text-ink/70 hover:border-walnut-400"
           }`}
         >
-          Addis Ababa
+          {t("Addis Ababa")}
         </button>
         <button
           type="button"
@@ -37,14 +39,16 @@ export default function DeliveryEstimator({
               : "border-walnut-200 text-ink/70 hover:border-walnut-400"
           }`}
         >
-          Other cities
+          {t("Other cities")}
         </button>
       </div>
       <p className="text-sm text-ink/70">
-        🚚 {minDays}–{maxDays} working days · {formatPrice(fee)} delivery fee
+        🚚 {t("{min}–{max} working days · {fee} delivery fee", { min: minDays, max: maxDays, fee: formatPrice(fee) })}
         <br />
         <span className="text-ink/50">
-          Free delivery on orders over {formatPrice(delivery.freeDeliveryThreshold)}.
+          {t("Free delivery on orders over {amount}.", {
+            amount: formatPrice(delivery.freeDeliveryThreshold),
+          })}
         </span>
       </p>
     </div>

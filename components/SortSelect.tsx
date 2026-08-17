@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
+import { useT } from "@/lib/i18n/context";
 
 const options = [
   { value: "", label: "Featured" },
@@ -13,6 +14,7 @@ export default function SortSelect() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const t = useT();
 
   return (
     <select
@@ -27,11 +29,11 @@ export default function SortSelect() {
         router.push(`${pathname}?${params.toString()}`);
       }}
       className="rounded-full border border-walnut-200 bg-white px-4 py-2 text-sm text-ink focus:border-walnut-400 focus:outline-none"
-      aria-label="Sort products"
+      aria-label={t("Sort products")}
     >
       {options.map((opt) => (
         <option key={opt.value} value={opt.value}>
-          {opt.label}
+          {t(opt.label)}
         </option>
       ))}
     </select>

@@ -2,6 +2,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getOrderById } from "@/lib/db";
 import { formatPrice } from "@/lib/products";
+import { getLocale } from "@/lib/i18n/get-locale";
+import { getDictionary } from "@/lib/i18n/get-dictionary";
+import { createT } from "@/lib/i18n/t";
 
 export default async function OrderConfirmationPage({
   params,
@@ -12,6 +15,9 @@ export default async function OrderConfirmationPage({
   const order = Number.isInteger(id) ? await getOrderById(id) : undefined;
   if (!order) notFound();
 
+  const locale = getLocale();
+  const t = createT(await getDictionary(locale));
+
   return (
     <div className="container-shop py-16">
       <div className="mx-auto max-w-xl text-center">
@@ -19,17 +25,20 @@ export default async function OrderConfirmationPage({
           ✓
         </span>
         <h1 className="mt-6 font-serif text-3xl font-semibold text-ink">
-          Order placed
+          {t("Order placed")}
         </h1>
         <p className="mt-2 text-ink/70">
-          Thanks, {order.customerName.split(" ")[0]} — order #{order.id} is
-          confirmed. A receipt has been sent to {order.customerEmail}.
+          {t("Thanks, {name} — order #{id} is confirmed. A receipt has been sent to {email}.", {
+            name: order.customerName.split(" ")[0],
+            id: order.id,
+            email: order.customerEmail,
+          })}
         </p>
       </div>
 
       <div className="mx-auto mt-10 max-w-xl rounded-2xl border border-walnut-100 p-6">
         <h2 className="font-serif text-lg font-semibold text-ink">
-          Order #{order.id}
+          {t("Order #{id}", { id: order.id })}
         </h2>
         <ul className="mt-4 flex flex-col gap-3 text-sm">
           {order.items.map((item) => (
@@ -44,12 +53,12 @@ export default async function OrderConfirmationPage({
           ))}
         </ul>
         <div className="mt-4 flex justify-between border-t border-walnut-100 pt-4 font-semibold text-ink">
-          <span>Total</span>
+          <span>{t("Total")}</span>
           <span>{formatPrice(order.subtotal)}</span>
         </div>
 
         <div className="mt-6 border-t border-walnut-100 pt-4 text-sm text-ink/70">
-          <p className="font-medium text-ink">Shipping to</p>
+          <p className="font-medium text-ink">{t("Shipping to")}</p>
           <p>{order.address}</p>
           <p>
             {order.city}, {order.postalCode}
@@ -59,7 +68,7 @@ export default async function OrderConfirmationPage({
 
       <div className="mt-10 text-center">
         <Link href="/shop" className="btn-primary">
-          Continue shopping
+          {t("Continue shopping")}
         </Link>
       </div>
     </div>

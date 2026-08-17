@@ -118,6 +118,37 @@ third-party account or API key required:
   is unreachable, this panel reports it instead of the whole analytics
   page crashing.
 
+## Language
+
+A language switcher in the header (English / አማርኛ / Afaan Oromoo) lets a
+visitor auto-translate the entire storefront — fixed UI text, product
+names/descriptions/materials, site settings copy, and admin-authored
+Pages — via the Google Cloud Translation API. Nothing needs translating
+by hand and it stays live: edit a product description in `/admin`, and
+the translated version updates on its own next time someone views it in
+that language.
+
+- **Setup**: set `GOOGLE_TRANSLATE_API_KEY` in `.env.local` (see
+  `.env.example` for where to get one). Without it, the switcher still
+  appears and works, but every string falls back to English — a missing
+  or failing translation call never breaks the page.
+- **How it works**: `lib/translate.ts` calls the API in batches and
+  caches every result in a `translations` table (keyed by a hash of
+  language + source text), so a string is only ever translated once —
+  after that, every page load reads the cache. `lib/i18n/ui-strings.ts`
+  is the fixed-text manifest (nav, buttons, labels); `lib/i18n/
+  translate-content.ts` translates DB content (products, settings, page
+  blocks) at render time. Translation is a read-time overlay — the
+  database always stores the original English/whatever-the-admin-typed
+  text, never a translated copy.
+- **Selection**: stored in a `locale` cookie (`components/
+  LanguageSwitcher.tsx` → `POST /api/locale`), read server-side by
+  `lib/i18n/get-locale.ts`.
+- **Scope**: the customer-facing storefront only — `/admin` stays
+  English, since it's the shop owner's own tool, not customer-facing.
+  Historical order line items (on the confirmation page) show the name
+  as recorded at purchase time, not re-translated.
+
 ## Content management
 
 Nothing customer-facing is hardcoded in a way the shop owner can't reach
@@ -230,12 +261,15 @@ app/
   admin/
     login/               Public login page
     (protected)/         Dashboard, products, orders, pages, analytics, settings — gated by middleware.ts
-  api/                 products, orders, track (public page-view logging), admin/* route handlers
+  api/                 products, orders, track (public page-view logging),
+                       locale (language switcher), admin/* route handlers
 components/           Shared UI — Header, Footer, ProductCard, admin forms,
                        ImageUpload, PageBlockEditor, BlockRenderer,
-                       PageViewTracker, BarChart, HorizontalBars, etc.
+                       PageViewTracker, BarChart, HorizontalBars,
+                       LanguageSwitcher, etc.
 lib/                  Product types/seed data, db access, settings, pages/blocks,
-                       cart context, admin auth, validation
+                       cart context, admin auth, validation, translate.ts
+  i18n/                Locale/dictionary/context (see "Language" above)
 db/                   schema.sql + seed script (products, settings, About page)
 middleware.ts          Protects /admin and /api/admin routes
 public/uploads/        Admin-uploaded images (gitignored)

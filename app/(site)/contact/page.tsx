@@ -1,12 +1,19 @@
 import type { Metadata } from "next";
 import ContactForm from "@/components/ContactForm";
 import { getSettings } from "@/lib/db";
+import { getLocale } from "@/lib/i18n/get-locale";
+import { getDictionary } from "@/lib/i18n/get-dictionary";
+import { createT } from "@/lib/i18n/t";
+import { translateSettings } from "@/lib/i18n/translate-content";
 
 export const metadata: Metadata = { title: "Contact" };
 export const dynamic = "force-dynamic";
 
 export default async function ContactPage() {
-  const settings = await getSettings();
+  const locale = getLocale();
+  const [settingsRaw, dict] = await Promise.all([getSettings(), getDictionary(locale)]);
+  const t = createT(dict);
+  const settings = await translateSettings(settingsRaw, locale);
 
   return (
     <div className="container-shop py-16">
@@ -25,7 +32,7 @@ export default async function ContactPage() {
         <div className="flex flex-col gap-6">
           <div>
             <h2 className="font-serif text-lg font-semibold text-ink">
-              Visit the showroom
+              {t("Visit the showroom")}
             </h2>
             {settings.address.map((line) => (
               <p key={line} className="text-ink/70">
@@ -35,14 +42,14 @@ export default async function ContactPage() {
           </div>
           <div>
             <h2 className="font-serif text-lg font-semibold text-ink">
-              Talk to us
+              {t("Talk to us")}
             </h2>
             <p className="text-ink/70">{settings.email}</p>
             <p className="text-ink/70">{settings.phone}</p>
           </div>
           <div>
             <h2 className="font-serif text-lg font-semibold text-ink">
-              Hours
+              {t("Hours")}
             </h2>
             <p className="text-ink/70">{settings.contact.hoursWeekday}</p>
             <p className="text-ink/70">{settings.contact.hoursWeekend}</p>

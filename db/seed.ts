@@ -52,6 +52,7 @@ async function main() {
   await conn.query("DROP TABLE IF EXISTS settings");
   await conn.query("DROP TABLE IF EXISTS pages");
   await conn.query("DROP TABLE IF EXISTS page_views");
+  await conn.query("DROP TABLE IF EXISTS translations");
   await conn.query("SET FOREIGN_KEY_CHECKS = 1");
 
   const schema = fs.readFileSync(path.join(__dirname, "schema.sql"), "utf8");

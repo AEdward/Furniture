@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { getSettings } from "@/lib/db";
+import { getLocale } from "@/lib/i18n/get-locale";
 
 // Settings (and most page content) are DB-backed and admin-editable at
 // any time, so nothing in this app should be statically cached at build
@@ -38,8 +39,13 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  // Reflects the storefront's selected language (see lib/i18n). The
+  // admin panel isn't translated, so this cookie-based value is only
+  // meaningfully accurate for (site) pages, not /admin ones.
+  const locale = getLocale();
+
   return (
-    <html lang="en">
+    <html lang={locale}>
       <body className="flex min-h-screen flex-col font-sans antialiased">
         {children}
       </body>

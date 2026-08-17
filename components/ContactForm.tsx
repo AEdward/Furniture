@@ -1,8 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import { useT } from "@/lib/i18n/context";
 
 export default function ContactForm() {
+  const t = useT();
   const [submitted, setSubmitted] = useState(false);
   const [form, setForm] = useState({ name: "", email: "", message: "" });
 
@@ -19,8 +21,8 @@ export default function ContactForm() {
         <span className="flex h-12 w-12 items-center justify-center rounded-full bg-walnut-500 text-xl text-cream">
           ✓
         </span>
-        <p className="mt-4 font-medium text-ink">Message sent</p>
-        <p className="mt-1 text-sm text-ink/60">We&apos;ll get back to you soon.</p>
+        <p className="mt-4 font-medium text-ink">{t("Message sent")}</p>
+        <p className="mt-1 text-sm text-ink/60">{t("We'll get back to you soon.")}</p>
       </div>
     );
   }
@@ -28,7 +30,7 @@ export default function ContactForm() {
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       <label className="flex flex-col gap-1.5 text-sm">
-        Name
+        {t("Name")}
         <input
           required
           value={form.name}
@@ -37,7 +39,7 @@ export default function ContactForm() {
         />
       </label>
       <label className="flex flex-col gap-1.5 text-sm">
-        Email
+        {t("Email")}
         <input
           required
           type="email"
@@ -47,7 +49,7 @@ export default function ContactForm() {
         />
       </label>
       <label className="flex flex-col gap-1.5 text-sm">
-        Message
+        {t("Message")}
         <textarea
           required
           rows={5}
@@ -57,7 +59,7 @@ export default function ContactForm() {
         />
       </label>
       <button type="submit" className="btn-primary mt-2">
-        Send message
+        {t("Send message")}
       </button>
     </form>
   );

@@ -2,8 +2,10 @@
 
 import { useState } from "react";
 import type { Dimensions } from "@/lib/products";
+import { useT } from "@/lib/i18n/context";
 
 export default function RoomFitCalculator({ dimensions }: { dimensions: Dimensions }) {
+  const t = useT();
   const [roomWidth, setRoomWidth] = useState("");
   const [roomDepth, setRoomDepth] = useState("");
   const [doorWidth, setDoorWidth] = useState("");
@@ -24,11 +26,16 @@ export default function RoomFitCalculator({ dimensions }: { dimensions: Dimensio
       if (dimensions.widthCm > rw) {
         ok = false;
         messages.push(
-          `This piece is ${dimensions.widthCm} cm wide — wider than your ${rw} cm room width.`
+          t("This piece is {width} cm wide — wider than your {room} cm room width.", {
+            width: dimensions.widthCm,
+            room: rw,
+          })
         );
       } else if (dimensions.widthCm + MARGIN_CM > rw) {
         messages.push(
-          `It'll fit, but leaves less than ${MARGIN_CM} cm of clearance along that wall.`
+          t("It'll fit, but leaves less than {margin} cm of clearance along that wall.", {
+            margin: MARGIN_CM,
+          })
         );
       }
     }
@@ -37,7 +44,10 @@ export default function RoomFitCalculator({ dimensions }: { dimensions: Dimensio
       if (dimensions.depthCm > rd) {
         ok = false;
         messages.push(
-          `This piece is ${dimensions.depthCm} cm deep — deeper than your ${rd} cm room depth.`
+          t("This piece is {depth} cm deep — deeper than your {room} cm room depth.", {
+            depth: dimensions.depthCm,
+            room: rd,
+          })
         );
       }
     }
@@ -47,13 +57,16 @@ export default function RoomFitCalculator({ dimensions }: { dimensions: Dimensio
       if (smallestSide > dw) {
         ok = false;
         messages.push(
-          `Every side of this piece (smallest: ${smallestSide} cm) is wider than your ${dw} cm door — it may not fit through.`
+          t(
+            "Every side of this piece (smallest: {smallest} cm) is wider than your {door} cm door — it may not fit through.",
+            { smallest: smallestSide, door: dw }
+          )
         );
       }
     }
 
     if (messages.length === 0) {
-      messages.push("Looks like a comfortable fit for the numbers you entered.");
+      messages.push(t("Looks like a comfortable fit for the numbers you entered."));
     }
 
     setResult({ ok, messages });
@@ -62,12 +75,13 @@ export default function RoomFitCalculator({ dimensions }: { dimensions: Dimensio
   return (
     <form onSubmit={handleCheck} className="flex flex-col gap-4">
       <p className="text-sm text-ink/60">
-        Enter your space in centimeters to check against this piece's{" "}
-        {dimensions.widthCm} × {dimensions.depthCm} × {dimensions.heightCm} cm footprint.
+        {t("Enter your space in centimeters to check against this piece's {dims} footprint.", {
+          dims: `${dimensions.widthCm} × ${dimensions.depthCm} × ${dimensions.heightCm} cm`,
+        })}
       </p>
       <div className="grid grid-cols-3 gap-3">
         <label className="flex flex-col gap-1.5 text-sm">
-          Room width (cm)
+          {t("Room width (cm)")}
           <input
             type="number"
             min={0}
@@ -77,7 +91,7 @@ export default function RoomFitCalculator({ dimensions }: { dimensions: Dimensio
           />
         </label>
         <label className="flex flex-col gap-1.5 text-sm">
-          Room depth (cm)
+          {t("Room depth (cm)")}
           <input
             type="number"
             min={0}
@@ -87,7 +101,7 @@ export default function RoomFitCalculator({ dimensions }: { dimensions: Dimensio
           />
         </label>
         <label className="flex flex-col gap-1.5 text-sm">
-          Door width (cm)
+          {t("Door width (cm)")}
           <input
             type="number"
             min={0}
@@ -98,7 +112,7 @@ export default function RoomFitCalculator({ dimensions }: { dimensions: Dimensio
         </label>
       </div>
       <button type="submit" className="btn-secondary self-start">
-        Check fit
+        {t("Check fit")}
       </button>
 
       {result && (
@@ -109,7 +123,7 @@ export default function RoomFitCalculator({ dimensions }: { dimensions: Dimensio
               : "bg-danger-50 text-danger-500"
           }`}
         >
-          <p className="font-medium">{result.ok ? "✅ Should fit" : "⚠️ Check the numbers"}</p>
+          <p className="font-medium">{result.ok ? t("✅ Should fit") : t("⚠️ Check the numbers")}</p>
           <ul className="mt-1 list-inside list-disc space-y-1">
             {result.messages.map((m) => (
               <li key={m}>{m}</li>

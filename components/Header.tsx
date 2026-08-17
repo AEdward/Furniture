@@ -5,6 +5,8 @@ import { useState } from "react";
 import { usePathname } from "next/navigation";
 import { useCart } from "@/lib/cart-context";
 import Logo from "@/components/Logo";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
+import { useT } from "@/lib/i18n/context";
 
 type NavLink = { href: string; label: string };
 
@@ -18,12 +20,13 @@ export default function Header({
   const [menuOpen, setMenuOpen] = useState(false);
   const pathname = usePathname();
   const { itemCount, isReady } = useCart();
+  const t = useT();
 
   const navLinks: NavLink[] = [
-    { href: "/", label: "Home" },
-    { href: "/shop", label: "Shop" },
+    { href: "/", label: t("Home") },
+    { href: "/shop", label: t("Shop") },
     ...navPages,
-    { href: "/contact", label: "Contact" },
+    { href: "/contact", label: t("Contact") },
   ];
 
   return (
@@ -56,10 +59,12 @@ export default function Header({
         </nav>
 
         <div className="flex items-center gap-3">
+          <LanguageSwitcher />
+
           <Link
             href="/cart"
             className="relative flex h-10 w-10 items-center justify-center rounded-full border border-walnut-200 text-walnut-600 transition-colors hover:bg-walnut-100"
-            aria-label="View cart"
+            aria-label={t("View cart")}
           >
             <svg
               viewBox="0 0 24 24"
@@ -83,7 +88,7 @@ export default function Header({
 
           <button
             className="flex h-10 w-10 items-center justify-center rounded-full border border-walnut-200 text-walnut-600 md:hidden"
-            aria-label="Toggle menu"
+            aria-label={t("Toggle menu")}
             onClick={() => setMenuOpen((v) => !v)}
           >
             <svg

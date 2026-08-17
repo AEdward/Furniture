@@ -1,11 +1,15 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
 import FurnitureIcon from "@/components/FurnitureIcon";
 import QuickAddButton from "@/components/QuickAddButton";
 import StarRating from "@/components/StarRating";
 import { formatPrice, type Product } from "@/lib/products";
+import { useT } from "@/lib/i18n/context";
 
 export default function ProductCard({ product }: { product: Product }) {
+  const t = useT();
   const lowStock =
     product.availability === "in_stock" && product.stock > 0 && product.stock <= 5;
   const outOfStock = product.availability === "out_of_stock";
@@ -34,24 +38,24 @@ export default function ProductCard({ product }: { product: Product }) {
           <div className="absolute left-3 top-3 flex flex-col gap-1.5">
             {product.new && (
               <span className="rounded-full bg-ink px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-cream">
-                New
+                {t("New")}
               </span>
             )}
             {product.compareAtPrice && (
               <span className="rounded-full bg-ink px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-terracotta-200">
-                Sale
+                {t("Sale")}
               </span>
             )}
             {madeToOrder && (
               <span className="rounded-full bg-walnut-500 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-cream">
-                Made to Order
+                {t("Made to Order")}
               </span>
             )}
           </div>
           {outOfStock && (
             <div className="absolute inset-0 flex items-center justify-center bg-ink/40">
               <span className="rounded-full bg-cream px-3 py-1 text-xs font-semibold uppercase tracking-wide text-ink">
-                Sold out
+                {t("Sold out")}
               </span>
             </div>
           )}
@@ -81,7 +85,7 @@ export default function ProductCard({ product }: { product: Product }) {
 
         {lowStock && (
           <p className="text-xs font-medium text-danger-500">
-            Only {product.stock} left
+            {t("Only {count} left", { count: product.stock })}
           </p>
         )}
 
