@@ -2,7 +2,9 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import FurnitureIcon from "@/components/FurnitureIcon";
+import ImageUpload from "@/components/ImageUpload";
 import {
   categories,
   gradientOptions,
@@ -43,8 +45,9 @@ export default function ProductForm({ mode, initial }: Props) {
   );
   const [description, setDescription] = useState(initial?.description ?? "");
   const [details, setDetails] = useState(initial?.details.join("\n") ?? "");
-  const [icon, setIcon] = useState<IconName>(initial?.icon ?? "sofa");
+  const [icon, setIcon] = useState<IconName>(initial?.icon ?? "single-door");
   const [gradient, setGradient] = useState(initial?.gradient ?? gradientOptions[0]);
+  const [imageUrl, setImageUrl] = useState<string | null>(initial?.imageUrl ?? null);
   const [stock, setStock] = useState(initial ? String(initial.stock) : "0");
   const [featured, setFeatured] = useState(initial?.featured ?? false);
   const [isNew, setIsNew] = useState(initial?.new ?? false);
@@ -94,6 +97,7 @@ export default function ProductForm({ mode, initial }: Props) {
       details,
       icon,
       gradient,
+      imageUrl,
       stock: Number(stock),
       featured,
       new: isNew,
@@ -364,23 +368,23 @@ export default function ProductForm({ mode, initial }: Props) {
             <h2 className={sectionTitleClass}>Materials & construction</h2>
             <div className="grid gap-4 sm:grid-cols-2">
               <label className={`${labelClass} sm:col-span-2`}>
-                Frame material *
-                <input required value={frameMaterial} onChange={(e) => setFrameMaterial(e.target.value)} className={inputClass} />
+                Core material *
+                <input required value={frameMaterial} onChange={(e) => setFrameMaterial(e.target.value)} placeholder="e.g. Solid oak" className={inputClass} />
               </label>
               <label className={labelClass}>
-                Upholstery (optional)
-                <input value={upholsteryMaterial} onChange={(e) => setUpholsteryMaterial(e.target.value)} className={inputClass} />
+                Finish (optional)
+                <input value={upholsteryMaterial} onChange={(e) => setUpholsteryMaterial(e.target.value)} placeholder="e.g. Matte lacquer finish" className={inputClass} />
               </label>
               <label className={labelClass}>
-                Legs (optional)
-                <input value={legsMaterial} onChange={(e) => setLegsMaterial(e.target.value)} className={inputClass} />
+                Hardware (optional)
+                <input value={legsMaterial} onChange={(e) => setLegsMaterial(e.target.value)} placeholder="e.g. Soft-close hinges" className={inputClass} />
               </label>
               <label className={labelClass}>
-                Foam density (optional)
+                Additional spec (optional)
                 <input
                   value={foamDensity}
                   onChange={(e) => setFoamDensity(e.target.value)}
-                  placeholder="e.g. 32kg/m³"
+                  placeholder="e.g. 60-minute fire rating"
                   className={inputClass}
                 />
               </label>
@@ -394,11 +398,11 @@ export default function ProductForm({ mode, initial }: Props) {
             </p>
             <div className="grid gap-4 sm:grid-cols-3">
               <label className={labelClass}>
-                Colors
+                Colors / finishes
                 <textarea rows={3} value={colors} onChange={(e) => setColors(e.target.value)} className={`${inputClass} resize-none`} />
               </label>
               <label className={labelClass}>
-                Fabric / material options
+                Style options
                 <textarea rows={3} value={materialOptions} onChange={(e) => setMaterialOptions(e.target.value)} className={`${inputClass} resize-none`} />
               </label>
               <label className={labelClass}>
@@ -421,12 +425,21 @@ export default function ProductForm({ mode, initial }: Props) {
         </div>
 
         <div className="flex flex-col gap-4">
-          <div className={`flex aspect-square items-center justify-center rounded-2xl bg-gradient-to-br ${gradient}`}>
-            <FurnitureIcon name={icon} className="h-24 w-24 text-walnut-500/70" />
+          <ImageUpload value={imageUrl} onChange={setImageUrl} label="Product photo" />
+          <p className="-mt-2 text-xs text-ink/50">
+            If no photo is uploaded, the icon + background below are shown instead.
+          </p>
+
+          <div className={`flex aspect-square items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-br ${gradient}`}>
+            {imageUrl ? (
+              <Image src={imageUrl} alt="" width={260} height={260} className="h-full w-full object-cover" />
+            ) : (
+              <FurnitureIcon name={icon} className="h-24 w-24 text-walnut-500/70" />
+            )}
           </div>
 
           <label className={labelClass}>
-            Icon
+            Icon (fallback if no photo)
             <select value={icon} onChange={(e) => setIcon(e.target.value as IconName)} className={inputClass}>
               {iconNames.map((i) => (
                 <option key={i} value={i}>

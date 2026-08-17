@@ -77,6 +77,8 @@ export function parseProductInput(body: unknown): ProductInput {
   const gradient = typeof b.gradient === "string" ? b.gradient : "";
   if (!gradient) throw new ValidationError("Please choose a background.");
 
+  const imageUrl = typeof b.imageUrl === "string" && b.imageUrl.trim() ? b.imageUrl.trim() : null;
+
   const stock = Number(b.stock);
   if (!Number.isFinite(stock) || stock < 0) {
     throw new ValidationError("Stock must be zero or a positive number.");
@@ -124,6 +126,7 @@ export function parseProductInput(body: unknown): ProductInput {
     details,
     icon,
     gradient,
+    imageUrl,
     featured: Boolean(b.featured),
     new: Boolean(b.new),
     stock: Math.round(stock),

@@ -1,0 +1,81 @@
+"use client";
+
+import { useRef, useState } from "react";
+import Image from "next/image";
+
+export default function ImageUpload({
+  value,
+  onChange,
+  label = "Image",
+}: {
+  value: string | null;
+  onChange: (url: string | null) => void;
+  label?: string;
+}) {
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  async function handleFile(file: File) {
+    setUploading(true);
+    setError(null);
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      const res = await fetch("/api/admin/upload", { method: "POST", body: formData });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error ?? "Upload failed.");
+        setUploading(false);
+        return;
+      }
+      onChange(data.url);
+    } catch {
+      setError("Network error — please try again.");
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  return (
+    <div className="flex flex-col gap-2">
+      <p className="text-sm font-medium text-ink">{label}</p>
+      {value ? (
+        <div className="relative h-40 w-40 overflow-hidden rounded-lg border border-walnut-200">
+          <Image src={value} alt="" fill className="object-cover" />
+          <button
+            type="button"
+            onClick={() => onChange(null)}
+            className="absolute right-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-ink/80 text-xs font-bold text-cream"
+            aria-label="Remove image"
+          >
+            ×
+          </button>
+        </div>
+      ) : (
+        <button
+          type="button"
+          onClick={() => inputRef.current?.click()}
+          disabled={uploading}
+          className="flex h-40 w-40 flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed border-walnut-200 text-xs text-ink/50 hover:border-walnut-400 disabled:opacity-50"
+        >
+          {uploading ? "Uploading…" : "Click to upload"}
+        </button>
+      )}
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/jpeg,image/png,image/webp"
+        className="hidden"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file) handleFile(file);
+          e.target.value = "";
+        }}
+      />
+      {error && <p className="text-xs text-danger-500">{error}</p>}
+    </div>
+  );
+}

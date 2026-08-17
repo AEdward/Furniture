@@ -1,9 +1,9 @@
 import Image from "next/image";
 import Link from "next/link";
 import { formatPrice } from "@/lib/products";
-import { siteConfig } from "@/lib/site-config";
+import type { SiteSettings } from "@/lib/settings";
 
-export default function Footer() {
+export default function Footer({ settings }: { settings: SiteSettings }) {
   return (
     <footer className="mt-24 border-t border-walnut-100 bg-walnut-700 text-walnut-50">
       <div className="container-shop grid gap-10 py-14 md:grid-cols-4">
@@ -21,11 +21,11 @@ export default function Footer() {
               />
             </span>
             <span className="font-serif text-xl font-semibold uppercase tracking-[0.1em] text-cream">
-              {siteConfig.name}
+              {settings.name}
             </span>
           </span>
           <p className="mt-3 max-w-xs text-sm leading-relaxed text-walnut-100/80">
-            {siteConfig.description}
+            {settings.description}
           </p>
         </div>
 
@@ -34,11 +34,9 @@ export default function Footer() {
             Shop
           </p>
           <ul className="mt-4 space-y-2.5 text-sm text-walnut-100/80">
-            <li><Link href="/shop?category=Living+Room" className="hover:text-cream">Living Room</Link></li>
-            <li><Link href="/shop?category=Bedroom" className="hover:text-cream">Bedroom</Link></li>
-            <li><Link href="/shop?category=Dining" className="hover:text-cream">Dining</Link></li>
-            <li><Link href="/shop?category=Office" className="hover:text-cream">Office</Link></li>
-            <li><Link href="/shop?category=Outdoor" className="hover:text-cream">Outdoor</Link></li>
+            <li><Link href="/shop?category=Doors" className="hover:text-cream">Doors</Link></li>
+            <li><Link href="/shop?category=Kitchen+Cabinets" className="hover:text-cream">Kitchen Cabinets</Link></li>
+            <li><Link href="/shop?category=Closets" className="hover:text-cream">Closets</Link></li>
           </ul>
         </div>
 
@@ -58,20 +56,20 @@ export default function Footer() {
             Visit
           </p>
           <ul className="mt-4 space-y-2.5 text-sm text-walnut-100/80">
-            {siteConfig.address.map((line) => (
+            {settings.address.map((line) => (
               <li key={line}>{line}</li>
             ))}
-            <li>{siteConfig.email}</li>
-            <li>{siteConfig.phone}</li>
+            <li>{settings.email}</li>
+            <li>{settings.phone}</li>
           </ul>
         </div>
       </div>
 
       <div className="border-t border-walnut-500/60">
         <div className="container-shop flex flex-col items-center justify-between gap-2 py-5 text-xs text-walnut-100/60 sm:flex-row">
-          <p>&copy; {new Date().getFullYear()} {siteConfig.name}. All rights reserved.</p>
+          <p>&copy; {new Date().getFullYear()} {settings.name}. All rights reserved.</p>
           <div className="flex items-center gap-4">
-            <p>Free shipping on orders over {formatPrice(siteConfig.freeShippingThreshold)}.</p>
+            <p>Free shipping on orders over {formatPrice(settings.freeShippingThreshold)}.</p>
             <Link href="/admin" className="hover:text-cream">
               Admin
             </Link>

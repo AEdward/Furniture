@@ -1,6 +1,8 @@
 import mysql from "mysql2/promise";
 import type { Availability, Category, IconName, Product } from "@/lib/products";
 import { ORDER_STATUSES, type OrderStatus } from "@/lib/order-status";
+import { DEFAULT_SETTINGS, mergeSettings, type SiteSettings } from "@/lib/settings";
+import type { PageBlock } from "@/lib/pages";
 
 export { ORDER_STATUSES, type OrderStatus };
 
@@ -32,6 +34,7 @@ type ProductRow = {
   details_json: string;
   icon: string;
   gradient: string;
+  image_url: string | null;
   featured: number;
   is_new: number;
   stock: number;
@@ -69,6 +72,7 @@ function rowToProduct(row: ProductRow): Product {
     details: JSON.parse(row.details_json),
     icon: row.icon as Product["icon"],
     gradient: row.gradient,
+    imageUrl: row.image_url ?? undefined,
     featured: !!row.featured,
     new: !!row.is_new,
     stock: row.stock,
@@ -369,6 +373,7 @@ export type ProductInput = {
   details: string[];
   icon: IconName;
   gradient: string;
+  imageUrl?: string | null;
   featured: boolean;
   new: boolean;
   stock: number;
@@ -406,6 +411,7 @@ function productInputParams(input: ProductInput): unknown[] {
     JSON.stringify(input.details),
     input.icon,
     input.gradient,
+    input.imageUrl ?? null,
     input.featured ? 1 : 0,
     input.new ? 1 : 0,
     input.stock,
@@ -432,7 +438,7 @@ function productInputParams(input: ProductInput): unknown[] {
   ];
 }
 
-const PRODUCT_INSERT_PLACEHOLDERS = Array(31).fill("?").join(", ");
+const PRODUCT_INSERT_PLACEHOLDERS = Array(32).fill("?").join(", ");
 
 export async function createProduct(input: ProductInput): Promise<Product> {
   const db = getPool();
@@ -447,7 +453,7 @@ export async function createProduct(input: ProductInput): Promise<Product> {
   await db.query(
     `INSERT INTO products
       (id, slug, name, category, price, compare_at_price, description, details_json,
-       icon, gradient, featured, is_new, stock,
+       icon, gradient, image_url, featured, is_new, stock,
        sku, availability, lead_time_days, rating, review_count,
        width_cm, depth_cm, height_cm, seat_height_cm, seat_depth_cm, arm_height_cm, leg_height_cm, weight_kg,
        frame_material, upholstery_material, legs_material, foam_density,
@@ -480,7 +486,7 @@ export async function updateProduct(
   const [result] = await db.query<mysql.ResultSetHeader>(
     `UPDATE products SET
       id = ?, slug = ?, name = ?, category = ?, price = ?, compare_at_price = ?,
-      description = ?, details_json = ?, icon = ?, gradient = ?, featured = ?, is_new = ?, stock = ?,
+      description = ?, details_json = ?, icon = ?, gradient = ?, image_url = ?, featured = ?, is_new = ?, stock = ?,
       sku = ?, availability = ?, lead_time_days = ?, rating = ?, review_count = ?,
       width_cm = ?, depth_cm = ?, height_cm = ?, seat_height_cm = ?, seat_depth_cm = ?,
       arm_height_cm = ?, leg_height_cm = ?, weight_kg = ?,
@@ -545,4 +551,196 @@ export async function getDashboardStats(): Promise<DashboardStats> {
     lowStockProducts: (lowStockRows as ProductRow[]).map(rowToProduct),
     recentOrders: allOrders.slice(0, 8),
   };
+}
+
+// ---------------------------------------------------------------------
+// Settings (site name/tagline/contact, home hero, policies)
+// ---------------------------------------------------------------------
+
+const SETTINGS_KEY = "site";
+
+export async function getSettings(): Promise<SiteSettings> {
+  const db = getPool();
+  const [rows] = await db.query<mysql.RowDataPacket[]>(
+    "SELECT value FROM settings WHERE `key` = ? LIMIT 1",
+    [SETTINGS_KEY]
+  );
+  const row = rows[0];
+  if (!row) return DEFAULT_SETTINGS;
+  try {
+    return mergeSettings(JSON.parse(row.value));
+  } catch {
+    return DEFAULT_SETTINGS;
+  }
+}
+
+export async function updateSettings(
+  partial: Partial<SiteSettings>
+): Promise<SiteSettings> {
+  const current = await getSettings();
+  const next = mergeSettings({ ...current, ...partial });
+  const db = getPool();
+  await db.query(
+    "INSERT INTO settings (`key`, value) VALUES (?, ?) ON DUPLICATE KEY UPDATE value = VALUES(value)",
+    [SETTINGS_KEY, JSON.stringify(next)]
+  );
+  return next;
+}
+
+// ---------------------------------------------------------------------
+// Pages (admin-authored, block-based CMS pages)
+// ---------------------------------------------------------------------
+
+export type Page = {
+  id: number;
+  slug: string;
+  title: string;
+  metaDescription: string | null;
+  blocks: PageBlock[];
+  showInNav: boolean;
+  navLabel: string | null;
+  navOrder: number;
+  updatedAt: string;
+};
+
+type PageRow = {
+  id: number;
+  slug: string;
+  title: string;
+  meta_description: string | null;
+  blocks_json: string;
+  show_in_nav: number;
+  nav_label: string | null;
+  nav_order: number;
+  updated_at: string;
+};
+
+function rowToPage(row: PageRow): Page {
+  return {
+    id: row.id,
+    slug: row.slug,
+    title: row.title,
+    metaDescription: row.meta_description,
+    blocks: JSON.parse(row.blocks_json),
+    showInNav: !!row.show_in_nav,
+    navLabel: row.nav_label,
+    navOrder: row.nav_order,
+    updatedAt: row.updated_at,
+  };
+}
+
+export class PageError extends Error {}
+
+export async function getAllPages(): Promise<Page[]> {
+  const db = getPool();
+  const [rows] = await db.query<mysql.RowDataPacket[]>(
+    "SELECT * FROM pages ORDER BY title"
+  );
+  return (rows as PageRow[]).map(rowToPage);
+}
+
+export async function getNavPages(): Promise<Page[]> {
+  const db = getPool();
+  const [rows] = await db.query<mysql.RowDataPacket[]>(
+    "SELECT * FROM pages WHERE show_in_nav = 1 ORDER BY nav_order ASC, title ASC"
+  );
+  return (rows as PageRow[]).map(rowToPage);
+}
+
+export async function getPageBySlug(slug: string): Promise<Page | undefined> {
+  const db = getPool();
+  const [rows] = await db.query<mysql.RowDataPacket[]>(
+    "SELECT * FROM pages WHERE slug = ? LIMIT 1",
+    [slug]
+  );
+  const row = (rows as PageRow[])[0];
+  return row ? rowToPage(row) : undefined;
+}
+
+export type PageInput = {
+  slug: string;
+  title: string;
+  metaDescription?: string | null;
+  blocks: PageBlock[];
+  showInNav: boolean;
+  navLabel?: string | null;
+  navOrder: number;
+};
+
+export async function createPage(input: PageInput): Promise<Page> {
+  const db = getPool();
+  const [existing] = await db.query<mysql.RowDataPacket[]>(
+    "SELECT slug FROM pages WHERE slug = ? LIMIT 1",
+    [input.slug]
+  );
+  if (existing.length > 0) {
+    throw new PageError(`A page with slug "${input.slug}" already exists.`);
+  }
+
+  await db.query(
+    `INSERT INTO pages (slug, title, meta_description, blocks_json, show_in_nav, nav_label, nav_order)
+     VALUES (?, ?, ?, ?, ?, ?, ?)`,
+    [
+      input.slug,
+      input.title,
+      input.metaDescription ?? null,
+      JSON.stringify(input.blocks),
+      input.showInNav ? 1 : 0,
+      input.navLabel ?? null,
+      input.navOrder,
+    ]
+  );
+
+  const created = await getPageBySlug(input.slug);
+  if (!created) throw new PageError("Failed to create page.");
+  return created;
+}
+
+export async function updatePage(slug: string, input: PageInput): Promise<Page> {
+  const db = getPool();
+
+  if (input.slug !== slug) {
+    const [existing] = await db.query<mysql.RowDataPacket[]>(
+      "SELECT slug FROM pages WHERE slug = ? LIMIT 1",
+      [input.slug]
+    );
+    if (existing.length > 0) {
+      throw new PageError(`A page with slug "${input.slug}" already exists.`);
+    }
+  }
+
+  const [result] = await db.query<mysql.ResultSetHeader>(
+    `UPDATE pages SET
+      slug = ?, title = ?, meta_description = ?, blocks_json = ?,
+      show_in_nav = ?, nav_label = ?, nav_order = ?
+     WHERE slug = ?`,
+    [
+      input.slug,
+      input.title,
+      input.metaDescription ?? null,
+      JSON.stringify(input.blocks),
+      input.showInNav ? 1 : 0,
+      input.navLabel ?? null,
+      input.navOrder,
+      slug,
+    ]
+  );
+  if (result.affectedRows === 0) {
+    throw new PageError("Page not found.");
+  }
+
+  const updated = await getPageBySlug(input.slug);
+  if (!updated) throw new PageError("Failed to update page.");
+  return updated;
+}
+
+export async function deletePage(slug: string): Promise<void> {
+  const db = getPool();
+  const [result] = await db.query<mysql.ResultSetHeader>(
+    "DELETE FROM pages WHERE slug = ?",
+    [slug]
+  );
+  if (result.affectedRows === 0) {
+    throw new PageError("Page not found.");
+  }
 }

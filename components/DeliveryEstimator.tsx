@@ -1,12 +1,18 @@
 "use client";
 
 import { useState } from "react";
-import { deliveryPolicy } from "@/lib/policies";
 import { formatPrice } from "@/lib/products";
+import type { SiteSettings } from "@/lib/settings";
 
-export default function DeliveryEstimator() {
+export default function DeliveryEstimator({
+  delivery,
+}: {
+  delivery: SiteSettings["delivery"];
+}) {
   const [location, setLocation] = useState<"addis" | "other">("addis");
-  const policy = location === "addis" ? deliveryPolicy.addisAbaba : deliveryPolicy.otherCities;
+  const minDays = location === "addis" ? delivery.addisMinDays : delivery.otherMinDays;
+  const maxDays = location === "addis" ? delivery.addisMaxDays : delivery.otherMaxDays;
+  const fee = location === "addis" ? delivery.addisFee : delivery.otherFee;
 
   return (
     <div className="flex flex-col gap-3">
@@ -35,10 +41,10 @@ export default function DeliveryEstimator() {
         </button>
       </div>
       <p className="text-sm text-ink/70">
-        🚚 {policy.minDays}–{policy.maxDays} working days · {formatPrice(policy.fee)} delivery fee
+        🚚 {minDays}–{maxDays} working days · {formatPrice(fee)} delivery fee
         <br />
         <span className="text-ink/50">
-          Free delivery on orders over {formatPrice(deliveryPolicy.freeDeliveryThreshold)}.
+          Free delivery on orders over {formatPrice(delivery.freeDeliveryThreshold)}.
         </span>
       </p>
     </div>

@@ -1,30 +1,32 @@
 # Zemenay Furniture
 
-A furniture e-commerce site: browse by category, view product details,
-add to cart, and check out. Built from a reusable template — all branding
-(name, logo, tagline, contact info) lives in one config file so it can be
-re-skinned per client without touching page code. This branch
-(`company/zemenay-furniture`) is rebranded for **Zemenay Furniture**
-specifically; `main` stays the generic, unbranded template for other
-clients.
+A site for a custom joinery business — doors, kitchen cabinets, and
+closets — with a real catalog, cart, and checkout, plus a genuine
+content-management layer: everything is admin-editable and stored in
+MySQL, not baked into code. Built from a reusable template; `main` stays
+the generic, unbranded version for other clients, and this branch
+(`company/zemenay-furniture`) is rebranded and re-catalogued for
+**Zemenay Furniture** specifically.
 
 The real logo, mark, and full favicon/app-icon set are in place
 (`public/brand/`, `public/favicon*`, `public/apple-touch-icon.png`,
 `public/android-chrome-*.png`, `public/site.webmanifest`), wired up via
 `app/layout.tsx` metadata and `components/Logo.tsx`.
 
-**Still placeholder on this branch:** contact email/phone in
-`lib/site-config.ts` are unconfirmed placeholders. The product catalog
-itself is still the generic starter catalog (`lib/products.ts`), not
-Zemenay's real inventory.
+**Still placeholder:** contact email/phone (editable at `/admin/settings`,
+just not confirmed real numbers yet). The product catalog is a
+representative starter set (16 doors/cabinets/closets), not Zemenay's
+actual current inventory — replace it product-by-product in `/admin/products`
+or wholesale via `lib/products.ts` + `npm run seed`.
 
 ## Stack
 
 Next.js 14 (App Router) · TypeScript · Tailwind CSS · MySQL (`mysql2`)
 
-Product images are inline SVG line-art on gradient backgrounds rather than
-photos, so the whole site works with zero external image dependencies —
-swap in real product photography later without any layout changes.
+Every product can have a real uploaded photo (`/admin` → edit a product →
+"Product photo"). Until one's uploaded, products fall back to inline SVG
+line-art on a gradient background, so the catalog never shows a broken
+image.
 
 ## Running it locally
 
@@ -50,7 +52,8 @@ You need [Node.js](https://nodejs.org) 18+ and a MySQL-compatible server
    Edit `.env.local` if your database isn't using the defaults in
    `docker-compose.yml`.
 
-3. Create the schema and seed the product catalog:
+3. Create the schema and seed the product catalog, site settings, and the
+   About page:
 
    ```bash
    npm run seed
@@ -72,74 +75,107 @@ You need [Node.js](https://nodejs.org) 18+ and a MySQL-compatible server
 
 **http://localhost:3000/admin** — sign in with `ADMIN_PASSWORD`. It's a
 single shared password (no per-user accounts), meant for the shop owner /
-small team, not a multi-role permission system.
+small team, not a multi-role permission system. Access is a signed,
+httpOnly cookie (`middleware.ts` guards every `/admin` and `/api/admin`
+route).
 
 - **Dashboard** — product/order counts, revenue, low-stock list, recent orders
-- **Products** — add, edit, delete; set price, availability (in stock /
-  made to order / out of stock), dimensions, materials, colors/fabric/wood
-  options, rating, SKU, icon/background, and the Featured/New flags
+- **Products** — add, edit, delete; price, availability (in stock / made
+  to order / out of stock), dimensions, materials, colors/style/wood
+  options, rating, SKU, a real uploaded photo (falls back to icon +
+  background if none), and Featured/New flags
 - **Orders** — view line items and shipping info, update status
   (placed → processing → shipped → delivered, or cancelled)
+- **Pages** — create, edit, and delete arbitrary pages (see below)
+- **Settings** — site name/tagline/contact info, the home page hero
+  (heading, subheading, image, button), and delivery/assembly/warranty/
+  returns/payment-method policy shown across the site
 
-Access is a signed, httpOnly cookie (`middleware.ts` guards every
-`/admin` and `/api/admin` route) — there's no separate user table, so
-"logging in" just means presenting the correct `ADMIN_PASSWORD`.
+## Content management
+
+Nothing customer-facing is hardcoded in a way the shop owner can't reach
+from `/admin`:
+
+- **Site settings** (`/admin/settings`) — one record in the `settings`
+  table (`lib/settings.ts` / `lib/db.ts`) drives the site name, tagline,
+  contact info, the home page hero, and every delivery/warranty/returns/
+  payment detail shown on product pages. Previously this lived in static
+  code files (`lib/site-config.ts`, `lib/policies.ts`) — both are gone;
+  everything reads from the database now.
+- **Pages** (`/admin/pages`) — a `pages` table holds admin-authored pages
+  as an ordered list of typed content blocks: **Hero** (heading/
+  subheading/image/button), **Text** (heading + paragraphs), and
+  **Image + Text** (image left or right of a text block). Reorder blocks
+  with the ↑/↓ buttons, add more via the buttons at the bottom, and flag
+  a page "Show in header navigation" to add it to the nav automatically.
+  `app/(site)/[slug]/page.tsx` renders any page by slug — the About page
+  (`/about`) is the first example, seeded by `db/seed.ts`.
+- **Product photos** — `/api/admin/upload` accepts JPG/PNG/WEBP up to 5MB
+  and saves to `public/uploads/` (gitignored — it's runtime content, not
+  template code). The same upload widget (`components/ImageUpload.tsx`)
+  is reused for product photos, the hero image, and page-block images.
+
+**Reserved page slugs** (can't be used for a custom page — they route to
+code-driven pages instead): `shop`, `cart`, `checkout`,
+`order-confirmation`, `contact`, `admin`, `api`.
+
+**Not built as a CMS feature** (deliberately out of scope for now): a
+drag-and-drop visual editor (blocks reorder via buttons, not dragging),
+rich WYSIWYG text (paragraphs are plain text split on blank lines), and a
+gallery/multi-image block type.
 
 ## Product pages
 
-Each product page (`/shop/[slug]`) is a full furniture PDP, not a generic
-e-commerce template:
+Each product page (`/shop/[slug]`) is a full furniture/joinery PDP, not a
+generic e-commerce template:
 
 - Rating + review count, SKU, and one of three availability states —
   **In Stock** (tracked by a numeric `stock` count), **Made to Order**
   (skips stock tracking entirely, shows a lead-time message, checkout
   never blocks it), or **Out of Stock** (checkout always rejects it,
   regardless of the `stock` number)
-- Structured dimensions (width/depth/height/seat height/seat depth/arm
-  height/leg height/weight) rendered as a table, plus a **room-fit
-  calculator** that compares a customer's entered room/door size against
-  them
-- Structured materials & construction (frame/upholstery/legs/foam density)
-- Color / fabric / wood **selector chips** — informational (single SKU,
+- Structured dimensions (width/depth/height + optional seat/arm/leg
+  height/weight) rendered as a table, plus a **fit calculator** that
+  compares a customer's entered room/opening size against them
+- Structured materials & construction — **core material**, **finish**,
+  **hardware**, and an **additional spec** field (fire rating, glass type,
+  etc.), reusing the same four schema columns across both furniture- and
+  millwork-style products
+- Color / style / wood **selector chips** — informational (single SKU,
   doesn't fork price or stock), but the selection follows the item into
   the cart, the order record, and the confirmation page as a variant label
-- Delivery, assembly, warranty, returns, and payment-method info pulled
-  from `lib/policies.ts` (shop-wide, not per-product)
+- Delivery, assembly, warranty, returns, and payment-method info — all
+  from `/admin/settings`, not hardcoded per product
 - Two cross-sell rails: same-category "You may also like" and
-  cross-category "Complete the room"
+  cross-category "Complete the project"
 
 **Deferred** (would need infrastructure this project doesn't have yet):
-multi-photo galleries / 360° / AR — blocked on real product photos
-existing at all, still using placeholder icons; a full submittable review
-system with sub-ratings and customer photos — `rating`/`reviewCount` are
-admin-set aggregate numbers, not a live review feed; installment/split
-payments — needs the real payment processor first; automatic bundle
-discount pricing for "Complete the room".
+multi-photo galleries / 360° / AR — products support one photo today;
+a full submittable review system with sub-ratings and customer photos —
+`rating`/`reviewCount` are admin-set aggregate numbers, not a live review
+feed; installment/split payments — needs a real payment processor first;
+automatic bundle discount pricing for "Complete the project".
 
 ## Rebranding for a client
 
-Everything client-specific lives in two places:
-
-- **`lib/site-config.ts`** — shop name, tagline, description, contact
-  info, free-shipping threshold. Update these values and every page
-  (header, footer, metadata) picks them up automatically.
-- **`components/Logo.tsx`** — renders the real logo files from
-  `public/brand/`. For a different client, swap those PNGs and update
-  the `src` paths (and re-run the favicon generator for `public/favicon*`
-  etc. if they need their own icon set).
+- **`/admin/settings`** — name, tagline, contact info, hero, and all
+  policy content. No code changes needed.
+- **`components/Logo.tsx`** + **`public/brand/`** — swap the logo PNGs and
+  update the `src` paths (and regenerate `public/favicon*` etc. if the
+  new client needs their own icon set).
 - **`lib/products.ts`** (`PRODUCT_SEED`) — the starter product catalog.
-  Replace with the real catalog, then run `npm run seed` again.
-- **`lib/policies.ts`** — delivery fees/times, assembly, warranty tiers,
-  returns policy, and payment methods shown on every product page.
+  Replace with the real catalog, then run `npm run seed` again — or just
+  use `/admin/products` once live.
 - **`tailwind.config.ts`** — the `walnut` / `terracotta` / `sand` color
   scale. Swap the hex values to match brand colors; every component
-  already references these tokens rather than hardcoded colors.
+  already references these tokens rather than hardcoded colors. (`danger`
+  is intentionally separate — it's the error/warning red, not a brand
+  accent, so error states never confuse a customer regardless of theme.)
 
 ## What's real vs. placeholder
 
-- **Products & inventory** — real. Stored in MySQL, served via
-  `lib/db.ts` and the `/api/products` routes. Stock is decremented
-  transactionally when an order is placed.
+- **Products, inventory, settings, and pages** — all real, stored in
+  MySQL. Stock is decremented transactionally when an order is placed.
 - **Orders** — real. `POST /api/orders` validates stock against the
   database (inside a transaction, so two people can't both buy the last
   unit) and persists the order + line items. `/order-confirmation/[id]`
@@ -162,13 +198,17 @@ app/
     shop/                Product listing + [slug] detail pages
     cart/, checkout/     Cart and checkout flow
     order-confirmation/  Post-purchase confirmation
-    about/, contact/     Static-ish content pages
+    contact/             Contact page (form + settings-driven info panel)
+    [slug]/              Dynamic renderer for admin-created CMS pages
   admin/
     login/               Public login page
-    (protected)/         Dashboard, products, orders — gated by middleware.ts
-  api/                 products, orders, admin/* route handlers
-components/           Shared UI (Header, Footer, ProductCard, admin nav/forms, etc.)
-lib/                  Product types/seed data, db access, cart context, site config, admin auth
-db/                   schema.sql + seed script
+    (protected)/         Dashboard, products, orders, pages, settings — gated by middleware.ts
+  api/                 products, orders, admin/* route handlers (incl. upload, settings, pages)
+components/           Shared UI — Header, Footer, ProductCard, admin forms,
+                       ImageUpload, PageBlockEditor, BlockRenderer, etc.
+lib/                  Product types/seed data, db access, settings, pages/blocks,
+                       cart context, admin auth, validation
+db/                   schema.sql + seed script (products, settings, About page)
 middleware.ts          Protects /admin and /api/admin routes
+public/uploads/        Admin-uploaded images (gitignored)
 ```

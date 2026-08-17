@@ -1,19 +1,20 @@
 import Image from "next/image";
-import { siteConfig } from "@/lib/site-config";
 
 export default function Logo({
   className,
   variant = "horizontal",
+  name = "Zemenay Furniture",
 }: {
   className?: string;
   variant?: "horizontal" | "stacked";
+  name?: string;
 }) {
   if (variant === "stacked") {
     return (
       <span className={`inline-flex items-center justify-center ${className ?? ""}`}>
         <Image
           src="/brand/zemenay-logo-full-transparent.png"
-          alt={siteConfig.name}
+          alt={name}
           width={645}
           height={452}
           priority
@@ -34,7 +35,7 @@ export default function Logo({
         className="h-9 w-9"
       />
       <span className="font-serif text-2xl font-semibold uppercase tracking-[0.15em] text-ink">
-        {siteConfig.shortName === "Z" ? "Zemenay" : siteConfig.name}
+        {name.replace(" Furniture", "")}
       </span>
     </span>
   );

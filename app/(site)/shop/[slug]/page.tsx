@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
@@ -11,15 +12,9 @@ import {
   getCompleteTheRoomProducts,
   getProductBySlug,
   getRelatedProducts,
+  getSettings,
 } from "@/lib/db";
 import { availabilityMessage, formatPrice } from "@/lib/products";
-import {
-  assemblyPolicy,
-  deliveryPolicy,
-  paymentMethods,
-  returnsPolicy,
-  warrantyPolicy,
-} from "@/lib/policies";
 
 export async function generateMetadata({
   params,
@@ -41,7 +36,7 @@ const sectionNav = [
   { href: "#delivery", label: "Delivery" },
   { href: "#warranty", label: "Warranty" },
   { href: "#returns", label: "Returns" },
-  { href: "#room-fit", label: "Room Fit" },
+  { href: "#room-fit", label: "Fit Check" },
 ];
 
 export default async function ProductPage({
@@ -52,10 +47,14 @@ export default async function ProductPage({
   const product = await getProductBySlug(params.slug);
   if (!product) notFound();
 
-  const related = await getRelatedProducts(product);
-  const completeTheRoom = await getCompleteTheRoomProducts(product);
+  const [related, completeTheRoom, settings] = await Promise.all([
+    getRelatedProducts(product),
+    getCompleteTheRoomProducts(product),
+    getSettings(),
+  ]);
   const d = product.dimensions;
   const m = product.materials;
+  const { delivery, assembly, warranty, returns, paymentMethods } = settings;
 
   const availabilityColor =
     product.availability === "in_stock"
@@ -83,12 +82,22 @@ export default async function ProductPage({
 
       <div className="grid gap-10 lg:grid-cols-2">
         <div
-          className={`flex aspect-square items-center justify-center rounded-2xl bg-gradient-to-br ${product.gradient}`}
+          className={`relative flex aspect-square items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-br ${product.gradient}`}
         >
-          <FurnitureIcon
-            name={product.icon}
-            className="h-40 w-40 text-walnut-500/70 sm:h-56 sm:w-56"
-          />
+          {product.imageUrl ? (
+            <Image
+              src={product.imageUrl}
+              alt={product.name}
+              fill
+              sizes="(min-width: 1024px) 50vw, 100vw"
+              className="object-cover"
+            />
+          ) : (
+            <FurnitureIcon
+              name={product.icon}
+              className="h-40 w-40 text-walnut-500/70 sm:h-56 sm:w-56"
+            />
+          )}
         </div>
 
         <div className="flex flex-col">
@@ -128,16 +137,16 @@ export default async function ProductPage({
 
           <div className="mt-8 grid grid-cols-2 gap-3 border-t border-walnut-100 pt-6 text-xs text-ink/60 sm:grid-cols-4">
             <a href="#delivery" className="hover:text-walnut-600">
-              🚚 {deliveryPolicy.addisAbaba.minDays}–{deliveryPolicy.addisAbaba.maxDays} days
+              🚚 {delivery.addisMinDays}–{delivery.addisMaxDays} days
             </a>
             <a href="#materials" className="hover:text-walnut-600">
-              🔧 {assemblyPolicy.installationAvailable ? "Assembly available" : "No assembly"}
+              🔧 {assembly.installationAvailable ? "Installation available" : "Self-install"}
             </a>
             <a href="#warranty" className="hover:text-walnut-600">
-              🛡️ {warrantyPolicy.tiers[0].years}-year warranty
+              🛡️ {warranty.tiers[0].years}-year warranty
             </a>
             <a href="#returns" className="hover:text-walnut-600">
-              ↩️ {returnsPolicy.periodDays}-day returns
+              ↩️ {returns.periodDays}-day returns
             </a>
           </div>
         </div>
@@ -215,8 +224,8 @@ export default async function ProductPage({
           </table>
         </div>
         <p className="mt-3 max-w-md text-xs text-ink/40">
-          Package dimensions may differ slightly from assembled size — contact us if you need
-          exact packing measurements for a tight stairwell or elevator.
+          Custom sizes are available on made-to-order pieces — contact us with your exact
+          opening or space measurements.
         </p>
       </section>
 
@@ -226,35 +235,35 @@ export default async function ProductPage({
         </h2>
         <div className="grid max-w-2xl gap-x-8 gap-y-3 text-sm sm:grid-cols-2">
           <div>
-            <p className="font-medium text-ink">Frame</p>
+            <p className="font-medium text-ink">Core material</p>
             <p className="text-ink/70">{m.frame}</p>
           </div>
           {m.upholstery && (
             <div>
-              <p className="font-medium text-ink">Upholstery</p>
+              <p className="font-medium text-ink">Finish</p>
               <p className="text-ink/70">{m.upholstery}</p>
             </div>
           )}
           {m.legs && (
             <div>
-              <p className="font-medium text-ink">Legs</p>
+              <p className="font-medium text-ink">Hardware</p>
               <p className="text-ink/70">{m.legs}</p>
             </div>
           )}
           {m.foamDensity && (
             <div>
-              <p className="font-medium text-ink">Foam</p>
+              <p className="font-medium text-ink">Additional spec</p>
               <p className="text-ink/70">{m.foamDensity}</p>
             </div>
           )}
         </div>
 
         <div className="mt-8 flex flex-col gap-4">
-          {assemblyPolicy.requiredByDefault && (
+          {assembly.requiredByDefault && (
             <p className="text-sm text-ink/70">
-              🔧 Assembly required — typically about {assemblyPolicy.typicalMinutes} minutes.{" "}
-              {assemblyPolicy.installationAvailable &&
-                `Professional installation available for ${formatPrice(assemblyPolicy.installationFee)}.`}
+              🔧 Installation required — typically about {assembly.typicalMinutes} minutes.{" "}
+              {assembly.installationAvailable &&
+                `Professional installation available for ${formatPrice(assembly.installationFee)}.`}
             </p>
           )}
         </div>
@@ -265,13 +274,13 @@ export default async function ProductPage({
           Delivery &amp; installation
         </h2>
         <div className="max-w-md">
-          <DeliveryEstimator />
+          <DeliveryEstimator delivery={delivery} />
         </div>
         <ul className="mt-6 max-w-md space-y-1.5 text-sm text-ink/70">
-          <li>🔧 Installation fee: {formatPrice(deliveryPolicy.installationFee)}</li>
+          <li>🔧 Installation fee: {formatPrice(delivery.installationFee)}</li>
           <li>
-            🏢 Carrying upstairs (no elevator): {formatPrice(deliveryPolicy.carryingFee)} —{" "}
-            {deliveryPolicy.carryingFeeNote}
+            🏢 Carrying upstairs (no elevator): {formatPrice(delivery.carryingFee)} —{" "}
+            {delivery.carryingFeeNote}
           </li>
         </ul>
       </section>
@@ -281,7 +290,7 @@ export default async function ProductPage({
         <div className="max-w-md overflow-hidden rounded-xl border border-walnut-100">
           <table className="w-full text-sm">
             <tbody className="divide-y divide-walnut-100">
-              {warrantyPolicy.tiers.map((t, i) => (
+              {warranty.tiers.map((t, i) => (
                 <tr key={t.part} className={i % 2 === 0 ? "bg-walnut-50/50" : undefined}>
                   <td className="px-4 py-2.5 font-medium text-ink">{t.part}</td>
                   <td className="px-4 py-2.5 text-right text-ink/70">
@@ -294,7 +303,7 @@ export default async function ProductPage({
         </div>
         <p className="mt-3 max-w-md text-xs text-ink/50">
           <span className="font-medium text-ink/70">Not covered: </span>
-          {warrantyPolicy.notCovered}
+          {warranty.notCovered}
         </p>
       </section>
 
@@ -302,14 +311,14 @@ export default async function ProductPage({
         <h2 className="mb-4 font-serif text-xl font-semibold text-ink">Returns &amp; exchanges</h2>
         <div className="max-w-2xl text-sm text-ink/70">
           <p className="font-medium text-ink">
-            {returnsPolicy.periodDays}-day returns
+            {returns.periodDays}-day returns
             {product.availability === "made_to_order" && " — with an exception for this item"}
           </p>
           {product.availability === "made_to_order" && (
-            <p className="mt-1 text-danger-500">{returnsPolicy.customExclusion}</p>
+            <p className="mt-1 text-danger-500">{returns.customExclusion}</p>
           )}
           <ul className="mt-3 space-y-1.5">
-            {returnsPolicy.conditions.map((c) => (
+            {returns.conditions.map((c) => (
               <li key={c} className="flex gap-2">
                 <span className="text-terracotta-400">•</span>
                 {c}
@@ -319,15 +328,15 @@ export default async function ProductPage({
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
             <div>
               <p className="font-medium text-ink">Who pays return shipping?</p>
-              <p>{returnsPolicy.whoPaysReturn}</p>
+              <p>{returns.whoPaysReturn}</p>
             </div>
             <div>
               <p className="font-medium text-ink">Refund process</p>
-              <p>{returnsPolicy.refundProcess}</p>
+              <p>{returns.refundProcess}</p>
             </div>
             <div className="sm:col-span-2">
               <p className="font-medium text-ink">Item arrived damaged?</p>
-              <p>{returnsPolicy.damagedProcedure}</p>
+              <p>{returns.damagedProcedure}</p>
             </div>
           </div>
         </div>
@@ -348,7 +357,9 @@ export default async function ProductPage({
       </section>
 
       <section id="room-fit" className="scroll-mt-32 border-t border-walnut-100 py-10">
-        <h2 className="mb-1 font-serif text-xl font-semibold text-ink">Will it fit your room?</h2>
+        <h2 className="mb-1 font-serif text-xl font-semibold text-ink">
+          Will it fit your space?
+        </h2>
         <p className="mb-4 max-w-md text-sm text-ink/60">
           A quick check before you buy — not a substitute for measuring twice.
         </p>
@@ -370,7 +381,7 @@ export default async function ProductPage({
 
       {completeTheRoom.length > 0 && (
         <section className="mt-16 border-t border-walnut-100 pt-10">
-          <h2 className="mb-6 font-serif text-2xl font-semibold text-ink">Complete the room</h2>
+          <h2 className="mb-6 font-serif text-2xl font-semibold text-ink">Complete the project</h2>
           <div className="grid grid-cols-2 gap-5 sm:grid-cols-3 lg:grid-cols-4">
             {completeTheRoom.map((p) => (
               <ProductCard key={p.id} product={p} />

@@ -6,23 +6,31 @@ import { usePathname } from "next/navigation";
 import { useCart } from "@/lib/cart-context";
 import Logo from "@/components/Logo";
 
-const navLinks = [
-  { href: "/", label: "Home" },
-  { href: "/shop", label: "Shop" },
-  { href: "/about", label: "About" },
-  { href: "/contact", label: "Contact" },
-];
+type NavLink = { href: string; label: string };
 
-export default function Header() {
+export default function Header({
+  siteName,
+  navPages = [],
+}: {
+  siteName: string;
+  navPages?: NavLink[];
+}) {
   const [menuOpen, setMenuOpen] = useState(false);
   const pathname = usePathname();
   const { itemCount, isReady } = useCart();
+
+  const navLinks: NavLink[] = [
+    { href: "/", label: "Home" },
+    { href: "/shop", label: "Shop" },
+    ...navPages,
+    { href: "/contact", label: "Contact" },
+  ];
 
   return (
     <header className="sticky top-0 z-40 border-b border-walnut-100/60 bg-cream/90 backdrop-blur">
       <div className="container-shop flex h-18 items-center justify-between py-4">
         <Link href="/" onClick={() => setMenuOpen(false)}>
-          <Logo />
+          <Logo name={siteName} />
         </Link>
 
         <nav className="hidden items-center gap-8 md:flex">

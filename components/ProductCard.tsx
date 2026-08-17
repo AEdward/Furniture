@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import FurnitureIcon from "@/components/FurnitureIcon";
 import QuickAddButton from "@/components/QuickAddButton";
@@ -16,10 +17,20 @@ export default function ProductCard({ product }: { product: Product }) {
         <div
           className={`relative flex aspect-[4/3] items-center justify-center bg-gradient-to-br ${product.gradient}`}
         >
-          <FurnitureIcon
-            name={product.icon}
-            className="h-24 w-24 text-walnut-500/70 transition-transform duration-300 group-hover:scale-105"
-          />
+          {product.imageUrl ? (
+            <Image
+              src={product.imageUrl}
+              alt={product.name}
+              fill
+              sizes="(min-width: 1024px) 25vw, 50vw"
+              className="object-cover transition-transform duration-300 group-hover:scale-105"
+            />
+          ) : (
+            <FurnitureIcon
+              name={product.icon}
+              className="h-24 w-24 text-walnut-500/70 transition-transform duration-300 group-hover:scale-105"
+            />
+          )}
           <div className="absolute left-3 top-3 flex flex-col gap-1.5">
             {product.new && (
               <span className="rounded-full bg-ink px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-cream">

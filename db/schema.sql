@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS products (
   details_json TEXT NOT NULL,
   icon VARCHAR(64) NOT NULL,
   gradient VARCHAR(64) NOT NULL,
+  image_url VARCHAR(500) NULL,
   featured TINYINT(1) NOT NULL DEFAULT 0,
   is_new TINYINT(1) NOT NULL DEFAULT 0,
   stock INT NOT NULL DEFAULT 0,
@@ -61,4 +62,27 @@ CREATE TABLE IF NOT EXISTS order_items (
   quantity INT NOT NULL,
   variant_label VARCHAR(191) NULL,
   FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Single-row key/value store for site-wide settings (name, tagline,
+-- contact info, home hero, delivery/warranty/returns/payment policy).
+-- One row per key; the "site" key holds the whole settings object as JSON.
+CREATE TABLE IF NOT EXISTS settings (
+  `key` VARCHAR(100) PRIMARY KEY,
+  value LONGTEXT NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Admin-authored pages, rendered at /<slug>. Content is an ordered array
+-- of typed blocks (hero / richtext / imagetext) stored as JSON.
+CREATE TABLE IF NOT EXISTS pages (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  slug VARCHAR(191) NOT NULL UNIQUE,
+  title VARCHAR(191) NOT NULL,
+  meta_description VARCHAR(255) NULL,
+  blocks_json LONGTEXT NOT NULL,
+  show_in_nav TINYINT(1) NOT NULL DEFAULT 0,
+  nav_label VARCHAR(64) NULL,
+  nav_order INT NOT NULL DEFAULT 0,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
