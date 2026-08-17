@@ -43,13 +43,33 @@ You need [Node.js](https://nodejs.org) 18+ and a MySQL-compatible server
    npm run seed
    ```
 
-4. Run the dev server:
+4. Set an admin password. In `.env.local`, set `ADMIN_PASSWORD` to whatever
+   you want to sign in with, and `ADMIN_SESSION_SECRET` to any long random
+   string (this signs the login cookie — it doesn't need to be memorable).
+
+5. Run the dev server:
 
    ```bash
    npm run dev
    ```
 
    Open **http://localhost:3000**.
+
+## Admin dashboard
+
+**http://localhost:3000/admin** — sign in with `ADMIN_PASSWORD`. It's a
+single shared password (no per-user accounts), meant for the shop owner /
+small team, not a multi-role permission system.
+
+- **Dashboard** — product/order counts, revenue, low-stock list, recent orders
+- **Products** — add, edit, delete; set price, stock, category, the
+  icon/background used for its card, and the Featured/New flags
+- **Orders** — view line items and shipping info, update status
+  (placed → processing → shipped → delivered, or cancelled)
+
+Access is a signed, httpOnly cookie (`middleware.ts` guards every
+`/admin` and `/api/admin` route) — there's no separate user table, so
+"logging in" just means presenting the correct `ADMIN_PASSWORD`.
 
 ## Rebranding for a client
 
@@ -88,13 +108,18 @@ Everything client-specific lives in two places:
 ## Project structure
 
 ```
-app/                  Pages and API routes (App Router)
-  shop/                Product listing + [slug] detail pages
-  cart/, checkout/     Cart and checkout flow
-  order-confirmation/  Post-purchase confirmation
-  about/, contact/     Static-ish content pages
-  api/                 products, orders route handlers
-components/           Shared UI (Header, Footer, ProductCard, etc.)
-lib/                  Product types/seed data, db access, cart context, site config
+app/
+  (site)/              Customer-facing pages, wrapped in Header/Footer/CartProvider
+    shop/                Product listing + [slug] detail pages
+    cart/, checkout/     Cart and checkout flow
+    order-confirmation/  Post-purchase confirmation
+    about/, contact/     Static-ish content pages
+  admin/
+    login/               Public login page
+    (protected)/         Dashboard, products, orders — gated by middleware.ts
+  api/                 products, orders, admin/* route handlers
+components/           Shared UI (Header, Footer, ProductCard, admin nav/forms, etc.)
+lib/                  Product types/seed data, db access, cart context, site config, admin auth
 db/                   schema.sql + seed script
+middleware.ts          Protects /admin and /api/admin routes
 ```

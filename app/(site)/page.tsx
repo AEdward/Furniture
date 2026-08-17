@@ -5,6 +5,8 @@ import { getFeaturedProducts } from "@/lib/db";
 import { categories } from "@/lib/products";
 import { siteConfig } from "@/lib/site-config";
 
+export const dynamic = "force-dynamic";
+
 const categoryIcon = {
   "Living Room": "sofa",
   Bedroom: "bed",

@@ -1,5 +1,8 @@
 import mysql from "mysql2/promise";
-import type { Category, Product } from "@/lib/products";
+import type { Category, IconName, Product } from "@/lib/products";
+import { ORDER_STATUSES, type OrderStatus } from "@/lib/order-status";
+
+export { ORDER_STATUSES, type OrderStatus };
 
 let pool: mysql.Pool | null = null;
 
@@ -237,5 +240,214 @@ export async function getOrderById(id: number): Promise<Order | undefined> {
       price: r.price,
       quantity: r.quantity,
     })),
+  };
+}
+
+// ---------------------------------------------------------------------
+// Admin: orders
+// ---------------------------------------------------------------------
+
+export type OrderSummary = {
+  id: number;
+  customerName: string;
+  customerEmail: string;
+  subtotal: number;
+  status: string;
+  createdAt: string;
+  itemCount: number;
+};
+
+export async function getAllOrders(): Promise<OrderSummary[]> {
+  const db = getPool();
+  const [rows] = await db.query<mysql.RowDataPacket[]>(
+    `SELECT o.id, o.customer_name, o.customer_email, o.subtotal, o.status, o.created_at,
+            COALESCE(SUM(oi.quantity), 0) AS item_count
+     FROM orders o
+     LEFT JOIN order_items oi ON oi.order_id = o.id
+     GROUP BY o.id
+     ORDER BY o.created_at DESC`
+  );
+  return rows.map((r) => ({
+    id: r.id,
+    customerName: r.customer_name,
+    customerEmail: r.customer_email,
+    subtotal: r.subtotal,
+    status: r.status,
+    createdAt: r.created_at,
+    itemCount: Number(r.item_count),
+  }));
+}
+
+export async function updateOrderStatus(
+  id: number,
+  status: OrderStatus
+): Promise<void> {
+  const db = getPool();
+  const [result] = await db.query<mysql.ResultSetHeader>(
+    "UPDATE orders SET status = ? WHERE id = ?",
+    [status, id]
+  );
+  if (result.affectedRows === 0) {
+    throw new OrderError("Order not found.");
+  }
+}
+
+// ---------------------------------------------------------------------
+// Admin: products
+// ---------------------------------------------------------------------
+
+export type ProductInput = {
+  slug: string;
+  name: string;
+  category: Category;
+  price: number;
+  compareAtPrice?: number | null;
+  description: string;
+  details: string[];
+  material: string;
+  dimensions: string;
+  icon: IconName;
+  gradient: string;
+  featured: boolean;
+  new: boolean;
+  stock: number;
+};
+
+export class ProductError extends Error {}
+
+export async function createProduct(input: ProductInput): Promise<Product> {
+  const db = getPool();
+  const [existing] = await db.query<mysql.RowDataPacket[]>(
+    "SELECT slug FROM products WHERE slug = ? LIMIT 1",
+    [input.slug]
+  );
+  if (existing.length > 0) {
+    throw new ProductError(`A product with slug "${input.slug}" already exists.`);
+  }
+
+  await db.query(
+    `INSERT INTO products
+      (id, slug, name, category, price, compare_at_price, description, details_json, material, dimensions, icon, gradient, featured, is_new, stock)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      input.slug,
+      input.slug,
+      input.name,
+      input.category,
+      input.price,
+      input.compareAtPrice ?? null,
+      input.description,
+      JSON.stringify(input.details),
+      input.material,
+      input.dimensions,
+      input.icon,
+      input.gradient,
+      input.featured ? 1 : 0,
+      input.new ? 1 : 0,
+      input.stock,
+    ]
+  );
+
+  const created = await getProductBySlug(input.slug);
+  if (!created) throw new ProductError("Failed to create product.");
+  return created;
+}
+
+export async function updateProduct(
+  slug: string,
+  input: ProductInput
+): Promise<Product> {
+  const db = getPool();
+
+  if (input.slug !== slug) {
+    const [existing] = await db.query<mysql.RowDataPacket[]>(
+      "SELECT slug FROM products WHERE slug = ? LIMIT 1",
+      [input.slug]
+    );
+    if (existing.length > 0) {
+      throw new ProductError(`A product with slug "${input.slug}" already exists.`);
+    }
+  }
+
+  const [result] = await db.query<mysql.ResultSetHeader>(
+    `UPDATE products SET
+      id = ?, slug = ?, name = ?, category = ?, price = ?, compare_at_price = ?,
+      description = ?, details_json = ?, material = ?, dimensions = ?, icon = ?,
+      gradient = ?, featured = ?, is_new = ?, stock = ?
+     WHERE slug = ?`,
+    [
+      input.slug,
+      input.slug,
+      input.name,
+      input.category,
+      input.price,
+      input.compareAtPrice ?? null,
+      input.description,
+      JSON.stringify(input.details),
+      input.material,
+      input.dimensions,
+      input.icon,
+      input.gradient,
+      input.featured ? 1 : 0,
+      input.new ? 1 : 0,
+      input.stock,
+      slug,
+    ]
+  );
+  if (result.affectedRows === 0) {
+    throw new ProductError("Product not found.");
+  }
+
+  const updated = await getProductBySlug(input.slug);
+  if (!updated) throw new ProductError("Failed to update product.");
+  return updated;
+}
+
+export async function deleteProduct(slug: string): Promise<void> {
+  const db = getPool();
+  const [result] = await db.query<mysql.ResultSetHeader>(
+    "DELETE FROM products WHERE slug = ?",
+    [slug]
+  );
+  if (result.affectedRows === 0) {
+    throw new ProductError("Product not found.");
+  }
+}
+
+// ---------------------------------------------------------------------
+// Admin: dashboard
+// ---------------------------------------------------------------------
+
+export type DashboardStats = {
+  productCount: number;
+  orderCount: number;
+  revenueTotal: number;
+  lowStockProducts: Product[];
+  recentOrders: OrderSummary[];
+};
+
+const LOW_STOCK_THRESHOLD = 5;
+
+export async function getDashboardStats(): Promise<DashboardStats> {
+  const db = getPool();
+
+  const [[productCountRow]] = await db.query<mysql.RowDataPacket[]>(
+    "SELECT COUNT(*) AS count FROM products"
+  );
+  const [[orderStatsRow]] = await db.query<mysql.RowDataPacket[]>(
+    "SELECT COUNT(*) AS count, COALESCE(SUM(subtotal), 0) AS revenue FROM orders WHERE status != 'cancelled'"
+  );
+  const [lowStockRows] = await db.query<mysql.RowDataPacket[]>(
+    "SELECT * FROM products WHERE stock <= ? ORDER BY stock ASC LIMIT 8",
+    [LOW_STOCK_THRESHOLD]
+  );
+  const allOrders = await getAllOrders();
+
+  return {
+    productCount: Number(productCountRow.count),
+    orderCount: Number(orderStatsRow.count),
+    revenueTotal: Number(orderStatsRow.revenue),
+    lowStockProducts: (lowStockRows as ProductRow[]).map(rowToProduct),
+    recentOrders: allOrders.slice(0, 8),
   };
 }

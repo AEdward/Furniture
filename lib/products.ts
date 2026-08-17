@@ -351,6 +351,43 @@ export const categories: Category[] = [
   "Outdoor",
 ];
 
+export function slugify(name: string): string {
+  return name
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+export const iconNames: IconName[] = [
+  "sofa",
+  "armchair",
+  "coffee-table",
+  "dining-table",
+  "dining-chair",
+  "bed",
+  "nightstand",
+  "wardrobe",
+  "desk",
+  "office-chair",
+  "bookshelf",
+  "outdoor-chair",
+  "outdoor-table",
+  "lamp",
+  "bench",
+];
+
+export const gradientOptions = [
+  "from-terracotta-100 to-walnut-100",
+  "from-walnut-100 to-sand",
+  "from-sand to-walnut-100",
+  "from-walnut-100 to-terracotta-100",
+  "from-sand to-terracotta-100",
+  "from-terracotta-100 to-sand",
+  "from-walnut-100 to-walnut-100",
+  "from-sand to-sand",
+];
+
 export function formatPrice(price: number): string {
   return new Intl.NumberFormat("en-US", {
     style: "currency",

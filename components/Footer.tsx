@@ -60,7 +60,12 @@ export default function Footer() {
       <div className="border-t border-walnut-500/60">
         <div className="container-shop flex flex-col items-center justify-between gap-2 py-5 text-xs text-walnut-100/60 sm:flex-row">
           <p>&copy; {new Date().getFullYear()} {siteConfig.name}. All rights reserved.</p>
-          <p>Free shipping on orders over ${siteConfig.freeShippingThreshold}.</p>
+          <div className="flex items-center gap-4">
+            <p>Free shipping on orders over ${siteConfig.freeShippingThreshold}.</p>
+            <Link href="/admin" className="hover:text-cream">
+              Admin
+            </Link>
+          </div>
         </div>
       </div>
     </footer>
