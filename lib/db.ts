@@ -97,7 +97,7 @@ export async function getAllProducts(category?: Category): Promise<Product[]> {
         [category]
       )
     : await db.query<mysql.RowDataPacket[]>("SELECT * FROM products ORDER BY name");
-  return (rows as ProductRow[]).map(rowToProduct);
+  return withReviewAggregates((rows as ProductRow[]).map(rowToProduct));
 }
 
 export async function getFeaturedProducts(): Promise<Product[]> {
@@ -105,7 +105,7 @@ export async function getFeaturedProducts(): Promise<Product[]> {
   const [rows] = await db.query<mysql.RowDataPacket[]>(
     "SELECT * FROM products WHERE featured = 1 ORDER BY name"
   );
-  return (rows as ProductRow[]).map(rowToProduct);
+  return withReviewAggregates((rows as ProductRow[]).map(rowToProduct));
 }
 
 export async function getProductBySlug(slug: string): Promise<Product | undefined> {
@@ -115,7 +115,9 @@ export async function getProductBySlug(slug: string): Promise<Product | undefine
     [slug]
   );
   const row = (rows as ProductRow[])[0];
-  return row ? rowToProduct(row) : undefined;
+  if (!row) return undefined;
+  const [withAgg] = await withReviewAggregates([rowToProduct(row)]);
+  return withAgg;
 }
 
 export async function getRelatedProducts(
@@ -127,7 +129,7 @@ export async function getRelatedProducts(
     "SELECT * FROM products WHERE category = ? AND id != ? ORDER BY name LIMIT ?",
     [product.category, product.id, count]
   );
-  return (rows as ProductRow[]).map(rowToProduct);
+  return withReviewAggregates((rows as ProductRow[]).map(rowToProduct));
 }
 
 // "Complete the room": a handful of products from other categories, for
@@ -141,7 +143,7 @@ export async function getCompleteTheRoomProducts(
     "SELECT * FROM products WHERE category != ? AND id != ? ORDER BY RAND() LIMIT ?",
     [product.category, product.id, count]
   );
-  return (rows as ProductRow[]).map(rowToProduct);
+  return withReviewAggregates((rows as ProductRow[]).map(rowToProduct));
 }
 
 export type PaymentMethod = "chapa" | "cod" | "bank_transfer";
@@ -1311,4 +1313,124 @@ export async function deleteContactMessage(id: number): Promise<void> {
   if (result.affectedRows === 0) {
     throw new ContactMessageError("Message not found.");
   }
+}
+
+// ---------------------------------------------------------------------
+// Reviews (customer-submitted, moderated before showing publicly)
+// ---------------------------------------------------------------------
+
+export type Review = {
+  id: number;
+  productId: string;
+  customerName: string;
+  customerEmail: string;
+  rating: number;
+  comment: string;
+  approved: boolean;
+  createdAt: string;
+};
+
+export class ReviewError extends Error {}
+
+function rowToReview(row: mysql.RowDataPacket): Review {
+  return {
+    id: row.id,
+    productId: row.product_id,
+    customerName: row.customer_name,
+    customerEmail: row.customer_email,
+    rating: row.rating,
+    comment: row.comment,
+    approved: !!row.approved,
+    createdAt: row.created_at,
+  };
+}
+
+export async function createReview(input: {
+  productId: string;
+  customerName: string;
+  customerEmail: string;
+  rating: number;
+  comment: string;
+}): Promise<Review> {
+  const db = getPool();
+  const [result] = await db.query<mysql.ResultSetHeader>(
+    "INSERT INTO reviews (product_id, customer_name, customer_email, rating, comment) VALUES (?, ?, ?, ?, ?)",
+    [input.productId, input.customerName, input.customerEmail, input.rating, input.comment]
+  );
+  const [rows] = await db.query<mysql.RowDataPacket[]>(
+    "SELECT * FROM reviews WHERE id = ?",
+    [result.insertId]
+  );
+  return rowToReview(rows[0]);
+}
+
+export async function getApprovedReviews(productId: string): Promise<Review[]> {
+  const db = getPool();
+  const [rows] = await db.query<mysql.RowDataPacket[]>(
+    "SELECT * FROM reviews WHERE product_id = ? AND approved = 1 ORDER BY created_at DESC",
+    [productId]
+  );
+  return rows.map(rowToReview);
+}
+
+export async function getAllReviews(): Promise<(Review & { productName: string; productSlug: string })[]> {
+  const db = getPool();
+  const [rows] = await db.query<mysql.RowDataPacket[]>(
+    `SELECT r.*, p.name AS product_name, p.slug AS product_slug
+     FROM reviews r
+     JOIN products p ON p.id = r.product_id
+     ORDER BY r.created_at DESC`
+  );
+  return rows.map((row) => ({
+    ...rowToReview(row),
+    productName: row.product_name,
+    productSlug: row.product_slug,
+  }));
+}
+
+export async function setReviewApproved(id: number, approved: boolean): Promise<void> {
+  const db = getPool();
+  const [result] = await db.query<mysql.ResultSetHeader>(
+    "UPDATE reviews SET approved = ? WHERE id = ?",
+    [approved ? 1 : 0, id]
+  );
+  if (result.affectedRows === 0) {
+    throw new ReviewError("Review not found.");
+  }
+}
+
+export async function deleteReview(id: number): Promise<void> {
+  const db = getPool();
+  const [result] = await db.query<mysql.ResultSetHeader>(
+    "DELETE FROM reviews WHERE id = ?",
+    [id]
+  );
+  if (result.affectedRows === 0) {
+    throw new ReviewError("Review not found.");
+  }
+}
+
+// Overlays real approved-review averages onto products that have them,
+// leaving the seeded rating/reviewCount as a fallback for products with
+// no submissions yet (so the catalog doesn't suddenly look empty).
+async function withReviewAggregates(products: Product[]): Promise<Product[]> {
+  if (products.length === 0) return products;
+  const db = getPool();
+  const ids = products.map((p) => p.id);
+  const [rows] = await db.query<mysql.RowDataPacket[]>(
+    `SELECT product_id, AVG(rating) AS avg_rating, COUNT(*) AS cnt
+     FROM reviews
+     WHERE approved = 1 AND product_id IN (?)
+     GROUP BY product_id`,
+    [ids]
+  );
+  const byProduct = new Map<string, { rating: number; count: number }>();
+  for (const row of rows) {
+    byProduct.set(row.product_id, { rating: Number(row.avg_rating), count: Number(row.cnt) });
+  }
+  return products.map((p) => {
+    const agg = byProduct.get(p.id);
+    if (!agg) return p;
+    return { ...p, rating: Math.round(agg.rating * 10) / 10, reviewCount: agg.count };
+  });
 }
