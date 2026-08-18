@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import ProductCard from "@/components/ProductCard";
 import SortSelect from "@/components/SortSelect";
+import ShopFilters from "@/components/ShopFilters";
 import { getAllProducts } from "@/lib/db";
 import { categories, type Category, type Product } from "@/lib/products";
 import { getLocale } from "@/lib/i18n/get-locale";
@@ -28,18 +29,61 @@ function sortProducts(products: Product[], sort?: string) {
 export default async function ShopPage({
   searchParams,
 }: {
-  searchParams: { category?: string; sort?: string };
+  searchParams: {
+    category?: string;
+    sort?: string;
+    q?: string;
+    minPrice?: string;
+    maxPrice?: string;
+    material?: string;
+    color?: string;
+  };
 }) {
   const activeCategory = categories.includes(searchParams.category as Category)
     ? (searchParams.category as Category)
     : undefined;
 
   const locale = await getLocale();
-  const [productsRaw, dict] = await Promise.all([
-    getAllProducts(activeCategory).then((p) => sortProducts(p, searchParams.sort)),
+  const [categoryProducts, dict] = await Promise.all([
+    getAllProducts(activeCategory),
     getDictionary(locale),
   ]);
   const t = createT(dict);
+
+  const availableMaterials = Array.from(
+    new Set(categoryProducts.flatMap((p) => [...p.materialOptions, ...p.woodOptions]))
+  ).sort();
+  const availableColors = Array.from(
+    new Set(categoryProducts.flatMap((p) => p.colors))
+  ).sort();
+
+  const q = (searchParams.q ?? "").trim().toLowerCase();
+  const minPrice = searchParams.minPrice ? Number(searchParams.minPrice) : undefined;
+  const maxPrice = searchParams.maxPrice ? Number(searchParams.maxPrice) : undefined;
+  const { material, color } = searchParams;
+
+  let filtered = categoryProducts;
+  if (q) {
+    filtered = filtered.filter(
+      (p) => p.name.toLowerCase().includes(q) || p.description.toLowerCase().includes(q)
+    );
+  }
+  if (minPrice !== undefined && Number.isFinite(minPrice)) {
+    filtered = filtered.filter((p) => p.price >= minPrice);
+  }
+  if (maxPrice !== undefined && Number.isFinite(maxPrice)) {
+    filtered = filtered.filter((p) => p.price <= maxPrice);
+  }
+  if (material) {
+    filtered = filtered.filter(
+      (p) => p.materialOptions.includes(material) || p.woodOptions.includes(material)
+    );
+  }
+  if (color) {
+    filtered = filtered.filter((p) => p.colors.includes(color));
+  }
+
+  const productsRaw = sortProducts(filtered, searchParams.sort);
   const products = await translateProducts(productsRaw, locale);
 
   return (
@@ -49,6 +93,10 @@ export default async function ShopPage({
         <h1 className="mt-2 font-serif text-3xl font-semibold text-ink sm:text-4xl">
           {activeCategory ? t(activeCategory) : t("All Furniture")}
         </h1>
+      </div>
+
+      <div className="mb-6">
+        <ShopFilters materials={availableMaterials} colors={availableColors} />
       </div>
 
       <div className="mb-8 flex flex-wrap items-center justify-between gap-4">

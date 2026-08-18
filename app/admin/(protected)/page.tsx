@@ -1,17 +1,21 @@
 import Link from "next/link";
-import { getDashboardStats } from "@/lib/db";
+import { getDashboardStats, getUnreadContactMessageCount } from "@/lib/db";
 import { formatPrice } from "@/lib/products";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminDashboardPage() {
-  const stats = await getDashboardStats();
+  const [stats, unreadMessages] = await Promise.all([
+    getDashboardStats(),
+    getUnreadContactMessageCount(),
+  ]);
 
   const cards = [
-    { label: "Products", value: stats.productCount },
-    { label: "Orders", value: stats.orderCount },
-    { label: "Revenue", value: formatPrice(stats.revenueTotal) },
-    { label: "Low stock", value: stats.lowStockProducts.length },
+    { label: "Products", value: stats.productCount, href: "/admin/products" },
+    { label: "Orders", value: stats.orderCount, href: "/admin/orders" },
+    { label: "Revenue", value: formatPrice(stats.revenueTotal), href: "/admin/orders" },
+    { label: "Unread messages", value: unreadMessages, href: "/admin/messages" },
+    { label: "Low stock", value: stats.lowStockProducts.length, href: "/admin/products" },
   ];
 
   return (
@@ -23,14 +27,18 @@ export default async function AdminDashboardPage() {
         </p>
       </div>
 
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
         {cards.map((c) => (
-          <div key={c.label} className="rounded-2xl border border-walnut-100 bg-white/60 p-5">
+          <Link
+            key={c.label}
+            href={c.href}
+            className="rounded-2xl border border-walnut-100 bg-white/60 p-5 transition-shadow hover:shadow-soft"
+          >
             <p className="text-xs font-medium uppercase tracking-wide text-ink/50">
               {c.label}
             </p>
             <p className="mt-2 font-serif text-2xl font-semibold text-ink">{c.value}</p>
-          </div>
+          </Link>
         ))}
       </div>
 

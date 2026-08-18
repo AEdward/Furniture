@@ -6,13 +6,31 @@ import { useT } from "@/lib/i18n/context";
 export default function ContactForm() {
   const t = useT();
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState({ name: "", email: "", message: "" });
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    // Placeholder: no message-sending backend wired up yet.
-    // Point this at an email service or an /api/contact route later.
-    setSubmitted(true);
+    setSubmitting(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setError(data.error ?? "Something went wrong — please try again.");
+        return;
+      }
+      setSubmitted(true);
+    } catch {
+      setError("Network error — please try again.");
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   if (submitted) {
@@ -58,8 +76,11 @@ export default function ContactForm() {
           className="resize-none rounded-lg border border-walnut-200 px-3 py-2.5 focus:border-walnut-400 focus:outline-none"
         />
       </label>
-      <button type="submit" className="btn-primary mt-2">
-        {t("Send message")}
+      {error && (
+        <p className="rounded-lg bg-danger-50 px-4 py-3 text-sm text-danger-500">{error}</p>
+      )}
+      <button type="submit" disabled={submitting} className="btn-primary mt-2">
+        {submitting ? t("Sending…") : t("Send message")}
       </button>
     </form>
   );

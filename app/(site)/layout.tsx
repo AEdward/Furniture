@@ -1,6 +1,7 @@
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import PageViewTracker from "@/components/PageViewTracker";
+import WhatsAppButton from "@/components/WhatsAppButton";
 import { CartProvider } from "@/lib/cart-context";
 import { getNavPages, getSettings } from "@/lib/db";
 import { I18nProvider } from "@/lib/i18n/context";
@@ -42,6 +43,7 @@ export default async function SiteLayout({
         />
         <main className="flex-1">{children}</main>
         <Footer settings={translatedSettings} />
+        <WhatsAppButton phone={settings.phone} />
       </CartProvider>
     </I18nProvider>
   );

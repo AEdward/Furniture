@@ -52,6 +52,13 @@ export const UI_STRINGS = [
   "Price: Low to High",
   "Price: High to Low",
   "Name: A to Z",
+  "Search products…",
+  "Search",
+  "Min price",
+  "Max price",
+  "Apply",
+  "All materials",
+  "All colors",
 
   // Product card / quick add
   "New",
@@ -207,8 +214,10 @@ export const UI_STRINGS = [
   "Name",
   "Message",
   "Send message",
+  "Sending…",
   "Message sent",
   "We'll get back to you soon.",
+  "Chat on WhatsApp",
 
   // Language switcher
   "Language",
