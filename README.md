@@ -121,26 +121,31 @@ third-party account or API key required:
 ## Language
 
 A language switcher in the header (English / አማርኛ / Afaan Oromoo) lets a
-visitor auto-translate the entire storefront — fixed UI text, product
+visitor view the storefront — fixed UI text, product
 names/descriptions/materials, site settings copy, and admin-authored
-Pages — via the Google Cloud Translation API. Nothing needs translating
-by hand and it stays live: edit a product description in `/admin`, and
-the translated version updates on its own next time someone views it in
-that language.
+Pages — in Amharic or Afaan Oromoo. Translation is manual, not a live API
+call: an admin fills in each string once in `/admin/translations`, and
+it's served from the database from then on. There's nothing to configure
+and no external service or cost — a string with no saved translation yet
+just falls back to English.
 
-- **Setup**: set `GOOGLE_TRANSLATE_API_KEY` in `.env.local` (see
-  `.env.example` for where to get one). Without it, the switcher still
-  appears and works, but every string falls back to English — a missing
-  or failing translation call never breaks the page.
-- **How it works**: `lib/translate.ts` calls the API in batches and
-  caches every result in a `translations` table (keyed by a hash of
-  language + source text), so a string is only ever translated once —
-  after that, every page load reads the cache. `lib/i18n/ui-strings.ts`
-  is the fixed-text manifest (nav, buttons, labels); `lib/i18n/
-  translate-content.ts` translates DB content (products, settings, page
-  blocks) at render time. Translation is a read-time overlay — the
-  database always stores the original English/whatever-the-admin-typed
-  text, never a translated copy.
+- **Setup**: none. No API key, no external service.
+- **Filling in translations**: `/admin/translations` lists every English
+  string the site can show — the fixed UI vocabulary (nav, buttons,
+  labels) plus any product/settings/page text that's actually been
+  viewed in that language — with a tab per language and a "needs
+  translation" filter. Edit the text and save; it's live immediately.
+- **How it works**: `lib/translate.ts` looks up each string in the
+  `translations` table (keyed by a hash of language + source text). A
+  string with no row yet is registered as an untranslated placeholder
+  (so it shows up in the admin editor) and passed through as English —
+  a missing translation or DB hiccup never breaks the page. `lib/i18n/
+  ui-strings.ts` is the fixed-text manifest (nav, buttons, labels);
+  `lib/i18n/translate-content.ts` looks up DB content (products,
+  settings, page blocks) the same way at render time. The database
+  always stores the original English/whatever-the-admin-typed text,
+  never a translated copy — translated text lives only in the
+  `translations` table.
 - **Selection**: stored in a `locale` cookie (`components/
   LanguageSwitcher.tsx` → `POST /api/locale`), read server-side by
   `lib/i18n/get-locale.ts`.

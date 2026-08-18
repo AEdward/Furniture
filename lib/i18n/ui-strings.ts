@@ -1,9 +1,9 @@
 // Every fixed (non-admin-editable) English string shown on the
 // storefront, used as the translation source AND as the dictionary key
 // (so components just call t("Add to cart") rather than maintaining a
-// separate key namespace). Keep this deduplicated — getDictionary()
-// translates the whole list in one batched API call per language, and
-// every entry here is one row in the `translations` cache table.
+// separate key namespace). Keep this deduplicated — every entry here is
+// one row an admin can translate at /admin/translations, one per
+// language, in the `translations` table.
 //
 // Strings with a runtime value use {placeholder} tokens, filled in by
 // lib/i18n/t.ts's t(key, { placeholder: value }).
