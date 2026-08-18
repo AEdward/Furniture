@@ -10,7 +10,7 @@ export const metadata: Metadata = { title: "Contact" };
 export const dynamic = "force-dynamic";
 
 export default async function ContactPage() {
-  const locale = getLocale();
+  const locale = await getLocale();
   const [settingsRaw, dict] = await Promise.all([getSettings(), getDictionary(locale)]);
   const t = createT(dict);
   const settings = await translateSettings(settingsRaw, locale);

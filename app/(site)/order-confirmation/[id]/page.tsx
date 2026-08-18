@@ -54,7 +54,7 @@ export default async function OrderConfirmationPage({
     }
   }
 
-  const locale = getLocale();
+  const locale = await getLocale();
   const t = createT(await getDictionary(locale));
 
   if (order.paymentMethod === "chapa" && order.paymentStatus !== "paid") {
@@ -63,7 +63,7 @@ export default async function OrderConfirmationPage({
       <div className="container-shop py-16">
         <div className="mx-auto max-w-xl text-center">
           <span
-            className={`inline-flex h-14 w-14 items-center justify-center rounded-full text-2xl text-cream ${
+            className={`inline-flex h-14 w-14 items-center justify-center rounded-full text-2xl text-walnut-50 ${
               failed ? "bg-danger-500" : "bg-terracotta-400"
             }`}
           >
@@ -98,7 +98,7 @@ export default async function OrderConfirmationPage({
   return (
     <div className="container-shop py-16">
       <div className="mx-auto max-w-xl text-center">
-        <span className="inline-flex h-14 w-14 items-center justify-center rounded-full bg-walnut-500 text-2xl text-cream">
+        <span className="inline-flex h-14 w-14 items-center justify-center rounded-full bg-walnut-500 text-2xl text-walnut-50">
           ✓
         </span>
         <h1 className="mt-6 font-serif text-3xl font-semibold text-ink">

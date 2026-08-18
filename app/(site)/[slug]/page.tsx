@@ -25,7 +25,7 @@ export default async function CmsPage({ params }: { params: { slug: string } }) 
   const page = await getPageBySlug(params.slug);
   if (!page) notFound();
 
-  const locale = getLocale();
+  const locale = await getLocale();
   const [title, blocks] = await Promise.all([
     locale === "en" ? page.title : translateText(page.title, locale),
     translatePageBlocks(page.blocks, locale),

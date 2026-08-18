@@ -21,7 +21,7 @@ const categoryIcon: Record<(typeof categories)[number], IconName> = {
 };
 
 export default async function HomePage() {
-  const locale = getLocale();
+  const locale = await getLocale();
   const [featuredRaw, settingsRaw, dict] = await Promise.all([
     getFeaturedProducts(),
     getSettings(),

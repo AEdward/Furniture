@@ -24,7 +24,7 @@ export default function DeliveryEstimator({
           onClick={() => setLocation("addis")}
           className={`rounded-full border px-4 py-1.5 text-sm font-medium transition-colors ${
             location === "addis"
-              ? "border-walnut-500 bg-walnut-500 text-cream"
+              ? "border-walnut-500 bg-walnut-500 text-walnut-50"
               : "border-walnut-200 text-ink/70 hover:border-walnut-400"
           }`}
         >
@@ -35,7 +35,7 @@ export default function DeliveryEstimator({
           onClick={() => setLocation("other")}
           className={`rounded-full border px-4 py-1.5 text-sm font-medium transition-colors ${
             location === "other"
-              ? "border-walnut-500 bg-walnut-500 text-cream"
+              ? "border-walnut-500 bg-walnut-500 text-walnut-50"
               : "border-walnut-200 text-ink/70 hover:border-walnut-400"
           }`}
         >

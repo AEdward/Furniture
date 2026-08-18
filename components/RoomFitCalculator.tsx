@@ -119,7 +119,7 @@ export default function RoomFitCalculator({ dimensions }: { dimensions: Dimensio
         <div
           className={`rounded-lg px-4 py-3 text-sm ${
             result.ok
-              ? "bg-walnut-50 text-walnut-600"
+              ? "bg-walnut-50 text-walnut-700"
               : "bg-danger-50 text-danger-500"
           }`}
         >

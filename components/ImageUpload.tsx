@@ -48,7 +48,7 @@ export default function ImageUpload({
           <button
             type="button"
             onClick={() => onChange(null)}
-            className="absolute right-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-ink/80 text-xs font-bold text-cream"
+            className="absolute right-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-walnut-700/80 text-xs font-bold text-walnut-50"
             aria-label="Remove image"
           >
             ×

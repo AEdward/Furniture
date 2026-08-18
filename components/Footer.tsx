@@ -15,7 +15,7 @@ export default function Footer({ settings }: { settings: SiteSettings }) {
           <span className="inline-flex items-center gap-2.5">
             {/* Light chip behind the mark — its strokes are dark and
                 would disappear directly on this dark footer background. */}
-            <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-cream p-1">
+            <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-walnut-50 p-1">
               <Image
                 src="/brand/zemenay-mark-transparent.png"
                 alt=""
@@ -24,7 +24,7 @@ export default function Footer({ settings }: { settings: SiteSettings }) {
                 className="h-full w-full object-contain"
               />
             </span>
-            <span className="font-serif text-xl font-semibold uppercase tracking-[0.1em] text-cream">
+            <span className="font-serif text-xl font-semibold uppercase tracking-[0.1em] text-walnut-50">
               {settings.name}
             </span>
           </span>
@@ -38,12 +38,12 @@ export default function Footer({ settings }: { settings: SiteSettings }) {
             {t("Shop")}
           </p>
           <ul className="mt-4 space-y-2.5 text-sm text-walnut-100/80">
-            <li><Link href="/shop?category=Doors" className="hover:text-cream">{t("Doors")}</Link></li>
-            <li><Link href="/shop?category=Kitchen+Cabinets" className="hover:text-cream">{t("Kitchen Cabinets")}</Link></li>
-            <li><Link href="/shop?category=Closets" className="hover:text-cream">{t("Closets")}</Link></li>
-            <li><Link href="/shop?category=Sofas" className="hover:text-cream">{t("Sofas")}</Link></li>
-            <li><Link href="/shop?category=Dining+Tables+%26+Chairs" className="hover:text-cream">{t("Dining Tables & Chairs")}</Link></li>
-            <li><Link href="/shop?category=Beds" className="hover:text-cream">{t("Beds")}</Link></li>
+            <li><Link href="/shop?category=Doors" className="hover:text-walnut-50">{t("Doors")}</Link></li>
+            <li><Link href="/shop?category=Kitchen+Cabinets" className="hover:text-walnut-50">{t("Kitchen Cabinets")}</Link></li>
+            <li><Link href="/shop?category=Closets" className="hover:text-walnut-50">{t("Closets")}</Link></li>
+            <li><Link href="/shop?category=Sofas" className="hover:text-walnut-50">{t("Sofas")}</Link></li>
+            <li><Link href="/shop?category=Dining+Tables+%26+Chairs" className="hover:text-walnut-50">{t("Dining Tables & Chairs")}</Link></li>
+            <li><Link href="/shop?category=Beds" className="hover:text-walnut-50">{t("Beds")}</Link></li>
           </ul>
         </div>
 
@@ -52,9 +52,9 @@ export default function Footer({ settings }: { settings: SiteSettings }) {
             {t("Company")}
           </p>
           <ul className="mt-4 space-y-2.5 text-sm text-walnut-100/80">
-            <li><Link href="/about" className="hover:text-cream">{t("Our Story")}</Link></li>
-            <li><Link href="/contact" className="hover:text-cream">{t("Contact")}</Link></li>
-            <li><Link href="/shop" className="hover:text-cream">{t("Shop All")}</Link></li>
+            <li><Link href="/about" className="hover:text-walnut-50">{t("Our Story")}</Link></li>
+            <li><Link href="/contact" className="hover:text-walnut-50">{t("Contact")}</Link></li>
+            <li><Link href="/shop" className="hover:text-walnut-50">{t("Shop All")}</Link></li>
           </ul>
         </div>
 
@@ -80,16 +80,11 @@ export default function Footer({ settings }: { settings: SiteSettings }) {
               name: settings.name,
             })}
           </p>
-          <div className="flex items-center gap-4">
-            <p>
-              {t("Free shipping on orders over {amount}.", {
-                amount: formatPrice(settings.freeShippingThreshold),
-              })}
-            </p>
-            <Link href="/admin" className="hover:text-cream">
-              {t("Admin")}
-            </Link>
-          </div>
+          <p>
+            {t("Free shipping on orders over {amount}.", {
+              amount: formatPrice(settings.freeShippingThreshold),
+            })}
+          </p>
         </div>
       </div>
     </footer>

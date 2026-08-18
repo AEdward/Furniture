@@ -114,7 +114,7 @@ function TranslationRowEditor({
             type="button"
             disabled={!dirty || saving || !value.trim()}
             onClick={() => onSave(value)}
-            className="rounded-full bg-walnut-500 px-4 py-1.5 text-xs font-medium text-cream transition-opacity disabled:opacity-40"
+            className="rounded-full bg-walnut-500 px-4 py-1.5 text-xs font-medium text-walnut-50 transition-opacity disabled:opacity-40"
           >
             {saving ? "Saving…" : "Save"}
           </button>

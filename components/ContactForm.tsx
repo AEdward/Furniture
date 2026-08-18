@@ -18,7 +18,7 @@ export default function ContactForm() {
   if (submitted) {
     return (
       <div className="flex h-full flex-col items-center justify-center py-10 text-center">
-        <span className="flex h-12 w-12 items-center justify-center rounded-full bg-walnut-500 text-xl text-cream">
+        <span className="flex h-12 w-12 items-center justify-center rounded-full bg-walnut-500 text-xl text-walnut-50">
           ✓
         </span>
         <p className="mt-4 font-medium text-ink">{t("Message sent")}</p>

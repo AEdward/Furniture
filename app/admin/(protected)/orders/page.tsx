@@ -5,15 +5,15 @@ import { formatPrice } from "@/lib/products";
 export const dynamic = "force-dynamic";
 
 const statusStyles: Record<string, string> = {
-  placed: "bg-walnut-100 text-walnut-600",
+  placed: "bg-walnut-100 text-walnut-700",
   processing: "bg-terracotta-100 text-terracotta-500",
-  shipped: "bg-walnut-100 text-walnut-600",
-  delivered: "bg-walnut-500 text-cream",
-  cancelled: "bg-ink/10 text-ink/50",
+  shipped: "bg-walnut-100 text-walnut-700",
+  delivered: "bg-walnut-500 text-walnut-50",
+  cancelled: "bg-walnut-700/10 text-ink/50",
 };
 
 const paymentStyles: Record<string, string> = {
-  paid: "bg-walnut-500 text-cream",
+  paid: "bg-walnut-500 text-walnut-50",
   pending: "bg-terracotta-100 text-terracotta-500",
   failed: "bg-danger-50 text-danger-500",
 };
@@ -74,7 +74,7 @@ export default async function AdminOrdersPage() {
                   <td className="px-5 py-3">
                     <span
                       className={`rounded-full px-2.5 py-1 text-xs font-medium capitalize ${
-                        statusStyles[order.status] ?? "bg-walnut-100 text-walnut-600"
+                        statusStyles[order.status] ?? "bg-walnut-100 text-walnut-700"
                       }`}
                     >
                       {order.status}
@@ -83,7 +83,7 @@ export default async function AdminOrdersPage() {
                   <td className="px-5 py-3">
                     <span
                       className={`rounded-full px-2.5 py-1 text-xs font-medium capitalize ${
-                        paymentStyles[order.paymentStatus] ?? "bg-walnut-100 text-walnut-600"
+                        paymentStyles[order.paymentStatus] ?? "bg-walnut-100 text-walnut-700"
                       }`}
                     >
                       {order.paymentStatus}

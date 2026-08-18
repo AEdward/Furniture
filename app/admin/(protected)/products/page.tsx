@@ -61,12 +61,12 @@ export default async function AdminProductsPage() {
                 <td className="px-5 py-3">
                   <div className="flex gap-1.5">
                     {product.featured && (
-                      <span className="rounded-full bg-walnut-100 px-2 py-0.5 text-xs text-walnut-600">
+                      <span className="rounded-full bg-walnut-100 px-2 py-0.5 text-xs text-walnut-700">
                         Featured
                       </span>
                     )}
                     {product.new && (
-                      <span className="rounded-full bg-ink px-2 py-0.5 text-xs text-cream">
+                      <span className="rounded-full bg-walnut-700 px-2 py-0.5 text-xs text-walnut-50">
                         New
                       </span>
                     )}

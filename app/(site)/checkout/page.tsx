@@ -6,7 +6,7 @@ import CheckoutForm from "@/components/CheckoutForm";
 export const dynamic = "force-dynamic";
 
 export default async function CheckoutPage() {
-  const locale = getLocale();
+  const locale = await getLocale();
   const settingsRaw = await getSettings();
   const settings = await translateSettings(settingsRaw, locale);
 

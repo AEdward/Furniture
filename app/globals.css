@@ -6,9 +6,105 @@ html {
   scroll-behavior: smooth;
 }
 
+/* Dark mode: only the neutral scale (page background, body text, card
+   surface) flips — see tailwind.config.ts. Brand/semantic colors
+   (walnut, terracotta, danger) stay constant in both themes.
+
+   Three states: an explicit choice via ThemeToggle stamps
+   data-theme="dark" or "light" on <html>; absent that, we follow
+   prefers-color-scheme. The inline script in app/layout.tsx sets
+   data-theme before first paint so there's no flash of the wrong
+   theme. */
+:root {
+  --color-cream: 250 248 244;
+  --color-sand: 239 235 227;
+  --color-ink: 26 25 24;
+  --color-surface: 255 255 255;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --color-cream: 22 19 15;
+    --color-sand: 28 24 18;
+    --color-ink: 240 236 229;
+    --color-surface: 32 28 22;
+  }
+}
+
+:root[data-theme="dark"] {
+  --color-cream: 22 19 15;
+  --color-sand: 28 24 18;
+  --color-ink: 240 236 229;
+  --color-surface: 32 28 22;
+}
+
+/* A few more walnut utilities get targeted dark-mode overrides for the
+   same reason as border-walnut-100 above: they're used as a thin
+   foreground (border/text/icon) against the page background rather
+   than as a solid filled chip, so a dark-on-dark shade reads as
+   invisible rather than "constant brand color." Everything else in
+   the walnut scale — solid badge/button fills, and their paired light
+   text — stays untouched and constant, as noted above. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .border-walnut-100 {
+    border-color: rgb(54 47 38 / 1);
+  }
+  :root:not([data-theme="light"]) .text-walnut-600,
+  :root:not([data-theme="light"]) .text-walnut-500 {
+    color: rgb(168 160 148 / 1);
+  }
+  :root:not([data-theme="light"]) .text-walnut-500\/70 {
+    color: rgb(168 160 148 / 0.7);
+  }
+  :root:not([data-theme="light"]) .hover\:bg-walnut-100:hover,
+  :root:not([data-theme="light"]) .hover\:bg-walnut-50:hover {
+    background-color: rgb(54 47 38 / 1);
+  }
+  :root:not([data-theme="light"]) .btn-secondary {
+    border-color: rgb(168 160 148 / 1);
+    color: rgb(168 160 148 / 1);
+  }
+  :root:not([data-theme="light"]) .btn-secondary:hover {
+    background-color: rgb(168 160 148 / 1);
+    color: rgb(22 19 15 / 1);
+  }
+}
+:root[data-theme="dark"] .border-walnut-100 {
+  border-color: rgb(54 47 38 / 1);
+}
+:root[data-theme="dark"] .text-walnut-600,
+:root[data-theme="dark"] .text-walnut-500 {
+  color: rgb(168 160 148 / 1);
+}
+:root[data-theme="dark"] .text-walnut-500\/70 {
+  color: rgb(168 160 148 / 0.7);
+}
+:root[data-theme="dark"] .hover\:bg-walnut-100:hover,
+:root[data-theme="dark"] .hover\:bg-walnut-50:hover {
+  background-color: rgb(54 47 38 / 1);
+}
+:root[data-theme="dark"] .btn-secondary {
+  border-color: rgb(168 160 148 / 1);
+  color: rgb(168 160 148 / 1);
+}
+:root[data-theme="dark"] .btn-secondary:hover {
+  background-color: rgb(168 160 148 / 1);
+  color: rgb(22 19 15 / 1);
+}
+
 body {
-  background-color: #faf8f4;
-  color: #1a1918;
+  @apply bg-cream text-ink;
+}
+
+/* Text-entry elements don't inherit a background from anywhere — left
+   alone they render with the browser's native (opaque white) control
+   background, which clashes badly with light dark-mode text. Every
+   form across the site uses these bare, unstyled elements, so this is
+   a single global fix rather than editing each one. */
+input,
+textarea,
+select {
+  @apply bg-white text-ink;
 }
 
 .container-shop {
@@ -16,11 +112,11 @@ body {
 }
 
 .btn-primary {
-  @apply inline-flex items-center justify-center rounded-full bg-walnut-500 px-6 py-3 text-sm font-medium tracking-wide text-cream transition-colors hover:bg-walnut-600 disabled:cursor-not-allowed disabled:opacity-50;
+  @apply inline-flex items-center justify-center rounded-full bg-walnut-500 px-6 py-3 text-sm font-medium tracking-wide text-walnut-50 transition-colors hover:bg-walnut-600 disabled:cursor-not-allowed disabled:opacity-50;
 }
 
 .btn-secondary {
-  @apply inline-flex items-center justify-center rounded-full border border-walnut-500 px-6 py-3 text-sm font-medium tracking-wide text-walnut-500 transition-colors hover:bg-walnut-500 hover:text-cream;
+  @apply inline-flex items-center justify-center rounded-full border border-walnut-500 px-6 py-3 text-sm font-medium tracking-wide text-walnut-500 transition-colors hover:bg-walnut-500 hover:text-walnut-50;
 }
 
 .section-label {

@@ -36,7 +36,7 @@ export default function PaymentStatusActions({ orderId }: { orderId: number }) {
           type="button"
           onClick={() => markAs("paid")}
           disabled={loading !== null}
-          className="rounded-full bg-walnut-500 px-3 py-1.5 text-xs font-medium text-cream disabled:opacity-50"
+          className="rounded-full bg-walnut-500 px-3 py-1.5 text-xs font-medium text-walnut-50 disabled:opacity-50"
         >
           {loading === "paid" ? "Saving…" : "Mark as paid"}
         </button>

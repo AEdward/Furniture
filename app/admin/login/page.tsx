@@ -7,6 +7,7 @@ import Logo from "@/components/Logo";
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -20,7 +21,7 @@ function LoginForm() {
       const res = await fetch("/api/admin/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ password }),
+        body: JSON.stringify({ email, password }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -46,15 +47,26 @@ function LoginForm() {
         Admin sign in
       </h1>
       <p className="mt-1 text-sm text-ink/60">
-        Enter the admin password to continue.
+        Sign in with your admin email and password.
       </p>
 
       <label className="mt-6 flex flex-col gap-1.5 text-sm">
+        Email
+        <input
+          type="email"
+          required
+          autoFocus
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          className="rounded-lg border border-walnut-200 px-3 py-2.5 focus:border-walnut-400 focus:outline-none"
+        />
+      </label>
+
+      <label className="mt-4 flex flex-col gap-1.5 text-sm">
         Password
         <input
           type="password"
           required
-          autoFocus
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           className="rounded-lg border border-walnut-200 px-3 py-2.5 focus:border-walnut-400 focus:outline-none"

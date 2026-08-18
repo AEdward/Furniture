@@ -34,7 +34,7 @@ export const viewport: Viewport = {
   themeColor: "#1a1a1a",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
@@ -42,11 +42,19 @@ export default function RootLayout({
   // Reflects the storefront's selected language (see lib/i18n). The
   // admin panel isn't translated, so this cookie-based value is only
   // meaningfully accurate for (site) pages, not /admin ones.
-  const locale = getLocale();
+  const locale = await getLocale();
 
   return (
-    <html lang={locale}>
-      <body className="flex min-h-screen flex-col font-sans antialiased">
+    <html lang={locale} suppressHydrationWarning>
+      <body className="flex min-h-screen flex-col bg-cream font-sans text-ink antialiased">
+        {/* Sets data-theme from localStorage before first paint, so a
+            returning visitor's dark-mode choice never flashes light
+            first. See components/ThemeToggle.tsx and globals.css. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `try{var t=localStorage.getItem('theme');if(t==='light'||t==='dark'){document.documentElement.setAttribute('data-theme',t);}}catch(e){}`,
+          }}
+        />
         {children}
       </body>
     </html>

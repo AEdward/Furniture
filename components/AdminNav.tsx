@@ -1,7 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
+import ThemeToggle from "@/components/ThemeToggle";
 
 const links = [
   { href: "/admin", label: "Dashboard" },
@@ -10,12 +12,14 @@ const links = [
   { href: "/admin/pages", label: "Pages" },
   { href: "/admin/translations", label: "Translations" },
   { href: "/admin/analytics", label: "Analytics" },
+  { href: "/admin/users", label: "Users" },
   { href: "/admin/settings", label: "Settings" },
 ];
 
-export default function AdminNav() {
+export default function AdminNav({ currentUserName }: { currentUserName: string | null }) {
   const pathname = usePathname();
   const router = useRouter();
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   async function handleLogout() {
     await fetch("/api/admin/logout", { method: "POST" });
@@ -23,34 +27,75 @@ export default function AdminNav() {
     router.refresh();
   }
 
+  const isActive = (href: string) =>
+    href === "/admin" ? pathname === "/admin" : pathname.startsWith(href);
+
   return (
-    <header className="border-b border-walnut-100 bg-white/60">
-      <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-        <div className="flex items-center gap-8">
-          <Link href="/admin" className="font-serif text-lg font-semibold text-walnut-600">
+    <>
+      {/* Mobile top bar — sidebar itself is an off-canvas drawer below md */}
+      <header className="flex items-center justify-between border-b border-walnut-100 bg-white/60 px-4 py-3 md:hidden">
+        <Link href="/admin" className="font-serif text-lg font-semibold text-walnut-600">
+          Admin
+        </Link>
+        <div className="flex items-center gap-2">
+          <ThemeToggle />
+          <button
+            type="button"
+            onClick={() => setMobileOpen((v) => !v)}
+            aria-label="Toggle menu"
+            className="flex h-9 w-9 items-center justify-center rounded-lg border border-walnut-200 text-walnut-600"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" className="h-5 w-5">
+              {mobileOpen ? <path d="M6 6l12 12M18 6L6 18" /> : <path d="M4 7h16M4 12h16M4 17h16" />}
+            </svg>
+          </button>
+        </div>
+      </header>
+
+      {mobileOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-walnut-700/30 md:hidden"
+          onClick={() => setMobileOpen(false)}
+        />
+      )}
+
+      <aside
+        className={`fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r border-walnut-100 bg-white/95 backdrop-blur transition-transform duration-200 md:sticky md:top-0 md:z-auto md:h-screen md:translate-x-0 md:bg-white/60 md:backdrop-blur-none ${
+          mobileOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
+        <div className="flex items-center justify-between px-6 py-6">
+          <Link
+            href="/admin"
+            onClick={() => setMobileOpen(false)}
+            className="font-serif text-lg font-semibold text-walnut-600"
+          >
             Admin
           </Link>
-          <nav className="flex items-center gap-6">
-            {links.map((link) => {
-              const active =
-                link.href === "/admin"
-                  ? pathname === "/admin"
-                  : pathname.startsWith(link.href);
-              return (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className={`text-sm font-medium transition-colors ${
-                    active ? "text-walnut-600" : "text-ink/60 hover:text-walnut-600"
-                  }`}
-                >
-                  {link.label}
-                </Link>
-              );
-            })}
-          </nav>
+          <ThemeToggle />
         </div>
-        <div className="flex items-center gap-4">
+
+        <nav className="flex flex-1 flex-col gap-1 overflow-y-auto px-3">
+          {links.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              onClick={() => setMobileOpen(false)}
+              className={`rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
+                isActive(link.href)
+                  ? "bg-walnut-500 text-walnut-50"
+                  : "text-ink/70 hover:bg-walnut-100"
+              }`}
+            >
+              {link.label}
+            </Link>
+          ))}
+        </nav>
+
+        <div className="flex flex-col gap-2 border-t border-walnut-100 px-6 py-4">
+          {currentUserName && (
+            <p className="truncate text-xs text-ink/40">Signed in as {currentUserName}</p>
+          )}
           <Link href="/" className="text-sm text-ink/50 hover:text-walnut-600">
             View site ↗
           </Link>
@@ -62,7 +107,7 @@ export default function AdminNav() {
             Log out
           </button>
         </div>
-      </div>
-    </header>
+      </aside>
+    </>
   );
 }

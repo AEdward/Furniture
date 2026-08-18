@@ -5,7 +5,7 @@ import OrderStatusSelect from "@/components/OrderStatusSelect";
 import PaymentStatusActions from "@/components/PaymentStatusActions";
 
 const paymentStyles: Record<string, string> = {
-  paid: "bg-walnut-500 text-cream",
+  paid: "bg-walnut-500 text-walnut-50",
   pending: "bg-terracotta-100 text-terracotta-500",
   failed: "bg-danger-50 text-danger-500",
 };
@@ -69,7 +69,7 @@ export default async function AdminOrderDetailPage({
             </p>
             <p
               className={`mt-2 inline-block rounded-full px-2.5 py-1 text-xs font-medium capitalize ${
-                paymentStyles[order.paymentStatus] ?? "bg-walnut-100 text-walnut-600"
+                paymentStyles[order.paymentStatus] ?? "bg-walnut-100 text-walnut-700"
               }`}
             >
               {order.paymentStatus}

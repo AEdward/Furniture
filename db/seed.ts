@@ -1,3 +1,4 @@
+import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import dotenv from "dotenv";
@@ -132,6 +133,30 @@ async function main() {
     ]
   );
   console.log("Seeded About page.");
+
+  // admin_users isn't in the drop list above (see schema.sql) so accounts
+  // added via /admin/users survive a reseed — only bootstrap one if the
+  // table is completely empty (e.g. first run).
+  const [adminRows] = await conn.query<mysql.RowDataPacket[]>(
+    "SELECT COUNT(*) AS count FROM admin_users"
+  );
+  const adminCount = Number((adminRows as mysql.RowDataPacket[])[0]?.count ?? 0);
+  if (adminCount === 0) {
+    const bootstrapEmail = (process.env.ADMIN_EMAIL || "admin@example.com").trim().toLowerCase();
+    const bootstrapPassword = process.env.ADMIN_PASSWORD || "changeme";
+    const salt = crypto.randomBytes(16).toString("hex");
+    const derivedKey = await new Promise<Buffer>((resolve, reject) => {
+      crypto.scrypt(bootstrapPassword, salt, 64, (err, key) => (err ? reject(err) : resolve(key)));
+    });
+    const passwordHash = `${salt}:${derivedKey.toString("hex")}`;
+    await conn.query(
+      "INSERT INTO admin_users (name, email, password_hash) VALUES (?, ?, ?)",
+      ["Admin", bootstrapEmail, passwordHash]
+    );
+    console.log(`Seeded bootstrap admin: ${bootstrapEmail} (password from ADMIN_PASSWORD).`);
+  } else {
+    console.log(`Skipped admin bootstrap — ${adminCount} admin account(s) already exist.`);
+  }
 
   await conn.end();
 }

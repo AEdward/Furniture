@@ -441,7 +441,7 @@ export default function SettingsForm({ initial }: { initial: SiteSettings }) {
         <p className="rounded-lg bg-danger-50 px-4 py-3 text-sm text-danger-500">{error}</p>
       )}
       {saved && !error && (
-        <p className="rounded-lg bg-walnut-50 px-4 py-3 text-sm text-walnut-600">
+        <p className="rounded-lg bg-walnut-50 px-4 py-3 text-sm text-walnut-700">
           Settings saved.
         </p>
       )}

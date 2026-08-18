@@ -37,23 +37,23 @@ export default function ProductCard({ product }: { product: Product }) {
           )}
           <div className="absolute left-3 top-3 flex flex-col gap-1.5">
             {product.new && (
-              <span className="rounded-full bg-ink px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-cream">
+              <span className="rounded-full bg-walnut-700 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-walnut-50">
                 {t("New")}
               </span>
             )}
             {product.compareAtPrice && (
-              <span className="rounded-full bg-ink px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-terracotta-200">
+              <span className="rounded-full bg-walnut-700 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-terracotta-200">
                 {t("Sale")}
               </span>
             )}
             {madeToOrder && (
-              <span className="rounded-full bg-walnut-500 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-cream">
+              <span className="rounded-full bg-walnut-500 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-walnut-50">
                 {t("Made to Order")}
               </span>
             )}
           </div>
           {outOfStock && (
-            <div className="absolute inset-0 flex items-center justify-center bg-ink/40">
+            <div className="absolute inset-0 flex items-center justify-center bg-walnut-700/40">
               <span className="rounded-full bg-cream px-3 py-1 text-xs font-semibold uppercase tracking-wide text-ink">
                 {t("Sold out")}
               </span>

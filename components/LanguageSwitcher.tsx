@@ -6,7 +6,13 @@ import { useLocale, useT } from "@/lib/i18n/context";
 
 export type LanguageOption = { code: string; label: string };
 
-export default function LanguageSwitcher({ languages }: { languages: LanguageOption[] }) {
+export default function LanguageSwitcher({
+  enabled,
+  languages,
+}: {
+  enabled: boolean;
+  languages: LanguageOption[];
+}) {
   const locale = useLocale();
   const t = useT();
   const router = useRouter();
@@ -14,8 +20,10 @@ export default function LanguageSwitcher({ languages }: { languages: LanguageOpt
   const [open, setOpen] = useState(false);
 
   const options: LanguageOption[] = [{ code: "en", label: "English" }, ...languages];
-  // Nothing to switch between if no target languages are configured.
-  if (options.length <= 1) return null;
+  // Hidden entirely unless an admin has turned translation on and
+  // configured at least one language — otherwise English is the only
+  // option, so there's nothing to switch.
+  if (!enabled || options.length <= 1) return null;
 
   const current = options.find((o) => o.code === locale) ?? options[0];
 

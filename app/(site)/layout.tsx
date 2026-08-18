@@ -15,7 +15,7 @@ export default async function SiteLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const locale = getLocale();
+  const locale = await getLocale();
   const [settings, navPages, dict] = await Promise.all([
     getSettings(),
     getNavPages(),
@@ -34,7 +34,12 @@ export default async function SiteLayout({
     <I18nProvider locale={locale} dict={dict}>
       <CartProvider>
         <PageViewTracker />
-        <Header siteName={settings.name} navPages={navLinks} languages={settings.translation.languages} />
+        <Header
+          siteName={settings.name}
+          navPages={navLinks}
+          translationEnabled={settings.translation.enabled}
+          languages={settings.translation.languages}
+        />
         <main className="flex-1">{children}</main>
         <Footer settings={translatedSettings} />
       </CartProvider>

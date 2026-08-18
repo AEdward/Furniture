@@ -31,7 +31,7 @@ function VariantGroup({
             onClick={() => onSelect(opt)}
             className={`rounded-full border px-3.5 py-1.5 text-sm transition-colors ${
               selected === opt
-                ? "border-walnut-500 bg-walnut-500 text-cream"
+                ? "border-walnut-500 bg-walnut-500 text-walnut-50"
                 : "border-walnut-200 text-ink/70 hover:border-walnut-400"
             }`}
           >
@@ -108,7 +108,7 @@ export default function AddToCartPanel({ product }: { product: Product }) {
             setAdded(true);
             setTimeout(() => setAdded(false), 1600);
           }}
-          className="btn-primary flex-1 disabled:bg-ink/20"
+          className="btn-primary flex-1 disabled:bg-walnut-700/20"
         >
           {outOfStock ? t("Sold out") : added ? t("Added to cart ✓") : t("Add to cart")}
         </button>

@@ -69,7 +69,7 @@ export default async function AdminTranslationsPage({
             href={`/admin/translations?lang=${l.code}`}
             className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
               l.code === lang
-                ? "bg-walnut-500 text-cream"
+                ? "bg-walnut-500 text-walnut-50"
                 : "border border-walnut-200 text-walnut-600 hover:bg-walnut-100"
             }`}
           >

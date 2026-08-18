@@ -8,8 +8,15 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        cream: "#FAF8F4",
-        sand: "#EFEBE3",
+        // Theme-aware (see globals.css for the light/dark variable
+        // values) — page background, secondary background, and card
+        // surface. Everything else (walnut/terracotta/danger, and
+        // "ink" below) is a brand/semantic color and stays constant
+        // across themes by design: a badge or button shouldn't change
+        // color just because the page switched themes.
+        cream: "rgb(var(--color-cream) / <alpha-value>)",
+        sand: "rgb(var(--color-sand) / <alpha-value>)",
+        white: "rgb(var(--color-surface) / <alpha-value>)",
         // Zemenay brand: charcoal/black primary. Token kept as "walnut"
         // for compatibility with existing component classes, but the
         // scale itself is now near-black rather than wood-toned.
@@ -43,7 +50,12 @@ const config: Config = {
           400: "#C1663F",
           500: "#A85332",
         },
-        ink: "#1A1918",
+        // Theme-aware body text — flips light/dark with the page
+        // background above. Never used as a background for anything
+        // meant to stay a fixed dark chip (badges/overlays use the
+        // constant walnut-700 instead — see components using bg-ink
+        // historically, now bg-walnut-700).
+        ink: "rgb(var(--color-ink) / <alpha-value>)",
       },
       fontFamily: {
         serif: [

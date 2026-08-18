@@ -10,6 +10,9 @@ export async function POST(request: NextRequest) {
   }
   if (locale !== "en") {
     const settings = await getSettings();
+    if (!settings.translation.enabled) {
+      return NextResponse.json({ error: "Translation is turned off." }, { status: 400 });
+    }
     if (!settings.translation.languages.some((l) => l.code === locale)) {
       return NextResponse.json({ error: "That language isn't offered." }, { status: 400 });
     }

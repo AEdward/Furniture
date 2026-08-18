@@ -51,7 +51,7 @@ export default async function ProductPage({
   const productRaw = await getProductBySlug(params.slug);
   if (!productRaw) notFound();
 
-  const locale = getLocale();
+  const locale = await getLocale();
   const [relatedRaw, completeTheRoomRaw, settingsRaw, dict] = await Promise.all([
     getRelatedProducts(productRaw),
     getCompleteTheRoomProducts(productRaw),

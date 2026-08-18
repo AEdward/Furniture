@@ -134,3 +134,16 @@ CREATE TABLE IF NOT EXISTS translations (
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   UNIQUE KEY uniq_translations_hash (source_hash)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Named admin accounts (replaces the old single shared ADMIN_PASSWORD).
+-- Deliberately not dropped/reseeded by db/seed.ts like the demo content
+-- tables above — accounts added via /admin/users should survive a
+-- reseed after a schema change, not disappear.
+CREATE TABLE IF NOT EXISTS admin_users (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(191) NOT NULL,
+  email VARCHAR(191) NOT NULL,
+  password_hash VARCHAR(255) NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY uniq_admin_users_email (email)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

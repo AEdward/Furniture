@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { useCart } from "@/lib/cart-context";
 import Logo from "@/components/Logo";
 import LanguageSwitcher, { type LanguageOption } from "@/components/LanguageSwitcher";
+import ThemeToggle from "@/components/ThemeToggle";
 import { useT } from "@/lib/i18n/context";
 
 type NavLink = { href: string; label: string };
@@ -13,10 +14,12 @@ type NavLink = { href: string; label: string };
 export default function Header({
   siteName,
   navPages = [],
+  translationEnabled = false,
   languages = [],
 }: {
   siteName: string;
   navPages?: NavLink[];
+  translationEnabled?: boolean;
   languages?: LanguageOption[];
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -61,7 +64,8 @@ export default function Header({
         </nav>
 
         <div className="flex items-center gap-3">
-          <LanguageSwitcher languages={languages} />
+          <ThemeToggle />
+          <LanguageSwitcher enabled={translationEnabled} languages={languages} />
 
           <Link
             href="/cart"
@@ -82,7 +86,7 @@ export default function Header({
               <circle cx="17" cy="20" r="1.2" />
             </svg>
             {isReady && itemCount > 0 && (
-              <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-ink text-[11px] font-semibold text-terracotta-200">
+              <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-walnut-700 text-[11px] font-semibold text-terracotta-200">
                 {itemCount}
               </span>
             )}

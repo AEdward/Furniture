@@ -34,7 +34,7 @@ export default async function ShopPage({
     ? (searchParams.category as Category)
     : undefined;
 
-  const locale = getLocale();
+  const locale = await getLocale();
   const [productsRaw, dict] = await Promise.all([
     getAllProducts(activeCategory).then((p) => sortProducts(p, searchParams.sort)),
     getDictionary(locale),
@@ -57,7 +57,7 @@ export default async function ShopPage({
             href="/shop"
             className={`rounded-full border px-4 py-2 text-sm font-medium transition-colors ${
               !activeCategory
-                ? "border-walnut-500 bg-walnut-500 text-cream"
+                ? "border-walnut-500 bg-walnut-500 text-walnut-50"
                 : "border-walnut-200 text-ink/70 hover:border-walnut-400"
             }`}
           >
@@ -69,7 +69,7 @@ export default async function ShopPage({
               href={`/shop?category=${encodeURIComponent(category)}`}
               className={`rounded-full border px-4 py-2 text-sm font-medium transition-colors ${
                 activeCategory === category
-                  ? "border-walnut-500 bg-walnut-500 text-cream"
+                  ? "border-walnut-500 bg-walnut-500 text-walnut-50"
                   : "border-walnut-200 text-ink/70 hover:border-walnut-400"
               }`}
             >
