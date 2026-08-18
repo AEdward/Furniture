@@ -120,34 +120,46 @@ third-party account or API key required:
 
 ## Language
 
-A language switcher in the header (English / አማርኛ / Afaan Oromoo) lets a
-visitor view the storefront — fixed UI text, product
-names/descriptions/materials, site settings copy, and admin-authored
-Pages — in Amharic or Afaan Oromoo. Translation is manual, not a live API
-call: an admin fills in each string once in `/admin/translations`, and
-it's served from the database from then on. There's nothing to configure
-and no external service or cost — a string with no saved translation yet
-just falls back to English.
+A language switcher in the header lets a visitor view the storefront —
+fixed UI text, product names/descriptions/materials, site settings copy,
+and admin-authored Pages — in any language an admin has turned on. Both
+which languages exist and whether translation is automatic are
+admin-configurable; nothing is hardcoded.
 
-- **Setup**: none. No API key, no external service.
-- **Filling in translations**: `/admin/translations` lists every English
-  string the site can show — the fixed UI vocabulary (nav, buttons,
-  labels) plus any product/settings/page text that's actually been
-  viewed in that language — with a tab per language and a "needs
-  translation" filter. Edit the text and save; it's live immediately.
+- **Setup**: none required. Set `GOOGLE_TRANSLATE_API_KEY` (see
+  `.env.example`) to enable automatic translation — without it, the
+  switcher still appears (if languages are configured) and works, but
+  every string falls back to English (or whatever's been filled in by
+  hand) instead of calling the API.
+- **Turning translation on/off, and adding/removing languages**:
+  `/admin/settings` → "Language & translation". Languages are a simple
+  `code | Label` list (e.g. `am | አማርኛ`) — add a line to offer a new
+  language, remove one to stop offering it. A separate checkbox turns
+  automatic Google Translate on or off; existing manual translations
+  and the language list itself are unaffected either way.
+- **Filling in / correcting translations by hand**: `/admin/translations`
+  lists every English string the site can show — the fixed UI
+  vocabulary (nav, buttons, labels) plus any product/settings/page text
+  that's actually been viewed in that language — with a tab per
+  configured language and a "needs translation" filter. Edit the text
+  and save; it takes effect immediately and is never overwritten by
+  auto-translation afterward.
 - **How it works**: `lib/translate.ts` looks up each string in the
   `translations` table (keyed by a hash of language + source text). A
-  string with no row yet is registered as an untranslated placeholder
-  (so it shows up in the admin editor) and passed through as English —
-  a missing translation or DB hiccup never breaks the page. `lib/i18n/
-  ui-strings.ts` is the fixed-text manifest (nav, buttons, labels);
-  `lib/i18n/translate-content.ts` looks up DB content (products,
-  settings, page blocks) the same way at render time. The database
-  always stores the original English/whatever-the-admin-typed text,
-  never a translated copy — translated text lives only in the
-  `translations` table.
+  row counts as a real translation only if it differs from the English
+  source; anything else is sent to the Google Translate API (if
+  auto-translation is on and configured) the first time it's rendered,
+  or registered as an untranslated placeholder and passed through as
+  English otherwise — a missing translation, disabled API, or DB hiccup
+  never breaks the page. `lib/i18n/ui-strings.ts` is the fixed-text
+  manifest (nav, buttons, labels); `lib/i18n/translate-content.ts` looks
+  up DB content (products, settings, page blocks) the same way at
+  render time. The database always stores the original
+  English/whatever-the-admin-typed text, never a translated copy —
+  translated text lives only in the `translations` table.
 - **Selection**: stored in a `locale` cookie (`components/
-  LanguageSwitcher.tsx` → `POST /api/locale`), read server-side by
+  LanguageSwitcher.tsx` → `POST /api/locale`, which checks the locale
+  is `en` or a currently configured language), read server-side by
   `lib/i18n/get-locale.ts`.
 - **Scope**: the customer-facing storefront only — `/admin` stays
   English, since it's the shop owner's own tool, not customer-facing.

@@ -4,10 +4,11 @@ import { getPool } from "@/lib/db-pool";
 import { UI_STRINGS } from "@/lib/i18n/ui-strings";
 import type { TargetLang } from "@/lib/translate";
 
-// Admin-facing CRUD for the manual translation table (see lib/translate.ts
-// for the read-time lookup this feeds). Lets an admin fill in Amharic and
-// Oromo text for every English string the site can show — no external
-// translation API involved.
+// Admin-facing CRUD for the translation table (see lib/translate.ts for
+// the read-time lookup/auto-translate this feeds). Lets an admin fill
+// in or correct text for every English string the site can show, for
+// any admin-configured language — an edit here always sticks, even
+// when automatic Google Translate is on (see settings.translation).
 
 export type TranslationRow = {
   id: number;

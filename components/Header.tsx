@@ -5,7 +5,7 @@ import { useState } from "react";
 import { usePathname } from "next/navigation";
 import { useCart } from "@/lib/cart-context";
 import Logo from "@/components/Logo";
-import LanguageSwitcher from "@/components/LanguageSwitcher";
+import LanguageSwitcher, { type LanguageOption } from "@/components/LanguageSwitcher";
 import { useT } from "@/lib/i18n/context";
 
 type NavLink = { href: string; label: string };
@@ -13,9 +13,11 @@ type NavLink = { href: string; label: string };
 export default function Header({
   siteName,
   navPages = [],
+  languages = [],
 }: {
   siteName: string;
   navPages?: NavLink[];
+  languages?: LanguageOption[];
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const pathname = usePathname();
@@ -59,7 +61,7 @@ export default function Header({
         </nav>
 
         <div className="flex items-center gap-3">
-          <LanguageSwitcher />
+          <LanguageSwitcher languages={languages} />
 
           <Link
             href="/cart"

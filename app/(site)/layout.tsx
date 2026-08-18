@@ -34,7 +34,7 @@ export default async function SiteLayout({
     <I18nProvider locale={locale} dict={dict}>
       <CartProvider>
         <PageViewTracker />
-        <Header siteName={settings.name} navPages={navLinks} />
+        <Header siteName={settings.name} navPages={navLinks} languages={settings.translation.languages} />
         <main className="flex-1">{children}</main>
         <Footer settings={translatedSettings} />
       </CartProvider>

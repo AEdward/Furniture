@@ -1,19 +1,48 @@
 import crypto from "node:crypto";
+import { cache } from "react";
 import mysql from "mysql2/promise";
 import { getPool } from "@/lib/db-pool";
+import { getSettings } from "@/lib/db";
 
-// Manual translation, cached in the `translations` table. Amharic and
-// Oromo text is written by an admin (see /admin/translations), not
-// fetched from a live API — there's no external service to configure or
-// pay for. Every English string this site displays gets a row per
-// target language, keyed by a hash of (lang, source text). A string
-// with no admin-supplied translation yet reads as English pass-through,
-// and this module registers a placeholder row for it (translated_text =
-// source_text) so it shows up in the admin editor to fill in. A DB
-// outage never breaks the storefront — it just means everything reads
-// as English for that request.
+// Translation, cached in the `translations` table (keyed by a hash of
+// language + source text) so the same English string only needs
+// resolving once per language — after that, every page load reads the
+// cache. A row counts as genuinely translated only if its text differs
+// from the English source; a row equal to its source is either a fresh
+// placeholder or a string nobody has translated yet, and is retried
+// below rather than treated as a hit.
+//
+// Two things can fill in a real translation:
+//  1. An admin writes it directly at /admin/translations — this always
+//     wins going forward, since a genuine translation is never re-sent
+//     to the API.
+//  2. The Google Cloud Translation API translates it automatically the
+//     first time it's rendered in that language, if an admin has
+//     turned this on (settings.translation.enabled) and
+//     GOOGLE_TRANSLATE_API_KEY is configured.
+// If auto-translation is off, unconfigured, or the request fails, the
+// string is registered as an untranslated placeholder (so it still
+// shows up in the admin editor) and passed through as English — a
+// translation outage never breaks the storefront.
+//
+// Which languages exist at all (what LanguageSwitcher offers) is
+// admin-configurable too — see settings.translation.languages — so a
+// "target language" is just whatever string an admin typed as a code.
 
-export type TargetLang = "am" | "om";
+export type TargetLang = string;
+
+const GOOGLE_TRANSLATE_ENDPOINT = "https://translation.googleapis.com/language/translate2";
+
+// Deduped per request (this can be called many times per page: once
+// via getDictionary, then again for products/settings/page blocks).
+const getTranslationSettings = cache(async () => {
+  try {
+    const settings = await getSettings();
+    return settings.translation;
+  } catch {
+    return { enabled: false, languages: [] as { code: string; label: string }[] };
+  }
+});
 
 function hashFor(lang: string, text: string): string {
   return crypto.createHash("sha1").update(`${lang}::${text}`).digest("hex");
@@ -39,46 +68,106 @@ async function getCached(lang: string, texts: string[]): Promise<Map<string, str
     return result;
   } catch {
     // Cache table unreachable/missing — fall through to the English
-    // pass-through in translateBatch. A DB outage must never break the
-    // storefront.
+    // pass-through below. A DB outage must never break the storefront.
     return new Map();
   }
 }
 
-async function registerMissing(lang: string, texts: string[]): Promise<void> {
+async function storeCached(lang: string, pairs: [string, string][]): Promise<void> {
+  if (pairs.length === 0) return;
+  const db = getPool();
+  const values = pairs.map(([source, translated]) => [
+    hashFor(lang, source),
+    lang,
+    source,
+    translated,
+  ]);
+  await db.query(
+    `INSERT INTO translations (source_hash, lang, source_text, translated_text) VALUES ?
+     ON DUPLICATE KEY UPDATE translated_text = VALUES(translated_text)`,
+    [values]
+  );
+}
+
+async function registerPlaceholders(lang: string, texts: string[]): Promise<void> {
   if (texts.length === 0) return;
   try {
     const db = getPool();
     const values = texts.map((source) => [hashFor(lang, source), lang, source, source]);
-    // INSERT IGNORE: if a row already exists for this hash — whether
-    // it's still an untranslated placeholder or an admin has already
-    // filled it in — leave it alone. Never clobber a saved translation.
+    // INSERT IGNORE: never clobber a row that's already there, whether
+    // it's a genuine translation or an existing placeholder.
     await db.query(
       `INSERT IGNORE INTO translations (source_hash, lang, source_text, translated_text) VALUES ?`,
       [values]
     );
   } catch {
     // Best-effort — a failure here just means this string won't show up
-    // in the admin editor yet (it'll register on a later request).
-    // Never blocks rendering.
+    // in the admin editor yet. Never blocks rendering.
+  }
+}
+
+async function callGoogleTranslate(texts: string[], target: string): Promise<string[]> {
+  const apiKey = process.env.GOOGLE_TRANSLATE_API_KEY;
+  if (!apiKey) return texts;
+
+  try {
+    const res = await fetch(`${GOOGLE_TRANSLATE_ENDPOINT}?key=${apiKey}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ q: texts, target, source: "en", format: "text" }),
+    });
+    if (!res.ok) return texts;
+    const data = await res.json();
+    const translations = data?.data?.translations;
+    if (!Array.isArray(translations) || translations.length !== texts.length) return texts;
+    return translations.map((t: { translatedText?: string }, i: number) =>
+      typeof t.translatedText === "string" ? t.translatedText : texts[i]
+    );
+  } catch {
+    return texts;
   }
 }
 
 /**
- * Resolves a batch of English strings to the target language using the
- * DB-backed manual translation table. Any string with no saved
- * translation yet is registered as a placeholder (for the admin editor)
- * and passed through as English. Returns a same-length array aligned
- * with the input.
+ * Resolves a batch of English strings to the target language. Cached
+ * hits (genuine translations, whether admin-written or API-translated)
+ * are returned as-is. Anything missing is sent to the Google Translate
+ * API if auto-translation is enabled and configured; otherwise (or for
+ * whatever the API doesn't resolve) it's registered as an untranslated
+ * placeholder and passed through as English. Returns a same-length
+ * array aligned with the input.
  */
 export async function translateBatch(texts: string[], target: TargetLang): Promise<string[]> {
   const unique = Array.from(new Set(texts.filter((t) => t && t.trim())));
   if (unique.length === 0) return texts;
 
   const cached = await getCached(target, unique);
-  const missing = unique.filter((t) => !cached.has(t));
-  if (missing.length > 0) {
-    await registerMissing(target, missing);
+  const untranslated = unique.filter((t) => {
+    const hit = cached.get(t);
+    return hit === undefined || hit === t;
+  });
+
+  if (untranslated.length > 0) {
+    const { enabled } = await getTranslationSettings();
+    if (enabled) {
+      const translated = await callGoogleTranslate(untranslated, target);
+      const newPairs: [string, string][] = [];
+      const stillMissing: string[] = [];
+      untranslated.forEach((source, i) => {
+        const translatedText = translated[i];
+        cached.set(source, translatedText);
+        if (translatedText !== source) {
+          newPairs.push([source, translatedText]);
+        } else {
+          stillMissing.push(source);
+        }
+      });
+      await storeCached(target, newPairs).catch(() => {});
+      await registerPlaceholders(target, stillMissing);
+    } else {
+      await registerPlaceholders(target, untranslated);
+      untranslated.forEach((t) => cached.set(t, t));
+    }
   }
 
   return texts.map((t) => (t && t.trim() ? cached.get(t) ?? t : t));

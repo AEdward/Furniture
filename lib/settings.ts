@@ -71,6 +71,11 @@ export type SiteSettings = {
     branch: string;
     instructions: string;
   };
+
+  translation: {
+    enabled: boolean;
+    languages: { code: string; label: string }[];
+  };
 };
 
 export const DEFAULT_SETTINGS: SiteSettings = {
@@ -157,6 +162,14 @@ export const DEFAULT_SETTINGS: SiteSettings = {
     instructions:
       "Please include your order number as the transfer reference, then send a screenshot of the receipt to our phone number so we can confirm and start preparing your order.",
   },
+
+  translation: {
+    enabled: true,
+    languages: [
+      { code: "am", label: "አማርኛ" },
+      { code: "om", label: "Afaan Oromoo" },
+    ],
+  },
 };
 
 export function mergeSettings(partial: Partial<SiteSettings>): SiteSettings {
@@ -170,5 +183,6 @@ export function mergeSettings(partial: Partial<SiteSettings>): SiteSettings {
     returns: { ...DEFAULT_SETTINGS.returns, ...partial.returns },
     contact: { ...DEFAULT_SETTINGS.contact, ...partial.contact },
     bankDetails: { ...DEFAULT_SETTINGS.bankDetails, ...partial.bankDetails },
+    translation: { ...DEFAULT_SETTINGS.translation, ...partial.translation },
   };
 }

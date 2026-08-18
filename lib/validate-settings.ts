@@ -22,6 +22,38 @@ function list(v: unknown): string[] {
   return [];
 }
 
+const LANGUAGE_CODE_PATTERN = /^[a-z]{2,3}(-[A-Z]{2})?$/;
+
+// "code | Label" per line, e.g. "am | አማርኛ"
+function parseLanguages(v: unknown): { code: string; label: string }[] {
+  const lines = list(v);
+  const seen = new Set<string>();
+  const result: { code: string; label: string }[] = [];
+  for (const line of lines) {
+    const [codeRaw, label] = line.split("|").map((s) => s.trim());
+    const code = (codeRaw || "").toLowerCase();
+    if (!code || !label) {
+      throw new SettingsValidationError(
+        `Languages must be formatted as "code | Label" — got "${line}".`
+      );
+    }
+    if (code === "en") {
+      throw new SettingsValidationError(
+        `"en" is reserved for English (the site's source language) and can't be added as a target language.`
+      );
+    }
+    if (!LANGUAGE_CODE_PATTERN.test(code)) {
+      throw new SettingsValidationError(
+        `"${code}" isn't a valid language code — use e.g. "am", "fr", "pt-BR".`
+      );
+    }
+    if (seen.has(code)) continue;
+    seen.add(code);
+    result.push({ code, label });
+  }
+  return result;
+}
+
 // "Part name | years" per line
 function parseTiers(v: unknown): { part: string; years: number }[] {
   const lines = list(v);
@@ -117,6 +149,11 @@ export function parseSettingsInput(body: unknown): Partial<SiteSettings> {
       accountNumber: str((b.bankDetails as Record<string, unknown>)?.accountNumber, "Account number", false),
       branch: str((b.bankDetails as Record<string, unknown>)?.branch, "Branch", false),
       instructions: str((b.bankDetails as Record<string, unknown>)?.instructions, "Bank transfer instructions", false),
+    },
+
+    translation: {
+      enabled: Boolean((b.translation as Record<string, unknown>)?.enabled),
+      languages: parseLanguages((b.translation as Record<string, unknown>)?.languages),
     },
   };
 }

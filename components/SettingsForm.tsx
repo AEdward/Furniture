@@ -71,6 +71,11 @@ export default function SettingsForm({ initial }: { initial: SiteSettings }) {
   const [contactHoursWeekday, setContactHoursWeekday] = useState(initial.contact.hoursWeekday);
   const [contactHoursWeekend, setContactHoursWeekend] = useState(initial.contact.hoursWeekend);
 
+  const [translationEnabled, setTranslationEnabled] = useState(initial.translation.enabled);
+  const [translationLanguages, setTranslationLanguages] = useState(
+    initial.translation.languages.map((l) => `${l.code} | ${l.label}`).join("\n")
+  );
+
   const [bankName, setBankName] = useState(initial.bankDetails.bankName);
   const [bankAccountName, setBankAccountName] = useState(initial.bankDetails.accountName);
   const [bankAccountNumber, setBankAccountNumber] = useState(initial.bankDetails.accountNumber);
@@ -145,6 +150,10 @@ export default function SettingsForm({ initial }: { initial: SiteSettings }) {
         accountNumber: bankAccountNumber,
         branch: bankBranch,
         instructions: bankInstructions,
+      },
+      translation: {
+        enabled: translationEnabled,
+        languages: translationLanguages,
       },
     };
 
@@ -347,6 +356,32 @@ export default function SettingsForm({ initial }: { initial: SiteSettings }) {
         <label className={labelClass}>
           One per line
           <textarea rows={4} value={paymentMethods} onChange={(e) => setPaymentMethods(e.target.value)} className={`${inputClass} resize-none`} />
+        </label>
+      </div>
+
+      <div className={sectionClass}>
+        <h2 className={sectionTitleClass}>Language &amp; translation</h2>
+        <p className="text-xs text-ink/50">
+          Manage which languages the storefront's language switcher offers. Fill in the actual
+          translated text at <a href="/admin/translations" className="font-medium text-walnut-600 hover:underline">Translations</a>.
+        </p>
+        <label className="flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            checked={translationEnabled}
+            onChange={(e) => setTranslationEnabled(e.target.checked)}
+          />
+          Automatically translate new text with Google Translate
+        </label>
+        <label className={labelClass}>
+          Languages — one per line, formatted as "code | Label" (e.g. "am | አማርኛ")
+          <textarea
+            rows={4}
+            value={translationLanguages}
+            onChange={(e) => setTranslationLanguages(e.target.value)}
+            className={`${inputClass} resize-none font-mono text-xs`}
+            placeholder="am | አማርኛ"
+          />
         </label>
       </div>
 
