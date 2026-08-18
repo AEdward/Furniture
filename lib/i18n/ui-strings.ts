@@ -39,12 +39,10 @@ export const UI_STRINGS = [
   "Every piece is built to last and backed to match.",
 
   // Product categories (fixed vocabulary — see lib/products.ts Category type)
-  "Doors",
-  "Kitchen Cabinets",
-  "Closets",
-  "Sofas",
-  "Dining Tables & Chairs",
-  "Beds",
+  "Living Room",
+  "Bedroom",
+  "Dining",
+  "Office",
 
   // Shop listing
   "All",

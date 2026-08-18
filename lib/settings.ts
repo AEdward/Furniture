@@ -81,18 +81,18 @@ export type SiteSettings = {
 export const DEFAULT_SETTINGS: SiteSettings = {
   name: "Golden Wood Furniture",
   shortName: "G",
-  tagline: "Premium furniture, doors, cabinets & closets, built to last.",
+  tagline: "Crafting Comfort & Elegance",
   description:
-    "Golden Wood Furniture — solid materials, honest prices, and doors, kitchen cabinets, closets, sofas, dining sets, and beds built to last a lifetime.",
-  email: "hello@goldenwoodfurniture.com",
-  phone: "(555) 555-0148",
-  address: ["Addis Ababa, Ethiopia"],
+    "Golden Wood Furniture — high-quality wooden furniture designed for modern homes. Living room, bedroom, dining, and office pieces crafted with attention to detail and quality materials.",
+  email: "Goldenwood.fur@gmail.com",
+  phone: "+251 91 162 1188",
+  address: ["Gurd Shola, next to Commercial Bank of Ethiopia", "In front of Top Ten Hotel, Addis Ababa, Ethiopia"],
   freeShippingThreshold: 50000,
 
   hero: {
-    heading: "Furniture, doors, and cabinetry built to fit your space.",
+    heading: "High-quality wooden furniture for modern homes.",
     subheading:
-      "Premium materials, honest prices, and craftsmanship built to be lived with — not just looked at. Browse the collection or ask about a custom build.",
+      "Crafting comfort and elegance for living rooms, bedrooms, dining spaces, and offices — combining modern design, durability, and comfort in every piece.",
     imageUrl: null,
     ctaLabel: "Shop the collection",
     ctaHref: "/shop",

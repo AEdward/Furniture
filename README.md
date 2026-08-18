@@ -1,8 +1,7 @@
 # Golden Wood Furniture
 
-A site for a custom furniture and joinery business — doors, kitchen
-cabinets, closets, sofas, dining tables & chairs, and beds — with a real
-catalog, cart, and checkout, plus a genuine
+A site for a wooden furniture business — living room, bedroom, dining,
+and office furniture — with a real catalog, cart, and checkout, plus a genuine
 content-management layer: everything is admin-editable and stored in
 MySQL, not baked into code. Built from a reusable template; `main` stays
 the generic, unbranded version for other clients. This same template is
@@ -17,11 +16,13 @@ The logo, mark, and full favicon/app-icon set are in place
 `public/android-chrome-*.png`, `public/site.webmanifest`), wired up via
 `app/layout.tsx` metadata and `components/Logo.tsx`.
 
-**Still placeholder:** contact email/phone (editable at `/admin/settings`,
-just not confirmed real numbers yet). The product catalog is a
-representative starter set (28 products across doors, kitchen cabinets,
-closets, sofas, dining tables & chairs, and beds), not Golden Wood's
-actual current inventory — replace it product-by-product in
+Company identity (name, tagline, contact info, address) and the product
+category taxonomy (Living Room, Bedroom, Dining, Office) are sourced from
+Golden Wood's own company profile. **Still placeholder:** the product
+catalog is a representative starter set (27 products across those four
+categories, matching the item types Golden Wood lists) with invented
+pricing and no real product photography — not Golden Wood's actual
+current inventory or prices — replace it product-by-product in
 `/admin/products` or wholesale via `lib/products.ts` + `npm run seed`.
 
 ## Stack

@@ -36,12 +36,10 @@ export default function Footer({ settings }: { settings: SiteSettings }) {
             {t("Shop")}
           </p>
           <ul className="mt-4 space-y-2.5 text-sm text-walnut-100/80">
-            <li><Link href="/shop?category=Doors" className="hover:text-walnut-50">{t("Doors")}</Link></li>
-            <li><Link href="/shop?category=Kitchen+Cabinets" className="hover:text-walnut-50">{t("Kitchen Cabinets")}</Link></li>
-            <li><Link href="/shop?category=Closets" className="hover:text-walnut-50">{t("Closets")}</Link></li>
-            <li><Link href="/shop?category=Sofas" className="hover:text-walnut-50">{t("Sofas")}</Link></li>
-            <li><Link href="/shop?category=Dining+Tables+%26+Chairs" className="hover:text-walnut-50">{t("Dining Tables & Chairs")}</Link></li>
-            <li><Link href="/shop?category=Beds" className="hover:text-walnut-50">{t("Beds")}</Link></li>
+            <li><Link href="/shop?category=Living+Room" className="hover:text-walnut-50">{t("Living Room")}</Link></li>
+            <li><Link href="/shop?category=Bedroom" className="hover:text-walnut-50">{t("Bedroom")}</Link></li>
+            <li><Link href="/shop?category=Dining" className="hover:text-walnut-50">{t("Dining")}</Link></li>
+            <li><Link href="/shop?category=Office" className="hover:text-walnut-50">{t("Office")}</Link></li>
           </ul>
         </div>
 

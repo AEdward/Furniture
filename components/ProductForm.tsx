@@ -45,7 +45,7 @@ export default function ProductForm({ mode, initial }: Props) {
   );
   const [description, setDescription] = useState(initial?.description ?? "");
   const [details, setDetails] = useState(initial?.details.join("\n") ?? "");
-  const [icon, setIcon] = useState<IconName>(initial?.icon ?? "single-door");
+  const [icon, setIcon] = useState<IconName>(initial?.icon ?? "sofa");
   const [gradient, setGradient] = useState(initial?.gradient ?? gradientOptions[0]);
   const [imageUrl, setImageUrl] = useState<string | null>(initial?.imageUrl ?? null);
   const [stock, setStock] = useState(initial ? String(initial.stock) : "0");

@@ -12,12 +12,10 @@ import { translateProducts, translateSettings } from "@/lib/i18n/translate-conte
 export const dynamic = "force-dynamic";
 
 const categoryIcon: Record<(typeof categories)[number], IconName> = {
-  Doors: "single-door",
-  "Kitchen Cabinets": "base-cabinet",
-  Closets: "wardrobe",
-  Sofas: "sofa",
-  "Dining Tables & Chairs": "dining-table",
-  Beds: "bed",
+  "Living Room": "sofa",
+  Bedroom: "bed",
+  Dining: "dining-table",
+  Office: "office-desk",
 };
 
 export default async function HomePage() {

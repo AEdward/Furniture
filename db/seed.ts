@@ -13,9 +13,9 @@ import type { PageBlock } from "../lib/pages";
 const ABOUT_PAGE_BLOCKS: PageBlock[] = [
   {
     type: "hero",
-    heading: "Built by hand, fitted to your space.",
+    heading: "Crafting Comfort & Elegance",
     subheading:
-      "Golden Wood Furniture builds custom doors, kitchen cabinets, closets, sofas, dining sets, and beds for homes across Addis Ababa.",
+      "Golden Wood Furniture designs and builds high-quality wooden furniture for living rooms, bedrooms, dining spaces, and offices across Addis Ababa.",
     imageUrl: null,
     ctaLabel: "Shop the collection",
     ctaHref: "/shop",
@@ -23,12 +23,12 @@ const ABOUT_PAGE_BLOCKS: PageBlock[] = [
   {
     type: "richtext",
     heading: "Our story",
-    body: "Golden Wood Furniture started as a small joinery workshop and grew into a name people trust for doors, kitchen cabinets, closets, sofas, dining sets, and beds that are actually built to fit. Every piece starts with a measurement of your space, not a factory template.\n\nWe work in solid wood, engineered cores, and steel where it matters — fire-rated doors, load-bearing cabinetry, hand-built upholstery, hardware that holds up to daily use.",
+    body: "Golden Wood Furniture is a furniture company based in Addis Ababa, Ethiopia, specializing in the design and production of high-quality wooden furniture for homes and offices. We focus on combining modern design, durability, and comfort to create furniture that enhances living and working spaces.\n\nOur vision is to become one of the most trusted furniture brands in Ethiopia. Our mission is to provide high-quality furniture that combines beauty, comfort, and durability — built on quality craftsmanship, customer satisfaction, innovation in design, and honest business practices.",
   },
   {
     type: "imagetext",
-    heading: "How we build",
-    body: "Every custom piece is measured on-site, built in our workshop, and installed by the same team that built it. No middlemen, no guesswork — just a piece that fits the opening you actually have.",
+    heading: "What we build",
+    body: "From sofas and center tables to beds, wardrobes, dining sets, and office desks and chairs, every piece is crafted with attention to detail and quality materials — reliable craftsmanship that meets the needs of customers in Addis Ababa and beyond.",
     imageUrl: null,
     imagePosition: "right",
   },
@@ -125,7 +125,7 @@ async function main() {
     [
       "about",
       "Our Story",
-      "How Golden Wood Furniture builds custom doors, kitchen cabinets, closets, sofas, dining sets, and beds.",
+      "How Golden Wood Furniture crafts living room, bedroom, dining, and office furniture in Addis Ababa.",
       JSON.stringify(ABOUT_PAGE_BLOCKS),
       1,
       "About",

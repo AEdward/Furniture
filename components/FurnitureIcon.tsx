@@ -1,29 +1,6 @@
 import type { IconName } from "@/lib/products";
 
 const paths: Record<IconName, JSX.Element> = {
-  "single-door": (
-    <>
-      <rect x="6" y="2" width="12" height="20" rx="1" />
-      <circle cx="15.2" cy="12" r="0.9" fill="currentColor" stroke="none" />
-      <path d="M6 2v20" />
-    </>
-  ),
-  "double-door": (
-    <>
-      <rect x="2.5" y="2" width="9" height="20" rx="1" />
-      <rect x="12.5" y="2" width="9" height="20" rx="1" />
-      <circle cx="10.3" cy="12" r="0.9" fill="currentColor" stroke="none" />
-      <circle cx="13.7" cy="12" r="0.9" fill="currentColor" stroke="none" />
-    </>
-  ),
-  "sliding-door": (
-    <>
-      <path d="M3 3h14v18H3z" />
-      <path d="M7 3h14v18H7z" />
-      <path d="M9.5 21v2M9.5 1v2" />
-      <path d="M17 12l3 0M18.3 10.5 20 12l-1.7 1.5" />
-    </>
-  ),
   "base-cabinet": (
     <>
       <path d="M3 6h18" />
@@ -50,13 +27,6 @@ const paths: Record<IconName, JSX.Element> = {
       <path d="M6 14v5M18 14v5" />
       <path d="M7 8.5h4M7 11h4" />
       <path d="M14 8.5h4M14 11h4" />
-    </>
-  ),
-  "pantry-cabinet": (
-    <>
-      <rect x="5" y="2" width="14" height="20" rx="1" />
-      <circle cx="16.5" cy="12" r="0.9" fill="currentColor" stroke="none" />
-      <path d="M8 6h4M8 10h4M8 14h4M8 18h4" />
     </>
   ),
   wardrobe: (
@@ -114,12 +84,54 @@ const paths: Record<IconName, JSX.Element> = {
       <path d="M4 17v3M20 17v3" />
     </>
   ),
-  "bunk-bed": (
+  "center-table": (
     <>
-      <rect x="2" y="3" width="18" height="4" rx="0.5" />
-      <rect x="2" y="11" width="18" height="4" rx="0.5" />
-      <path d="M3 7v12M20 3v16" />
-      <path d="M3 19h1M19 19h2" />
+      <rect x="2" y="9" width="20" height="2.2" rx="1" />
+      <rect x="5" y="15" width="14" height="1.6" rx="0.6" />
+      <path d="M4.5 11.2v9M19.5 11.2v9" />
+    </>
+  ),
+  "tv-stand": (
+    <>
+      <rect x="1.5" y="9" width="21" height="7" rx="1" />
+      <path d="M8 9v7M16 9v7" />
+      <circle cx="4.5" cy="12.5" r="0.6" fill="currentColor" stroke="none" />
+      <circle cx="19.5" cy="12.5" r="0.6" fill="currentColor" stroke="none" />
+      <path d="M4 16v2.5M20 16v2.5" />
+    </>
+  ),
+  "wall-drawer": (
+    <>
+      <rect x="2" y="6" width="20" height="6" rx="1" />
+      <path d="M2 9h20" />
+      <circle cx="7" cy="9" r="0.6" fill="currentColor" stroke="none" />
+      <circle cx="17" cy="9" r="0.6" fill="currentColor" stroke="none" />
+      <path d="M9 2.5h6" />
+    </>
+  ),
+  nightstand: (
+    <>
+      <rect x="5" y="3" width="14" height="16" rx="1" />
+      <path d="M5 8h14M5 13h14" />
+      <circle cx="12" cy="5.5" r="0.6" fill="currentColor" stroke="none" />
+      <circle cx="12" cy="10.5" r="0.6" fill="currentColor" stroke="none" />
+      <path d="M7 19v2M17 19v2" />
+    </>
+  ),
+  "office-desk": (
+    <>
+      <rect x="2" y="6" width="20" height="2.2" rx="0.5" />
+      <path d="M4 8.2v11M20 8.2v11" />
+      <rect x="14.5" y="8.2" width="5.5" height="6" rx="0.5" />
+      <circle cx="17" cy="10.5" r="0.5" fill="currentColor" stroke="none" />
+    </>
+  ),
+  "office-chair": (
+    <>
+      <rect x="6" y="2" width="12" height="9" rx="1.5" />
+      <rect x="7" y="12" width="10" height="3.2" rx="1" />
+      <path d="M12 15.2v4" />
+      <path d="M8 22l4-2.8 4 2.8" />
     </>
   ),
 };
