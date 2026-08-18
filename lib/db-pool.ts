@@ -20,7 +20,7 @@ export function getPool(): mysql.Pool {
       port: Number(process.env.DB_PORT) || 3306,
       user: process.env.DB_USER || "furniture_app",
       password: process.env.DB_PASSWORD || "",
-      database: process.env.DB_NAME || "zemenay",
+      database: process.env.DB_NAME || "goldenwood",
       waitForConnections: true,
       // Kept modest on purpose: this app never needs many concurrent
       // connections, and a small limit caps how much damage an orphaned

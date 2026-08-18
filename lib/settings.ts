@@ -79,12 +79,12 @@ export type SiteSettings = {
 };
 
 export const DEFAULT_SETTINGS: SiteSettings = {
-  name: "Zemenay Furniture",
-  shortName: "Z",
-  tagline: "Custom furniture, doors, cabinets & closets, built to fit.",
+  name: "Golden Wood Furniture",
+  shortName: "G",
+  tagline: "Premium furniture, doors, cabinets & closets, built to last.",
   description:
-    "Zemenay Furniture — solid materials, honest prices, and doors, kitchen cabinets, closets, sofas, dining sets, and beds built to last a lifetime.",
-  email: "hello@zemenayfurniture.com",
+    "Golden Wood Furniture — solid materials, honest prices, and doors, kitchen cabinets, closets, sofas, dining sets, and beds built to last a lifetime.",
+  email: "hello@goldenwoodfurniture.com",
   phone: "(555) 555-0148",
   address: ["Addis Ababa, Ethiopia"],
   freeShippingThreshold: 50000,
@@ -92,7 +92,7 @@ export const DEFAULT_SETTINGS: SiteSettings = {
   hero: {
     heading: "Furniture, doors, and cabinetry built to fit your space.",
     subheading:
-      "Solid materials, honest prices, and craftsmanship built to be lived with — not just looked at. Browse the collection or ask about a custom build.",
+      "Premium materials, honest prices, and craftsmanship built to be lived with — not just looked at. Browse the collection or ask about a custom build.",
     imageUrl: null,
     ctaLabel: "Shop the collection",
     ctaHref: "/shop",
@@ -156,7 +156,7 @@ export const DEFAULT_SETTINGS: SiteSettings = {
 
   bankDetails: {
     bankName: "Commercial Bank of Ethiopia",
-    accountName: "Zemenay Furniture PLC",
+    accountName: "Golden Wood Furniture PLC",
     accountNumber: "1000000000000",
     branch: "Bole Branch",
     instructions:

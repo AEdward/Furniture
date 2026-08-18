@@ -13,11 +13,9 @@ export default function Footer({ settings }: { settings: SiteSettings }) {
       <div className="container-shop grid gap-10 py-14 md:grid-cols-4">
         <div>
           <span className="inline-flex items-center gap-2.5">
-            {/* Light chip behind the mark — its strokes are dark and
-                would disappear directly on this dark footer background. */}
-            <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-walnut-50 p-1">
+            <span className="flex h-9 w-9 items-center justify-center">
               <Image
-                src="/brand/zemenay-mark-transparent.png"
+                src="/brand/golden-wood-mark-transparent.png"
                 alt=""
                 width={352}
                 height={352}

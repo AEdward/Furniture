@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
       txRef,
       callbackUrl: `${baseUrl}/api/webhooks/chapa`,
       returnUrl: `${baseUrl}/order-confirmation/${order.id}?tx_ref=${encodeURIComponent(txRef)}`,
-      title: "Zemenay Order",
+      title: "Golden Wood Order",
       description: `Order ${order.id}`,
     });
 

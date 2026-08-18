@@ -3,7 +3,7 @@ import Image from "next/image";
 export default function Logo({
   className,
   variant = "horizontal",
-  name = "Zemenay Furniture",
+  name = "Golden Wood Furniture",
 }: {
   className?: string;
   variant?: "horizontal" | "stacked";
@@ -13,10 +13,10 @@ export default function Logo({
     return (
       <span className={`inline-flex items-center justify-center ${className ?? ""}`}>
         <Image
-          src="/brand/zemenay-logo-full-transparent.png"
+          src="/brand/golden-wood-logo-full-transparent.png"
           alt={name}
-          width={645}
-          height={452}
+          width={900}
+          height={560}
           priority
           className="h-32 w-auto"
         />
@@ -27,7 +27,7 @@ export default function Logo({
   return (
     <span className={`inline-flex items-center gap-2.5 ${className ?? ""}`}>
       <Image
-        src="/brand/zemenay-mark-transparent.png"
+        src="/brand/golden-wood-mark-transparent.png"
         alt=""
         width={352}
         height={352}

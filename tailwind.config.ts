@@ -17,9 +17,9 @@ const config: Config = {
         cream: "rgb(var(--color-cream) / <alpha-value>)",
         sand: "rgb(var(--color-sand) / <alpha-value>)",
         white: "rgb(var(--color-surface) / <alpha-value>)",
-        // Zemenay brand: charcoal/black primary. Token kept as "walnut"
-        // for compatibility with existing component classes, but the
-        // scale itself is now near-black rather than wood-toned.
+        // Golden Wood brand: charcoal/black primary. Token kept as
+        // "walnut" for compatibility with existing component classes,
+        // but the scale itself is now near-black rather than wood-toned.
         walnut: {
           50: "#F5F4F2",
           100: "#E7E4DF",
@@ -32,7 +32,7 @@ const config: Config = {
           800: "#0D0B0A",
           900: "#060505",
         },
-        // Gold accent, matching the logo's Z monogram.
+        // Gold accent, matching the logo's sparkle mark.
         terracotta: {
           50: "#FBF6E9",
           100: "#F3E4B8",

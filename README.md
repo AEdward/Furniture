@@ -1,15 +1,18 @@
-# Zemenay Furniture
+# Golden Wood Furniture
 
 A site for a custom furniture and joinery business — doors, kitchen
 cabinets, closets, sofas, dining tables & chairs, and beds — with a real
 catalog, cart, and checkout, plus a genuine
 content-management layer: everything is admin-editable and stored in
 MySQL, not baked into code. Built from a reusable template; `main` stays
-the generic, unbranded version for other clients, and this branch
-(`company/zemenay-furniture`) is rebranded and re-catalogued for
-**Zemenay Furniture** specifically.
+the generic, unbranded version for other clients. This same template is
+also deployed as **Zemenay Furniture** (`company/zemenay-furniture`) —
+a separate business, same engine — and this branch
+(`company/golden-wood-furniture`) is rebranded and re-catalogued for
+**Golden Wood Furniture** specifically. Each company branch has its own
+database (see `DB_NAME` below) so the two never share data.
 
-The real logo, mark, and full favicon/app-icon set are in place
+The logo, mark, and full favicon/app-icon set are in place
 (`public/brand/`, `public/favicon*`, `public/apple-touch-icon.png`,
 `public/android-chrome-*.png`, `public/site.webmanifest`), wired up via
 `app/layout.tsx` metadata and `components/Logo.tsx`.
@@ -17,9 +20,9 @@ The real logo, mark, and full favicon/app-icon set are in place
 **Still placeholder:** contact email/phone (editable at `/admin/settings`,
 just not confirmed real numbers yet). The product catalog is a
 representative starter set (28 products across doors, kitchen cabinets,
-closets, sofas, dining tables & chairs, and beds), not Zemenay's actual
-current inventory — replace it product-by-product in `/admin/products`
-or wholesale via `lib/products.ts` + `npm run seed`.
+closets, sofas, dining tables & chairs, and beds), not Golden Wood's
+actual current inventory — replace it product-by-product in
+`/admin/products` or wholesale via `lib/products.ts` + `npm run seed`.
 
 ## Stack
 
@@ -41,7 +44,7 @@ You need [Node.js](https://nodejs.org) 18+ and a MySQL-compatible server
    docker compose up -d
    ```
 
-   This starts MySQL 8.4 on `localhost:3306` with a `zemenay` database
+   This starts MySQL 8.4 on `localhost:3306` with a `goldenwood` database
    already created.
 
 2. Install dependencies and configure environment variables:
