@@ -19,6 +19,7 @@ type ProductRow = {
   icon: string;
   gradient: string;
   image_url: string | null;
+  images_json: string;
   featured: number;
   is_new: number;
   stock: number;
@@ -57,6 +58,7 @@ function rowToProduct(row: ProductRow): Product {
     icon: row.icon as Product["icon"],
     gradient: row.gradient,
     imageUrl: row.image_url ?? undefined,
+    images: row.images_json ? JSON.parse(row.images_json) : [],
     featured: !!row.featured,
     new: !!row.is_new,
     stock: row.stock,
@@ -599,6 +601,7 @@ export type ProductInput = {
   icon: IconName;
   gradient: string;
   imageUrl?: string | null;
+  images?: string[];
   featured: boolean;
   new: boolean;
   stock: number;
@@ -660,10 +663,11 @@ function productInputParams(input: ProductInput): unknown[] {
     JSON.stringify(input.colors),
     JSON.stringify(input.materialOptions),
     JSON.stringify(input.woodOptions),
+    JSON.stringify(input.images ?? []),
   ];
 }
 
-const PRODUCT_INSERT_PLACEHOLDERS = Array(32).fill("?").join(", ");
+const PRODUCT_INSERT_PLACEHOLDERS = Array(33).fill("?").join(", ");
 
 export async function createProduct(input: ProductInput): Promise<Product> {
   const db = getPool();
@@ -682,7 +686,7 @@ export async function createProduct(input: ProductInput): Promise<Product> {
        sku, availability, lead_time_days, rating, review_count,
        width_cm, depth_cm, height_cm, seat_height_cm, seat_depth_cm, arm_height_cm, leg_height_cm, weight_kg,
        frame_material, upholstery_material, legs_material, foam_density,
-       colors_json, material_options_json, wood_options_json)
+       colors_json, material_options_json, wood_options_json, images_json)
      VALUES (?, ?, ${PRODUCT_INSERT_PLACEHOLDERS})`,
     [input.slug, input.slug, ...productInputParams(input)]
   );
@@ -716,7 +720,7 @@ export async function updateProduct(
       width_cm = ?, depth_cm = ?, height_cm = ?, seat_height_cm = ?, seat_depth_cm = ?,
       arm_height_cm = ?, leg_height_cm = ?, weight_kg = ?,
       frame_material = ?, upholstery_material = ?, legs_material = ?, foam_density = ?,
-      colors_json = ?, material_options_json = ?, wood_options_json = ?
+      colors_json = ?, material_options_json = ?, wood_options_json = ?, images_json = ?
      WHERE slug = ?`,
     [input.slug, input.slug, ...productInputParams(input), slug]
   );
