@@ -38,6 +38,16 @@ export type InitializeInput = {
   description: string;
 };
 
+// Chapa's customization.title/description validation rejects most
+// punctuation — including a plain "#", which broke "Order #8". Keep
+// only letters, numbers, spaces, and a small safe set of punctuation.
+function sanitizeCustomizationText(text: string): string {
+  return text
+    .replace(/[^\p{L}\p{N} .,'-]/gu, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 export async function initializeChapaTransaction(
   input: InitializeInput
 ): Promise<{ checkoutUrl: string }> {
@@ -51,10 +61,10 @@ export async function initializeChapaTransaction(
     tx_ref: input.txRef,
     callback_url: input.callbackUrl,
     return_url: input.returnUrl,
-    // Chapa caps title at 16 chars and rejects most punctuation in it.
+    // Chapa caps title at 16 chars.
     customization: {
-      title: input.title.slice(0, 16),
-      description: input.description.slice(0, 60),
+      title: sanitizeCustomizationText(input.title).slice(0, 16),
+      description: sanitizeCustomizationText(input.description).slice(0, 60),
     },
   };
 

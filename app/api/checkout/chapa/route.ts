@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
       callbackUrl: `${baseUrl}/api/webhooks/chapa`,
       returnUrl: `${baseUrl}/order-confirmation/${order.id}?tx_ref=${encodeURIComponent(txRef)}`,
       title: "Zemenay Order",
-      description: `Order #${order.id}`,
+      description: `Order ${order.id}`,
     });
 
     await setOrderPaymentRef(order.id, "chapa", txRef);
