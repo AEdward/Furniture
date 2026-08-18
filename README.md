@@ -286,6 +286,19 @@ payment actually clears.
   alongside fulfillment status; the order detail page shows the payment
   provider and transaction reference.
 
+## Email
+
+Transactional email — order confirmations, shipping status updates, and
+a notification whenever the contact form gets a new message — goes out
+via SMTP (`lib/mailer.ts`), the same "real unless unconfigured" pattern
+as Chapa: without `SMTP_HOST`/`SMTP_USER`/`SMTP_PASSWORD` set in
+`.env.local`, sending is a no-op that just logs to the console, so
+nothing that triggers an email (placing an order, an admin changing its
+status, a customer submitting the contact form) ever breaks because
+email isn't set up yet. Point it at any SMTP provider — Gmail App
+Passwords, SendGrid, Mailgun, Amazon SES — and set `SMTP_FROM` for the
+From address (defaults to `SMTP_USER`).
+
 ## What's real vs. placeholder
 
 - **Products, inventory, settings, and pages** — all real, stored in
