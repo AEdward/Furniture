@@ -153,3 +153,16 @@ CREATE TABLE IF NOT EXISTS admin_users (
 -- admin_users is preserved across reseeds (see comment above), so a
 -- fresh CREATE TABLE IF NOT EXISTS never runs against an existing one.
 ALTER TABLE admin_users ADD COLUMN IF NOT EXISTS role ENUM('admin', 'editor') NOT NULL DEFAULT 'admin' AFTER password_hash;
+
+-- Contact form submissions — previously the form just faked success
+-- client-side and the message went nowhere. Dropped/recreated on reseed
+-- like orders above, since this whole script is dev/demo tooling.
+CREATE TABLE IF NOT EXISTS contact_messages (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(191) NOT NULL,
+  email VARCHAR(191) NOT NULL,
+  message TEXT NOT NULL,
+  read_at TIMESTAMP NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_contact_messages_created_at (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

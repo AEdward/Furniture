@@ -1223,3 +1223,88 @@ export async function deletePage(slug: string): Promise<void> {
     throw new PageError("Page not found.");
   }
 }
+
+// ---------------------------------------------------------------------
+// Contact messages (public contact form submissions)
+// ---------------------------------------------------------------------
+
+export type ContactMessage = {
+  id: number;
+  name: string;
+  email: string;
+  message: string;
+  readAt: string | null;
+  createdAt: string;
+};
+
+export class ContactMessageError extends Error {}
+
+function rowToContactMessage(row: mysql.RowDataPacket): ContactMessage {
+  return {
+    id: row.id,
+    name: row.name,
+    email: row.email,
+    message: row.message,
+    readAt: row.read_at,
+    createdAt: row.created_at,
+  };
+}
+
+export async function createContactMessage(input: {
+  name: string;
+  email: string;
+  message: string;
+}): Promise<ContactMessage> {
+  const db = getPool();
+  const [result] = await db.query<mysql.ResultSetHeader>(
+    "INSERT INTO contact_messages (name, email, message) VALUES (?, ?, ?)",
+    [input.name, input.email, input.message]
+  );
+  const [rows] = await db.query<mysql.RowDataPacket[]>(
+    "SELECT id, name, email, message, read_at, created_at FROM contact_messages WHERE id = ?",
+    [result.insertId]
+  );
+  return rowToContactMessage(rows[0]);
+}
+
+export async function getAllContactMessages(): Promise<ContactMessage[]> {
+  const db = getPool();
+  const [rows] = await db.query<mysql.RowDataPacket[]>(
+    "SELECT id, name, email, message, read_at, created_at FROM contact_messages ORDER BY created_at DESC"
+  );
+  return rows.map(rowToContactMessage);
+}
+
+export async function getUnreadContactMessageCount(): Promise<number> {
+  const db = getPool();
+  const [rows] = await db.query<mysql.RowDataPacket[]>(
+    "SELECT COUNT(*) AS count FROM contact_messages WHERE read_at IS NULL"
+  );
+  return Number(rows[0]?.count ?? 0);
+}
+
+export async function markContactMessageRead(id: number): Promise<void> {
+  const db = getPool();
+  const [result] = await db.query<mysql.ResultSetHeader>(
+    "UPDATE contact_messages SET read_at = NOW() WHERE id = ? AND read_at IS NULL",
+    [id]
+  );
+  if (result.affectedRows === 0) {
+    const [rows] = await db.query<mysql.RowDataPacket[]>(
+      "SELECT id FROM contact_messages WHERE id = ?",
+      [id]
+    );
+    if (!rows[0]) throw new ContactMessageError("Message not found.");
+  }
+}
+
+export async function deleteContactMessage(id: number): Promise<void> {
+  const db = getPool();
+  const [result] = await db.query<mysql.ResultSetHeader>(
+    "DELETE FROM contact_messages WHERE id = ?",
+    [id]
+  );
+  if (result.affectedRows === 0) {
+    throw new ContactMessageError("Message not found.");
+  }
+}

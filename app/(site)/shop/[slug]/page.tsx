@@ -87,8 +87,42 @@ export default async function ProductPage({
           ? t("Only {stock} left in stock", { stock: product.stock })
           : t("In stock");
 
+  const availabilitySchema =
+    product.availability === "in_stock"
+      ? "https://schema.org/InStock"
+      : product.availability === "made_to_order"
+        ? "https://schema.org/PreOrder"
+        : "https://schema.org/OutOfStock";
+
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: product.name,
+    description: product.description,
+    sku: product.sku,
+    image: product.imageUrl ?? undefined,
+    aggregateRating:
+      product.reviewCount > 0
+        ? {
+            "@type": "AggregateRating",
+            ratingValue: product.rating,
+            reviewCount: product.reviewCount,
+          }
+        : undefined,
+    offers: {
+      "@type": "Offer",
+      priceCurrency: "ETB",
+      price: product.price,
+      availability: availabilitySchema,
+    },
+  };
+
   return (
     <div className="container-shop py-12">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <nav className="mb-6 text-sm text-ink/50">
         <Link href="/shop" className="hover:text-walnut-600">
           {t("Shop")}
