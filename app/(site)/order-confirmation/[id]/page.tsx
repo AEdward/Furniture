@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { confirmOrderPayment, getOrderById, markOrderPaymentFailed } from "@/lib/db";
+import { confirmOrderPayment, getOrderById, getSettings, markOrderPaymentFailed } from "@/lib/db";
 import { formatPrice } from "@/lib/products";
 import { getLocale } from "@/lib/i18n/get-locale";
 import { getDictionary } from "@/lib/i18n/get-dictionary";
 import { createT } from "@/lib/i18n/t";
+import { translateSettings } from "@/lib/i18n/translate-content";
 import { isChapaConfigured, verifyChapaTransaction } from "@/lib/chapa";
 import RetryPaymentButton from "@/components/RetryPaymentButton";
 
@@ -21,12 +22,22 @@ export default async function OrderConfirmationPage({
 
   let order = initialOrder;
 
+  // Only Chapa has an external redirect step that can be abandoned or
+  // fail — cod/bank_transfer commit at order creation, so their
+  // payment_status stays 'pending' by design until the shop confirms
+  // cash/transfer receipt, which is normal, not an error state here.
+  //
   // Chapa's return_url lands the customer back here before the webhook
   // necessarily has — actively verify right now so they see an accurate
   // result immediately, rather than a stale "pending" until the async
   // webhook catches up. The webhook remains the authoritative fallback
   // (e.g. if the customer closes the tab before the redirect completes).
-  if (order.paymentStatus === "pending" && searchParams.tx_ref && isChapaConfigured()) {
+  if (
+    order.paymentMethod === "chapa" &&
+    order.paymentStatus === "pending" &&
+    searchParams.tx_ref &&
+    isChapaConfigured()
+  ) {
     try {
       const result = await verifyChapaTransaction(searchParams.tx_ref);
       if (result.success) {
@@ -46,7 +57,7 @@ export default async function OrderConfirmationPage({
   const locale = getLocale();
   const t = createT(await getDictionary(locale));
 
-  if (order.paymentStatus !== "paid") {
+  if (order.paymentMethod === "chapa" && order.paymentStatus !== "paid") {
     const failed = order.paymentStatus === "failed";
     return (
       <div className="container-shop py-16">
@@ -80,6 +91,9 @@ export default async function OrderConfirmationPage({
       </div>
     );
   }
+
+  const settingsRaw = order.paymentMethod === "bank_transfer" ? await getSettings() : null;
+  const settings = settingsRaw ? await translateSettings(settingsRaw, locale) : null;
 
   return (
     <div className="container-shop py-16">
@@ -127,6 +141,42 @@ export default async function OrderConfirmationPage({
             {order.city}, {order.postalCode}
           </p>
         </div>
+
+        {order.paymentMethod === "cod" && (
+          <div className="mt-6 rounded-xl bg-walnut-50/60 p-4 text-sm text-ink/70">
+            {t("Pay {price} in cash when your order is delivered.", {
+              price: formatPrice(order.subtotal),
+            })}
+          </div>
+        )}
+
+        {order.paymentMethod === "bank_transfer" && order.paymentStatus !== "paid" && settings && (
+          <div className="mt-6 rounded-xl bg-walnut-50/60 p-4 text-sm text-ink/70">
+            <p className="font-medium text-ink">{t("Bank transfer details")}</p>
+            <p className="mt-2">
+              {t("Bank")}: {settings.bankDetails.bankName}
+            </p>
+            <p>
+              {t("Account name")}: {settings.bankDetails.accountName}
+            </p>
+            <p>
+              {t("Account number")}: {settings.bankDetails.accountNumber}
+            </p>
+            {settings.bankDetails.branch && (
+              <p>
+                {t("Branch")}: {settings.bankDetails.branch}
+              </p>
+            )}
+            <p className="mt-2 text-xs text-ink/50">
+              {t("Please transfer {price} to the account above, using your order number as the reference.", {
+                price: formatPrice(order.subtotal),
+              })}
+            </p>
+            {settings.bankDetails.instructions && (
+              <p className="mt-2 text-xs text-ink/50">{settings.bankDetails.instructions}</p>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="mt-10 text-center">

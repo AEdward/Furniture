@@ -142,6 +142,8 @@ export async function getCompleteTheRoomProducts(
   return (rows as ProductRow[]).map(rowToProduct);
 }
 
+export type PaymentMethod = "chapa" | "cod" | "bank_transfer";
+
 export type OrderInput = {
   customerName: string;
   customerEmail: string;
@@ -150,6 +152,13 @@ export type OrderInput = {
   city: string;
   postalCode: string;
   items: { slug: string; quantity: number; variant?: string }[];
+  paymentMethod: PaymentMethod;
+  // Identifies "this browser's current checkout attempt" (see
+  // lib/cart-context.tsx). If a still-pending order already exists for
+  // this id, it's updated in place instead of inserting a new row —
+  // that's what turns "payment failed, customer retries" into one
+  // order, not a new one every attempt.
+  cartSessionId: string | null;
 };
 
 export type OrderResult = {
@@ -160,10 +169,14 @@ export type OrderResult = {
 
 export class OrderError extends Error {}
 
-// Stock is validated here (so checkout fails fast if something sold
-// out) but NOT decremented — that happens in confirmOrderPayment, once
-// Chapa actually confirms the money was paid. Otherwise an abandoned or
-// failed checkout would hold stock hostage indefinitely.
+// Only 'chapa' defers its stock decrement to confirmOrderPayment — it's
+// the one method with an external redirect step that can be abandoned.
+// 'cod'/'bank_transfer' commit immediately: there's no gateway hop to
+// abandon, so the stock is reserved the moment the order is placed.
+function decrementsStockImmediately(method: PaymentMethod): boolean {
+  return method !== "chapa";
+}
+
 export async function createOrder(input: OrderInput): Promise<OrderResult> {
   if (input.items.length === 0) {
     throw new OrderError("Cart is empty.");
@@ -173,6 +186,30 @@ export async function createOrder(input: OrderInput): Promise<OrderResult> {
   const conn = await db.getConnection();
   try {
     await conn.beginTransaction();
+
+    // Resume a still-pending Chapa draft order for this browser, if one
+    // exists, instead of creating a duplicate — that's what turns
+    // "payment failed, customer retries" into one order, not a new one
+    // every attempt. Deliberately scoped to payment_method = 'chapa'
+    // only: for cod/bank_transfer, payment_status stays 'pending' for a
+    // long time by design (waiting on cash/transfer confirmation) — that
+    // pending order is a *committed, final* order, not an abandoned
+    // draft, and must never be silently overwritten by a later,
+    // unrelated checkout that happens to share the same browser. Chapa
+    // never reserves stock for a pending order (see
+    // decrementsStockImmediately), so there's nothing to restore here.
+    let existingOrderId: number | null = null;
+    if (input.cartSessionId) {
+      const [draftRows] = await conn.query<mysql.RowDataPacket[]>(
+        "SELECT id FROM orders WHERE cart_session_id = ? AND payment_method = 'chapa' AND payment_status = 'pending' FOR UPDATE",
+        [input.cartSessionId]
+      );
+      const draft = draftRows[0];
+      if (draft) {
+        existingOrderId = draft.id;
+        await conn.query("DELETE FROM order_items WHERE order_id = ?", [existingOrderId]);
+      }
+    }
 
     const lineItems: OrderResult["items"] = [];
     let subtotal = 0;
@@ -214,21 +251,56 @@ export async function createOrder(input: OrderInput): Promise<OrderResult> {
       throw new OrderError("Cart is empty.");
     }
 
-    const [orderResult] = await conn.query<mysql.ResultSetHeader>(
-      `INSERT INTO orders
-        (customer_name, customer_email, customer_phone, address, city, postal_code, subtotal, status, payment_status)
-       VALUES (?, ?, ?, ?, ?, ?, ?, 'placed', 'pending')`,
-      [
-        input.customerName,
-        input.customerEmail,
-        input.customerPhone,
-        input.address,
-        input.city,
-        input.postalCode,
-        subtotal,
-      ]
-    );
-    const orderId = orderResult.insertId;
+    if (decrementsStockImmediately(input.paymentMethod)) {
+      for (const item of lineItems) {
+        await conn.query(
+          "UPDATE products SET stock = stock - ? WHERE slug = ? AND availability = 'in_stock'",
+          [item.quantity, item.slug]
+        );
+      }
+    }
+
+    let orderId: number;
+    if (existingOrderId) {
+      await conn.query(
+        `UPDATE orders SET
+          customer_name = ?, customer_email = ?, customer_phone = ?,
+          address = ?, city = ?, postal_code = ?, subtotal = ?,
+          payment_method = ?, payment_status = 'pending', payment_provider = NULL, payment_ref = NULL
+         WHERE id = ?`,
+        [
+          input.customerName,
+          input.customerEmail,
+          input.customerPhone,
+          input.address,
+          input.city,
+          input.postalCode,
+          subtotal,
+          input.paymentMethod,
+          existingOrderId,
+        ]
+      );
+      orderId = existingOrderId;
+    } else {
+      const [orderResult] = await conn.query<mysql.ResultSetHeader>(
+        `INSERT INTO orders
+          (customer_name, customer_email, customer_phone, address, city, postal_code, subtotal,
+           status, payment_method, payment_status, cart_session_id)
+         VALUES (?, ?, ?, ?, ?, ?, ?, 'placed', ?, 'pending', ?)`,
+        [
+          input.customerName,
+          input.customerEmail,
+          input.customerPhone,
+          input.address,
+          input.city,
+          input.postalCode,
+          subtotal,
+          input.paymentMethod,
+          input.cartSessionId,
+        ]
+      );
+      orderId = orderResult.insertId;
+    }
 
     for (const item of lineItems) {
       await conn.query(
@@ -260,6 +332,7 @@ export type Order = {
   postalCode: string;
   subtotal: number;
   status: string;
+  paymentMethod: PaymentMethod;
   paymentStatus: PaymentStatus;
   paymentProvider: string | null;
   paymentRef: string | null;
@@ -278,6 +351,7 @@ function rowToOrder(order: mysql.RowDataPacket, items: Order["items"]): Order {
     postalCode: order.postal_code,
     subtotal: order.subtotal,
     status: order.status,
+    paymentMethod: order.payment_method as PaymentMethod,
     paymentStatus: order.payment_status as PaymentStatus,
     paymentProvider: order.payment_provider ?? null,
     paymentRef: order.payment_ref ?? null,
@@ -344,14 +418,20 @@ export async function setOrderPaymentRef(
 // Idempotent: safe to call more than once for the same order (the
 // return-URL page and the webhook can both race to confirm the same
 // payment — whichever gets there first wins, the other is a no-op).
-// Stock is decremented here, floored at zero rather than re-validated
+// Used for both Chapa's auto-confirm (webhook/return-URL verify) and
+// the admin's manual "Mark as paid" action (cod/bank_transfer).
+//
+// Stock is only decremented here for 'chapa' orders — 'cod'/
+// 'bank_transfer' already reserved it at order-creation time (see
+// createOrder), so decrementing again here would double-count it.
+// Chapa's decrement is floored at zero rather than re-validated
 // strictly, since the money has already been captured by this point —
 // an oversell caught here is a rare edge case for manual follow-up, not
 // something to bounce a paid customer over.
 export async function confirmOrderPayment(
   orderId: number,
   provider: string,
-  paymentRef: string
+  paymentRef: string | null
 ): Promise<{ alreadyConfirmed: boolean }> {
   const db = getPool();
   const conn = await db.getConnection();
@@ -359,7 +439,7 @@ export async function confirmOrderPayment(
     await conn.beginTransaction();
 
     const [orderRows] = await conn.query<mysql.RowDataPacket[]>(
-      "SELECT id, payment_status FROM orders WHERE id = ? FOR UPDATE",
+      "SELECT id, payment_status, payment_method FROM orders WHERE id = ? FOR UPDATE",
       [orderId]
     );
     const order = orderRows[0];
@@ -370,17 +450,19 @@ export async function confirmOrderPayment(
       return { alreadyConfirmed: true };
     }
 
-    const [itemRows] = await conn.query<mysql.RowDataPacket[]>(
-      "SELECT product_slug, quantity FROM order_items WHERE order_id = ?",
-      [orderId]
-    );
-    for (const item of itemRows) {
-      await conn.query(
-        `UPDATE products
-         SET stock = GREATEST(stock - ?, 0)
-         WHERE slug = ? AND availability = 'in_stock'`,
-        [item.quantity, item.product_slug]
+    if (!decrementsStockImmediately(order.payment_method as PaymentMethod)) {
+      const [itemRows] = await conn.query<mysql.RowDataPacket[]>(
+        "SELECT product_slug, quantity FROM order_items WHERE order_id = ?",
+        [orderId]
       );
+      for (const item of itemRows) {
+        await conn.query(
+          `UPDATE products
+           SET stock = GREATEST(stock - ?, 0)
+           WHERE slug = ? AND availability = 'in_stock'`,
+          [item.quantity, item.product_slug]
+        );
+      }
     }
 
     await conn.query(
@@ -398,13 +480,54 @@ export async function confirmOrderPayment(
   }
 }
 
-export async function markOrderPaymentFailed(orderId: number, paymentRef: string): Promise<void> {
+// Restores any stock the order had reserved (cod/bank_transfer decrement
+// immediately at creation; chapa never reserved anything for a pending
+// order, so there's nothing to give back there). Only downgrades from
+// 'pending' — never overwrites an already-paid order.
+export async function markOrderPaymentFailed(
+  orderId: number,
+  paymentRef: string | null
+): Promise<void> {
   const db = getPool();
-  // Only downgrades from 'pending' — never overwrites an already-paid order.
-  await db.query(
-    "UPDATE orders SET payment_status = 'failed', payment_ref = ? WHERE id = ? AND payment_status = 'pending'",
-    [paymentRef, orderId]
-  );
+  const conn = await db.getConnection();
+  try {
+    await conn.beginTransaction();
+
+    const [orderRows] = await conn.query<mysql.RowDataPacket[]>(
+      "SELECT id, payment_status, payment_method FROM orders WHERE id = ? FOR UPDATE",
+      [orderId]
+    );
+    const order = orderRows[0];
+    if (!order || order.payment_status !== "pending") {
+      await conn.commit();
+      return;
+    }
+
+    if (decrementsStockImmediately(order.payment_method as PaymentMethod)) {
+      const [itemRows] = await conn.query<mysql.RowDataPacket[]>(
+        "SELECT product_slug, quantity FROM order_items WHERE order_id = ?",
+        [orderId]
+      );
+      for (const item of itemRows) {
+        await conn.query(
+          "UPDATE products SET stock = stock + ? WHERE slug = ? AND availability = 'in_stock'",
+          [item.quantity, item.product_slug]
+        );
+      }
+    }
+
+    await conn.query(
+      "UPDATE orders SET payment_status = 'failed', payment_ref = ? WHERE id = ?",
+      [paymentRef, orderId]
+    );
+
+    await conn.commit();
+  } catch (err) {
+    await conn.rollback();
+    throw err;
+  } finally {
+    conn.release();
+  }
 }
 
 // ---------------------------------------------------------------------
@@ -417,6 +540,7 @@ export type OrderSummary = {
   customerEmail: string;
   subtotal: number;
   status: string;
+  paymentMethod: PaymentMethod;
   paymentStatus: PaymentStatus;
   createdAt: string;
   itemCount: number;
@@ -425,7 +549,8 @@ export type OrderSummary = {
 export async function getAllOrders(): Promise<OrderSummary[]> {
   const db = getPool();
   const [rows] = await db.query<mysql.RowDataPacket[]>(
-    `SELECT o.id, o.customer_name, o.customer_email, o.subtotal, o.status, o.payment_status, o.created_at,
+    `SELECT o.id, o.customer_name, o.customer_email, o.subtotal, o.status,
+            o.payment_method, o.payment_status, o.created_at,
             COALESCE(SUM(oi.quantity), 0) AS item_count
      FROM orders o
      LEFT JOIN order_items oi ON oi.order_id = o.id
@@ -438,6 +563,7 @@ export async function getAllOrders(): Promise<OrderSummary[]> {
     customerEmail: r.customer_email,
     subtotal: r.subtotal,
     status: r.status,
+    paymentMethod: r.payment_method as PaymentMethod,
     paymentStatus: r.payment_status as PaymentStatus,
     createdAt: r.created_at,
     itemCount: Number(r.item_count),

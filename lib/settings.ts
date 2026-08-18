@@ -63,6 +63,14 @@ export type SiteSettings = {
     hoursWeekday: string;
     hoursWeekend: string;
   };
+
+  bankDetails: {
+    bankName: string;
+    accountName: string;
+    accountNumber: string;
+    branch: string;
+    instructions: string;
+  };
 };
 
 export const DEFAULT_SETTINGS: SiteSettings = {
@@ -140,6 +148,15 @@ export const DEFAULT_SETTINGS: SiteSettings = {
     hoursWeekday: "Mon–Fri: 10am–6pm",
     hoursWeekend: "Sat–Sun: 11am–5pm",
   },
+
+  bankDetails: {
+    bankName: "Commercial Bank of Ethiopia",
+    accountName: "Zemenay Furniture PLC",
+    accountNumber: "1000000000000",
+    branch: "Bole Branch",
+    instructions:
+      "Please include your order number as the transfer reference, then send a screenshot of the receipt to our phone number so we can confirm and start preparing your order.",
+  },
 };
 
 export function mergeSettings(partial: Partial<SiteSettings>): SiteSettings {
@@ -152,5 +169,6 @@ export function mergeSettings(partial: Partial<SiteSettings>): SiteSettings {
     warranty: { ...DEFAULT_SETTINGS.warranty, ...partial.warranty },
     returns: { ...DEFAULT_SETTINGS.returns, ...partial.returns },
     contact: { ...DEFAULT_SETTINGS.contact, ...partial.contact },
+    bankDetails: { ...DEFAULT_SETTINGS.bankDetails, ...partial.bankDetails },
   };
 }

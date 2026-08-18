@@ -52,17 +52,27 @@ CREATE TABLE IF NOT EXISTS orders (
   subtotal INT NOT NULL,
   status VARCHAR(32) NOT NULL DEFAULT 'placed',
 
-  -- Payment (Chapa). Separate from `status` above, which tracks
-  -- fulfillment (placed/processing/shipped/...) — payment_status tracks
-  -- whether money actually changed hands. Stock is only decremented once
-  -- payment_status becomes 'paid' (see confirmOrderPayment in lib/db.ts),
-  -- so an abandoned/failed checkout never holds stock hostage.
+  -- Payment. Separate from `status` above, which tracks fulfillment
+  -- (placed/processing/shipped/...) — payment_status tracks whether
+  -- money actually changed hands. payment_method is what the customer
+  -- picked at checkout ('chapa' | 'cod' | 'bank_transfer'); for 'chapa'
+  -- stock is only decremented once payment_status becomes 'paid' (see
+  -- confirmOrderPayment in lib/db.ts), since that flow can be abandoned
+  -- mid-redirect — 'cod'/'bank_transfer' decrement immediately at order
+  -- creation instead, since there's no external step to abandon.
+  payment_method VARCHAR(32) NOT NULL DEFAULT 'chapa',
   payment_status VARCHAR(32) NOT NULL DEFAULT 'pending',
   payment_provider VARCHAR(32) NULL,
   payment_ref VARCHAR(191) NULL,
 
+  -- Identifies "this browser's current checkout attempt" (see
+  -- lib/cart-context.tsx), so retrying after a failed/abandoned payment
+  -- updates the same still-pending order instead of creating a new one.
+  cart_session_id VARCHAR(64) NULL,
+
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  INDEX idx_orders_payment_ref (payment_ref)
+  INDEX idx_orders_payment_ref (payment_ref),
+  INDEX idx_orders_cart_session (cart_session_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS order_items (

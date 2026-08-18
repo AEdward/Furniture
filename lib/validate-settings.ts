@@ -110,5 +110,13 @@ export function parseSettingsInput(body: unknown): Partial<SiteSettings> {
       hoursWeekday: str((b.contact as Record<string, unknown>)?.hoursWeekday, "Weekday hours", false),
       hoursWeekend: str((b.contact as Record<string, unknown>)?.hoursWeekend, "Weekend hours", false),
     },
+
+    bankDetails: {
+      bankName: str((b.bankDetails as Record<string, unknown>)?.bankName, "Bank name", false),
+      accountName: str((b.bankDetails as Record<string, unknown>)?.accountName, "Account name", false),
+      accountNumber: str((b.bankDetails as Record<string, unknown>)?.accountNumber, "Account number", false),
+      branch: str((b.bankDetails as Record<string, unknown>)?.branch, "Branch", false),
+      instructions: str((b.bankDetails as Record<string, unknown>)?.instructions, "Bank transfer instructions", false),
+    },
   };
 }

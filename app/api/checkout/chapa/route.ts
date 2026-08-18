@@ -19,6 +19,12 @@ export async function POST(request: NextRequest) {
   if (order.paymentStatus === "paid") {
     return NextResponse.json({ error: "This order has already been paid." }, { status: 400 });
   }
+  if (order.paymentMethod !== "chapa") {
+    return NextResponse.json(
+      { error: "This order isn't set up for online payment." },
+      { status: 400 }
+    );
+  }
 
   if (!isChapaConfigured()) {
     return NextResponse.json(

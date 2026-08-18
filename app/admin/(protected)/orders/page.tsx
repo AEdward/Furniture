@@ -18,6 +18,12 @@ const paymentStyles: Record<string, string> = {
   failed: "bg-danger-50 text-danger-500",
 };
 
+const paymentMethodLabels: Record<string, string> = {
+  chapa: "Chapa",
+  cod: "Cash on delivery",
+  bank_transfer: "Bank transfer",
+};
+
 export default async function AdminOrdersPage() {
   const orders = await getAllOrders();
 
@@ -82,6 +88,9 @@ export default async function AdminOrdersPage() {
                     >
                       {order.paymentStatus}
                     </span>
+                    <div className="mt-1 text-xs text-ink/40">
+                      {paymentMethodLabels[order.paymentMethod] ?? order.paymentMethod}
+                    </div>
                   </td>
                   <td className="px-5 py-3 text-ink/50">
                     {new Date(order.createdAt).toLocaleDateString()}

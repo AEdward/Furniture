@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { OrderError, updateOrderStatus } from "@/lib/db";
+import { confirmOrderPayment, markOrderPaymentFailed, OrderError, updateOrderStatus } from "@/lib/db";
 import { ORDER_STATUSES, type OrderStatus } from "@/lib/order-status";
 
 export async function PATCH(
@@ -12,13 +12,30 @@ export async function PATCH(
   }
 
   const body = await request.json().catch(() => ({}));
-  const status = body.status as OrderStatus;
-  if (!ORDER_STATUSES.includes(status)) {
-    return NextResponse.json({ error: "Invalid status." }, { status: 400 });
-  }
 
   try {
-    await updateOrderStatus(id, status);
+    if (typeof body.status === "string") {
+      const status = body.status as OrderStatus;
+      if (!ORDER_STATUSES.includes(status)) {
+        return NextResponse.json({ error: "Invalid status." }, { status: 400 });
+      }
+      await updateOrderStatus(id, status);
+    }
+
+    // Manual override for cod/bank_transfer (and a fallback for chapa,
+    // in case the webhook/return-URL verify never fired) — the shop
+    // owner confirming they physically received cash or saw the
+    // transfer land, or that it never came.
+    if (typeof body.paymentStatus === "string") {
+      if (body.paymentStatus === "paid") {
+        await confirmOrderPayment(id, "admin", null);
+      } else if (body.paymentStatus === "failed") {
+        await markOrderPaymentFailed(id, null);
+      } else {
+        return NextResponse.json({ error: "Invalid payment status." }, { status: 400 });
+      }
+    }
+
     return NextResponse.json({ ok: true });
   } catch (err) {
     if (err instanceof OrderError) {

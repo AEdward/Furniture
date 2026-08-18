@@ -71,6 +71,12 @@ export default function SettingsForm({ initial }: { initial: SiteSettings }) {
   const [contactHoursWeekday, setContactHoursWeekday] = useState(initial.contact.hoursWeekday);
   const [contactHoursWeekend, setContactHoursWeekend] = useState(initial.contact.hoursWeekend);
 
+  const [bankName, setBankName] = useState(initial.bankDetails.bankName);
+  const [bankAccountName, setBankAccountName] = useState(initial.bankDetails.accountName);
+  const [bankAccountNumber, setBankAccountNumber] = useState(initial.bankDetails.accountNumber);
+  const [bankBranch, setBankBranch] = useState(initial.bankDetails.branch);
+  const [bankInstructions, setBankInstructions] = useState(initial.bankDetails.instructions);
+
   const inputClass =
     "rounded-lg border border-walnut-200 px-3 py-2.5 focus:border-walnut-400 focus:outline-none";
   const labelClass = "flex flex-col gap-1.5 text-sm";
@@ -132,6 +138,13 @@ export default function SettingsForm({ initial }: { initial: SiteSettings }) {
         subheading: contactSubheading,
         hoursWeekday: contactHoursWeekday,
         hoursWeekend: contactHoursWeekend,
+      },
+      bankDetails: {
+        bankName,
+        accountName: bankAccountName,
+        accountNumber: bankAccountNumber,
+        branch: bankBranch,
+        instructions: bankInstructions,
       },
     };
 
@@ -355,6 +368,36 @@ export default function SettingsForm({ initial }: { initial: SiteSettings }) {
           <label className={labelClass}>
             Weekend hours
             <input value={contactHoursWeekend} onChange={(e) => setContactHoursWeekend(e.target.value)} className={inputClass} />
+          </label>
+        </div>
+      </div>
+
+      <div className={sectionClass}>
+        <h2 className={sectionTitleClass}>Bank transfer details</h2>
+        <p className="text-xs text-ink/50">
+          Shown to customers who choose "Bank transfer" at checkout, and on their order
+          confirmation page.
+        </p>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <label className={labelClass}>
+            Bank name
+            <input value={bankName} onChange={(e) => setBankName(e.target.value)} className={inputClass} />
+          </label>
+          <label className={labelClass}>
+            Account name
+            <input value={bankAccountName} onChange={(e) => setBankAccountName(e.target.value)} className={inputClass} />
+          </label>
+          <label className={labelClass}>
+            Account number
+            <input value={bankAccountNumber} onChange={(e) => setBankAccountNumber(e.target.value)} className={inputClass} />
+          </label>
+          <label className={labelClass}>
+            Branch
+            <input value={bankBranch} onChange={(e) => setBankBranch(e.target.value)} className={inputClass} />
+          </label>
+          <label className={`${labelClass} sm:col-span-2`}>
+            Instructions for the customer
+            <textarea rows={2} value={bankInstructions} onChange={(e) => setBankInstructions(e.target.value)} className={`${inputClass} resize-none`} />
           </label>
         </div>
       </div>

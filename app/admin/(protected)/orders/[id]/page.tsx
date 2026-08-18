@@ -2,11 +2,18 @@ import { notFound } from "next/navigation";
 import { getOrderById } from "@/lib/db";
 import { formatPrice } from "@/lib/products";
 import OrderStatusSelect from "@/components/OrderStatusSelect";
+import PaymentStatusActions from "@/components/PaymentStatusActions";
 
 const paymentStyles: Record<string, string> = {
   paid: "bg-walnut-500 text-cream",
   pending: "bg-terracotta-100 text-terracotta-500",
   failed: "bg-danger-50 text-danger-500",
+};
+
+const paymentMethodLabels: Record<string, string> = {
+  chapa: "Chapa (online)",
+  cod: "Cash on delivery",
+  bank_transfer: "Bank transfer",
 };
 
 export default async function AdminOrderDetailPage({
@@ -57,8 +64,11 @@ export default async function AdminOrderDetailPage({
 
           <div className="rounded-2xl border border-walnut-100 bg-white/60 p-6">
             <h2 className="font-serif text-lg font-semibold text-ink">Payment</h2>
+            <p className="mt-3 text-sm text-ink/70">
+              {paymentMethodLabels[order.paymentMethod] ?? order.paymentMethod}
+            </p>
             <p
-              className={`mt-3 inline-block rounded-full px-2.5 py-1 text-xs font-medium capitalize ${
+              className={`mt-2 inline-block rounded-full px-2.5 py-1 text-xs font-medium capitalize ${
                 paymentStyles[order.paymentStatus] ?? "bg-walnut-100 text-walnut-600"
               }`}
             >
@@ -70,6 +80,7 @@ export default async function AdminOrderDetailPage({
                 {order.paymentRef && ` · ${order.paymentRef}`}
               </p>
             )}
+            {order.paymentStatus === "pending" && <PaymentStatusActions orderId={order.id} />}
           </div>
 
           <div className="rounded-2xl border border-walnut-100 bg-white/60 p-6 text-sm">

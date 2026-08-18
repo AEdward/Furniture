@@ -33,15 +33,40 @@ type CartContextValue = {
   updateQuantity: (slug: string, quantity: number, variant?: string) => void;
   clearCart: () => void;
   isReady: boolean;
+  // Identifies "this browser's current checkout attempt" so a retry
+  // after a failed/abandoned payment updates the same draft order
+  // server-side instead of creating a new one. Persists indefinitely —
+  // it doesn't need to rotate, since the server only ever reuses an
+  // order that's still 'pending' (see createOrder in lib/db.ts).
+  cartSessionId: string | null;
 };
 
 const CartContext = createContext<CartContextValue | null>(null);
 
 const STORAGE_KEY = "furniture-shop-cart";
+const SESSION_STORAGE_KEY = "furniture-shop-cart-session-id";
+
+function readOrCreateCartSessionId(): string {
+  try {
+    const existing = window.localStorage.getItem(SESSION_STORAGE_KEY);
+    if (existing) return existing;
+    const id =
+      typeof crypto !== "undefined" && "randomUUID" in crypto
+        ? crypto.randomUUID()
+        : `cs-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    window.localStorage.setItem(SESSION_STORAGE_KEY, id);
+    return id;
+  } catch {
+    // localStorage unavailable (private browsing, etc.) — checkout still
+    // works, it just can't dedupe retries into the same draft order.
+    return "";
+  }
+}
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [lines, setLines] = useState<CartLine[]>([]);
   const [isReady, setIsReady] = useState(false);
+  const [cartSessionId, setCartSessionId] = useState<string | null>(null);
 
   useEffect(() => {
     try {
@@ -50,6 +75,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     } catch {
       // ignore corrupt storage
     } finally {
+      setCartSessionId(readOrCreateCartSessionId() || null);
       setIsReady(true);
     }
   }, []);
@@ -119,6 +145,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     updateQuantity,
     clearCart,
     isReady,
+    cartSessionId,
   };
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

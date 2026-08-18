@@ -90,6 +90,7 @@ export async function translateSettings(
     settings.contact.subheading,
     settings.contact.hoursWeekday,
     settings.contact.hoursWeekend,
+    settings.bankDetails.instructions,
   ];
 
   const translated = await translateBatch(strings, locale);
@@ -130,6 +131,12 @@ export async function translateSettings(
       subheading: tr(settings.contact.subheading),
       hoursWeekday: tr(settings.contact.hoursWeekday),
       hoursWeekend: tr(settings.contact.hoursWeekend),
+    },
+    // bankName/accountName/accountNumber/branch are literal data (a
+    // proper noun, an account number), not prose — left untranslated.
+    bankDetails: {
+      ...settings.bankDetails,
+      instructions: tr(settings.bankDetails.instructions),
     },
   };
 }

@@ -165,10 +165,20 @@ export const UI_STRINGS = [
   "Address",
   "City",
   "Postal code",
-  "You'll be redirected to Chapa to pay securely — your order is recorded once payment is confirmed.",
   "Placing order…",
   "Redirecting to payment…",
   "Place order — {price}",
+  "Place order",
+
+  // Payment method
+  "Payment method",
+  "Pay online",
+  "Pay securely with Chapa — card, mobile money, and more.",
+  "Cash on delivery",
+  "Pay in cash when your order arrives.",
+  "Bank transfer",
+  "Transfer the total to our bank account; we'll confirm and prepare your order.",
+  "You'll be redirected to Chapa to pay securely — your order is recorded once payment is confirmed.",
 
   // Order confirmation
   "Order placed",
@@ -184,6 +194,13 @@ export const UI_STRINGS = [
   "The payment for this order wasn't completed. You can try again below, or contact us if you were charged.",
   "Try payment again",
   "Check payment status",
+  "Pay {price} in cash when your order is delivered.",
+  "Bank transfer details",
+  "Bank",
+  "Account name",
+  "Account number",
+  "Branch",
+  "Please transfer {price} to the account above, using your order number as the reference.",
 
   // Contact
   "Visit the showroom",

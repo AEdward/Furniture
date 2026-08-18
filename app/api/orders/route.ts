@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
-import { createOrder, OrderError } from "@/lib/db";
+import { createOrder, OrderError, type PaymentMethod } from "@/lib/db";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 // Permissive on purpose — accepts local (09...) and international
 // (+2519...) formats without forcing a specific country pattern.
 const PHONE_RE = /^\+?[0-9 ()-]{7,20}$/;
+const PAYMENT_METHODS: PaymentMethod[] = ["chapa", "cod", "bank_transfer"];
 
 export async function POST(request: Request) {
   let body: unknown;
@@ -26,6 +27,9 @@ export async function POST(request: Request) {
   const city = typeof b.city === "string" ? b.city.trim() : "";
   const postalCode = typeof b.postalCode === "string" ? b.postalCode.trim() : "";
   const rawItems = Array.isArray(b.items) ? b.items : [];
+  const paymentMethod = b.paymentMethod as PaymentMethod;
+  const cartSessionId =
+    typeof b.cartSessionId === "string" && b.cartSessionId.trim() ? b.cartSessionId.trim() : null;
 
   if (!customerName || !address || !city || !postalCode) {
     return NextResponse.json({ error: "Please fill in all fields." }, { status: 400 });
@@ -35,6 +39,9 @@ export async function POST(request: Request) {
   }
   if (!PHONE_RE.test(customerPhone)) {
     return NextResponse.json({ error: "Please enter a valid phone number." }, { status: 400 });
+  }
+  if (!PAYMENT_METHODS.includes(paymentMethod)) {
+    return NextResponse.json({ error: "Please choose a payment method." }, { status: 400 });
   }
 
   const items = rawItems
@@ -65,6 +72,8 @@ export async function POST(request: Request) {
       city,
       postalCode,
       items,
+      paymentMethod,
+      cartSessionId,
     });
     return NextResponse.json({ order }, { status: 201 });
   } catch (err) {
