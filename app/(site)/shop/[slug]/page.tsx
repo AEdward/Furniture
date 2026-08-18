@@ -1,8 +1,7 @@
-import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import FurnitureIcon from "@/components/FurnitureIcon";
+import ProductGallery from "@/components/ProductGallery";
 import ProductCard from "@/components/ProductCard";
 import AddToCartPanel from "@/components/AddToCartPanel";
 import StarRating from "@/components/StarRating";
@@ -100,7 +99,7 @@ export default async function ProductPage({
     name: product.name,
     description: product.description,
     sku: product.sku,
-    image: product.imageUrl ?? undefined,
+    image: [product.imageUrl, ...(product.images ?? [])].filter(Boolean),
     aggregateRating:
       product.reviewCount > 0
         ? {
@@ -139,24 +138,14 @@ export default async function ProductPage({
       </nav>
 
       <div className="grid gap-10 lg:grid-cols-2">
-        <div
-          className={`relative flex aspect-square items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-br ${product.gradient}`}
-        >
-          {product.imageUrl ? (
-            <Image
-              src={product.imageUrl}
-              alt={product.name}
-              fill
-              sizes="(min-width: 1024px) 50vw, 100vw"
-              className="object-cover"
-            />
-          ) : (
-            <FurnitureIcon
-              name={product.icon}
-              className="h-40 w-40 text-walnut-500/70 sm:h-56 sm:w-56"
-            />
+        <ProductGallery
+          images={[product.imageUrl, ...(product.images ?? [])].filter(
+            (url): url is string => !!url
           )}
-        </div>
+          name={product.name}
+          icon={product.icon}
+          gradient={product.gradient}
+        />
 
         <div className="flex flex-col">
           <p className="section-label">{t(product.category)}</p>

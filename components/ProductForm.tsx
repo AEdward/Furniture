@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import FurnitureIcon from "@/components/FurnitureIcon";
 import ImageUpload from "@/components/ImageUpload";
+import MultiImageUpload from "@/components/MultiImageUpload";
 import {
   categories,
   gradientOptions,
@@ -48,6 +49,7 @@ export default function ProductForm({ mode, initial }: Props) {
   const [icon, setIcon] = useState<IconName>(initial?.icon ?? "sofa");
   const [gradient, setGradient] = useState(initial?.gradient ?? gradientOptions[0]);
   const [imageUrl, setImageUrl] = useState<string | null>(initial?.imageUrl ?? null);
+  const [images, setImages] = useState<string[]>(initial?.images ?? []);
   const [stock, setStock] = useState(initial ? String(initial.stock) : "0");
   const [featured, setFeatured] = useState(initial?.featured ?? false);
   const [isNew, setIsNew] = useState(initial?.new ?? false);
@@ -98,6 +100,7 @@ export default function ProductForm({ mode, initial }: Props) {
       icon,
       gradient,
       imageUrl,
+      images,
       stock: Number(stock),
       featured,
       new: isNew,
@@ -426,6 +429,7 @@ export default function ProductForm({ mode, initial }: Props) {
 
         <div className="flex flex-col gap-4">
           <ImageUpload value={imageUrl} onChange={setImageUrl} label="Product photo" />
+          <MultiImageUpload value={images} onChange={setImages} label="Additional gallery images" />
           <p className="-mt-2 text-xs text-ink/50">
             If no photo is uploaded, the icon + background below are shown instead.
           </p>

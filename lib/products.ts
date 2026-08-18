@@ -62,6 +62,7 @@ export type Product = {
   icon: IconName;
   gradient: string;
   imageUrl?: string;
+  images?: string[];
   featured?: boolean;
   new?: boolean;
   stock: number;

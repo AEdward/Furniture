@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS products (
   icon VARCHAR(64) NOT NULL,
   gradient VARCHAR(64) NOT NULL,
   image_url VARCHAR(500) NULL,
+  images_json TEXT NOT NULL DEFAULT '[]',
   featured TINYINT(1) NOT NULL DEFAULT 0,
   is_new TINYINT(1) NOT NULL DEFAULT 0,
   stock INT NOT NULL DEFAULT 0,

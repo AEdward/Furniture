@@ -68,13 +68,13 @@ async function main() {
          sku, availability, lead_time_days, rating, review_count,
          width_cm, depth_cm, height_cm, seat_height_cm, seat_depth_cm, arm_height_cm, leg_height_cm, weight_kg,
          frame_material, upholstery_material, legs_material, foam_density,
-         colors_json, material_options_json, wood_options_json)
+         colors_json, material_options_json, wood_options_json, images_json)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?,
                ?, ?, ?, ?, ?, ?,
                ?, ?, ?, ?, ?,
                ?, ?, ?, ?, ?, ?, ?, ?,
                ?, ?, ?, ?,
-               ?, ?, ?)`,
+               ?, ?, ?, ?)`,
       [
         p.id,
         p.slug,
@@ -110,6 +110,7 @@ async function main() {
         JSON.stringify(p.colors),
         JSON.stringify(p.materialOptions),
         JSON.stringify(p.woodOptions),
+        JSON.stringify(p.images ?? []),
       ]
     );
   }
