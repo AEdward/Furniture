@@ -51,6 +51,7 @@ async function main() {
   await conn.query("DROP TABLE IF EXISTS orders");
   await conn.query("DROP TABLE IF EXISTS contact_messages");
   await conn.query("DROP TABLE IF EXISTS reviews");
+  await conn.query("DROP TABLE IF EXISTS back_in_stock_requests");
   await conn.query("DROP TABLE IF EXISTS products");
   await conn.query("DROP TABLE IF EXISTS settings");
   await conn.query("DROP TABLE IF EXISTS pages");

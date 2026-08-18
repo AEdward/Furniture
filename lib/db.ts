@@ -5,7 +5,7 @@ import { DEFAULT_SETTINGS, mergeSettings, type SiteSettings } from "@/lib/settin
 import type { PageBlock } from "@/lib/pages";
 import { getPool } from "@/lib/db-pool";
 import { sendEmail } from "@/lib/mailer";
-import { orderConfirmationEmail, orderStatusUpdateEmail } from "@/lib/email-templates";
+import { backInStockEmail, orderConfirmationEmail, orderStatusUpdateEmail } from "@/lib/email-templates";
 
 export { ORDER_STATUSES, type OrderStatus };
 
@@ -744,6 +744,8 @@ export async function updateProduct(
     }
   }
 
+  const before = await getProductBySlug(slug);
+
   const [result] = await db.query<mysql.ResultSetHeader>(
     `UPDATE products SET
       id = ?, slug = ?, name = ?, category = ?, price = ?, compare_at_price = ?,
@@ -762,6 +764,11 @@ export async function updateProduct(
 
   const updated = await getProductBySlug(input.slug);
   if (!updated) throw new ProductError("Failed to update product.");
+
+  if (before && before.availability === "out_of_stock" && updated.availability !== "out_of_stock") {
+    await notifyBackInStock(updated);
+  }
+
   return updated;
 }
 
@@ -1463,4 +1470,63 @@ async function withReviewAggregates(products: Product[]): Promise<Product[]> {
     if (!agg) return p;
     return { ...p, rating: Math.round(agg.rating * 10) / 10, reviewCount: agg.count };
   });
+}
+
+// ---------------------------------------------------------------------
+// Back-in-stock notifications
+// ---------------------------------------------------------------------
+
+export class BackInStockError extends Error {}
+
+export async function createBackInStockRequest(
+  productSlug: string,
+  email: string
+): Promise<void> {
+  const product = await getProductBySlug(productSlug);
+  if (!product) throw new BackInStockError("Product not found.");
+
+  const db = getPool();
+  try {
+    await db.query(
+      "INSERT INTO back_in_stock_requests (product_id, email) VALUES (?, ?)",
+      [product.id, email]
+    );
+  } catch (err) {
+    if (err instanceof Error && (err as { code?: string }).code === "ER_DUP_ENTRY") {
+      // Already signed up for this product — not an error from the
+      // customer's point of view, just a no-op.
+      return;
+    }
+    throw err;
+  }
+}
+
+// Emails everyone who asked to be notified for this product, then marks
+// them notified so a later availability flap doesn't re-email them.
+// Called from updateProduct() the moment availability moves away from
+// out_of_stock — never throws, since a failed notification pass
+// shouldn't block the product edit that triggered it.
+async function notifyBackInStock(product: Product): Promise<void> {
+  try {
+    const db = getPool();
+    const [rows] = await db.query<mysql.RowDataPacket[]>(
+      "SELECT id, email FROM back_in_stock_requests WHERE product_id = ? AND notified_at IS NULL",
+      [product.id]
+    );
+    if (rows.length === 0) return;
+
+    const settings = await getSettings();
+    const baseUrl = process.env.APP_BASE_URL || "http://localhost:3000";
+    const productUrl = `${baseUrl}/shop/${product.slug}`;
+    const template = backInStockEmail(product.name, productUrl, settings);
+
+    for (const row of rows) {
+      await sendEmail({ to: row.email, ...template });
+    }
+
+    const ids = rows.map((r) => r.id);
+    await db.query("UPDATE back_in_stock_requests SET notified_at = NOW() WHERE id IN (?)", [ids]);
+  } catch (err) {
+    console.error("[back-in-stock] Failed to send notifications:", err);
+  }
 }

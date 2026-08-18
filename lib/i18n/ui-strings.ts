@@ -232,6 +232,11 @@ export const UI_STRINGS = [
   "Cancel",
   "Write a review",
 
+  // Back in stock
+  "Notify me when back in stock",
+  "Notify me",
+  "We'll email you when it's back.",
+
   // Language switcher
   "Language",
 ] as const;
