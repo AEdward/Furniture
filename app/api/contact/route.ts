@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
-import { createContactMessage } from "@/lib/db";
+import { createContactMessage, getSettings } from "@/lib/db";
+import { sendEmail } from "@/lib/mailer";
+import { contactNotificationEmail } from "@/lib/email-templates";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MAX_MESSAGE_LENGTH = 5000;
@@ -35,7 +37,12 @@ export async function POST(request: Request) {
   }
 
   try {
-    await createContactMessage({ name, email, message });
+    const savedMessage = await createContactMessage({ name, email, message });
+    const settings = await getSettings();
+    await sendEmail({
+      to: settings.email,
+      ...contactNotificationEmail(savedMessage, settings),
+    });
     return NextResponse.json({ ok: true }, { status: 201 });
   } catch (err) {
     console.error(err);

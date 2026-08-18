@@ -4,6 +4,8 @@ import { ORDER_STATUSES, type OrderStatus } from "@/lib/order-status";
 import { DEFAULT_SETTINGS, mergeSettings, type SiteSettings } from "@/lib/settings";
 import type { PageBlock } from "@/lib/pages";
 import { getPool } from "@/lib/db-pool";
+import { sendEmail } from "@/lib/mailer";
+import { orderConfirmationEmail, orderStatusUpdateEmail } from "@/lib/email-templates";
 
 export { ORDER_STATUSES, type OrderStatus };
 
@@ -315,6 +317,21 @@ export async function createOrder(input: OrderInput): Promise<OrderResult> {
     }
 
     await conn.commit();
+
+    // Only for a genuinely new order — not a resumed Chapa draft (see
+    // existingOrderId above), which would otherwise re-send this on
+    // every retry after a failed payment.
+    if (!existingOrderId) {
+      const settings = await getSettings();
+      await sendEmail({
+        to: input.customerEmail,
+        ...orderConfirmationEmail(
+          { id: orderId, customerName: input.customerName, address: input.address, city: input.city, subtotal, items: lineItems },
+          settings
+        ),
+      });
+    }
+
     return { id: orderId, subtotal, items: lineItems };
   } catch (err) {
     await conn.rollback();
@@ -585,6 +602,19 @@ export async function updateOrderStatus(
   );
   if (result.affectedRows === 0) {
     throw new OrderError("Order not found.");
+  }
+
+  const [rows] = await db.query<mysql.RowDataPacket[]>(
+    "SELECT customer_name, customer_email FROM orders WHERE id = ?",
+    [id]
+  );
+  const order = rows[0];
+  if (order) {
+    const settings = await getSettings();
+    await sendEmail({
+      to: order.customer_email,
+      ...orderStatusUpdateEmail({ id, customerName: order.customer_name, status }, settings),
+    });
   }
 }
 
