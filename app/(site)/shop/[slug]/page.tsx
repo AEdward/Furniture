@@ -7,7 +7,9 @@ import AddToCartPanel from "@/components/AddToCartPanel";
 import StarRating from "@/components/StarRating";
 import RoomFitCalculator from "@/components/RoomFitCalculator";
 import DeliveryEstimator from "@/components/DeliveryEstimator";
+import ProductReviews from "@/components/ProductReviews";
 import {
+  getApprovedReviews,
   getCompleteTheRoomProducts,
   getProductBySlug,
   getRelatedProducts,
@@ -40,6 +42,7 @@ const sectionNav = [
   { href: "#warranty", label: "Warranty" },
   { href: "#returns", label: "Returns" },
   { href: "#room-fit", label: "Fit Check" },
+  { href: "#reviews", label: "Reviews" },
 ];
 
 export default async function ProductPage({
@@ -51,11 +54,12 @@ export default async function ProductPage({
   if (!productRaw) notFound();
 
   const locale = await getLocale();
-  const [relatedRaw, completeTheRoomRaw, settingsRaw, dict] = await Promise.all([
+  const [relatedRaw, completeTheRoomRaw, settingsRaw, dict, reviews] = await Promise.all([
     getRelatedProducts(productRaw),
     getCompleteTheRoomProducts(productRaw),
     getSettings(),
     getDictionary(locale),
+    getApprovedReviews(productRaw.id),
   ]);
   const t = createT(dict);
   const [product, related, completeTheRoom, settings] = await Promise.all([
@@ -417,6 +421,13 @@ export default async function ProductPage({
         </p>
         <div className="max-w-md">
           <RoomFitCalculator dimensions={d} />
+        </div>
+      </section>
+
+      <section id="reviews" className="scroll-mt-32 border-t border-walnut-100 py-10">
+        <h2 className="mb-6 font-serif text-xl font-semibold text-ink">{t("Reviews")}</h2>
+        <div className="max-w-2xl">
+          <ProductReviews productSlug={product.slug} reviews={reviews} />
         </div>
       </section>
 

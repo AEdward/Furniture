@@ -167,3 +167,20 @@ CREATE TABLE IF NOT EXISTS contact_messages (
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   INDEX idx_contact_messages_created_at (created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Customer-submitted product reviews. New reviews start unapproved so
+-- an admin moderates before they appear publicly (see lib/db.ts
+-- getApprovedReviews vs getAllReviews). Dropped/recreated on reseed
+-- like orders/contact_messages above.
+CREATE TABLE IF NOT EXISTS reviews (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  product_id VARCHAR(191) NOT NULL,
+  customer_name VARCHAR(191) NOT NULL,
+  customer_email VARCHAR(191) NOT NULL,
+  rating TINYINT NOT NULL,
+  comment TEXT NOT NULL,
+  approved TINYINT(1) NOT NULL DEFAULT 0,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
+  INDEX idx_reviews_product_approved (product_id, approved)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

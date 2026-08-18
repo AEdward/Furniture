@@ -219,6 +219,17 @@ export const UI_STRINGS = [
   "We'll get back to you soon.",
   "Chat on WhatsApp",
 
+  // Reviews
+  "Reviews",
+  "No reviews yet — be the first to share yours.",
+  "Thanks! Your review will appear once approved.",
+  "Rating",
+  "Your review",
+  "Submitting…",
+  "Submit review",
+  "Cancel",
+  "Write a review",
+
   // Language switcher
   "Language",
 ] as const;
