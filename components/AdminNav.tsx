@@ -4,22 +4,30 @@ import Link from "next/link";
 import { useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import ThemeToggle from "@/components/ThemeToggle";
+import type { AdminRole } from "@/lib/admin-users";
 
 const links = [
-  { href: "/admin", label: "Dashboard" },
-  { href: "/admin/products", label: "Products" },
-  { href: "/admin/orders", label: "Orders" },
-  { href: "/admin/pages", label: "Pages" },
-  { href: "/admin/translations", label: "Translations" },
-  { href: "/admin/analytics", label: "Analytics" },
-  { href: "/admin/users", label: "Users" },
-  { href: "/admin/settings", label: "Settings" },
+  { href: "/admin", label: "Dashboard", adminOnly: false },
+  { href: "/admin/products", label: "Products", adminOnly: false },
+  { href: "/admin/orders", label: "Orders", adminOnly: true },
+  { href: "/admin/pages", label: "Pages", adminOnly: false },
+  { href: "/admin/translations", label: "Translations", adminOnly: false },
+  { href: "/admin/analytics", label: "Analytics", adminOnly: false },
+  { href: "/admin/users", label: "Users", adminOnly: true },
+  { href: "/admin/settings", label: "Settings", adminOnly: true },
 ];
 
-export default function AdminNav({ currentUserName }: { currentUserName: string | null }) {
+export default function AdminNav({
+  currentUserName,
+  currentUserRole,
+}: {
+  currentUserName: string | null;
+  currentUserRole: AdminRole | null;
+}) {
   const pathname = usePathname();
   const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const visibleLinks = links.filter((link) => !link.adminOnly || currentUserRole === "admin");
 
   async function handleLogout() {
     await fetch("/api/admin/logout", { method: "POST" });
@@ -76,7 +84,7 @@ export default function AdminNav({ currentUserName }: { currentUserName: string 
         </div>
 
         <nav className="flex flex-1 flex-col gap-1 overflow-y-auto px-3">
-          {links.map((link) => (
+          {visibleLinks.map((link) => (
             <Link
               key={link.href}
               href={link.href}
@@ -94,7 +102,14 @@ export default function AdminNav({ currentUserName }: { currentUserName: string 
 
         <div className="flex flex-col gap-2 border-t border-walnut-100 px-6 py-4">
           {currentUserName && (
-            <p className="truncate text-xs text-ink/40">Signed in as {currentUserName}</p>
+            <p className="truncate text-xs text-ink/40">
+              Signed in as {currentUserName}
+              {currentUserRole && (
+                <span className="ml-1.5 rounded-full bg-walnut-100 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-walnut-700">
+                  {currentUserRole}
+                </span>
+              )}
+            </p>
           )}
           <Link href="/" className="text-sm text-ink/50 hover:text-walnut-600">
             View site ↗

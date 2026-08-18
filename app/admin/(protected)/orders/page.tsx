@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getAllOrders } from "@/lib/db";
 import { formatPrice } from "@/lib/products";
+import { requireAdminPage } from "@/lib/admin-guard";
 
 export const dynamic = "force-dynamic";
 
@@ -25,6 +26,7 @@ const paymentMethodLabels: Record<string, string> = {
 };
 
 export default async function AdminOrdersPage() {
+  await requireAdminPage();
   const orders = await getAllOrders();
 
   return (

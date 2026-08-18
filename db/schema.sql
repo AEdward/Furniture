@@ -144,6 +144,12 @@ CREATE TABLE IF NOT EXISTS admin_users (
   name VARCHAR(191) NOT NULL,
   email VARCHAR(191) NOT NULL,
   password_hash VARCHAR(255) NOT NULL,
+  role ENUM('admin', 'editor') NOT NULL DEFAULT 'admin',
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   UNIQUE KEY uniq_admin_users_email (email)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Idempotent add-column for databases created before roles existed —
+-- admin_users is preserved across reseeds (see comment above), so a
+-- fresh CREATE TABLE IF NOT EXISTS never runs against an existing one.
+ALTER TABLE admin_users ADD COLUMN IF NOT EXISTS role ENUM('admin', 'editor') NOT NULL DEFAULT 'admin' AFTER password_hash;

@@ -1,9 +1,11 @@
 import SettingsForm from "@/components/SettingsForm";
 import { getSettings } from "@/lib/db";
+import { requireAdminPage } from "@/lib/admin-guard";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminSettingsPage() {
+  await requireAdminPage();
   const settings = await getSettings();
 
   return (

@@ -1,11 +1,15 @@
 import { NextResponse } from "next/server";
 import { confirmOrderPayment, markOrderPaymentFailed, OrderError, updateOrderStatus } from "@/lib/db";
 import { ORDER_STATUSES, type OrderStatus } from "@/lib/order-status";
+import { requireAdminApi } from "@/lib/admin-guard";
 
 export async function PATCH(
   request: Request,
   { params }: { params: { id: string } }
 ) {
+  const gate = await requireAdminApi();
+  if (gate instanceof NextResponse) return gate;
+
   const id = Number(params.id);
   if (!Number.isInteger(id)) {
     return NextResponse.json({ error: "Invalid order id." }, { status: 400 });
