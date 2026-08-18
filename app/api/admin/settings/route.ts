@@ -1,8 +1,12 @@
 import { NextResponse } from "next/server";
 import { updateSettings } from "@/lib/db";
 import { parseSettingsInput, SettingsValidationError } from "@/lib/validate-settings";
+import { requireAdminApi } from "@/lib/admin-guard";
 
 export async function PUT(request: Request) {
+  const gate = await requireAdminApi();
+  if (gate instanceof NextResponse) return gate;
+
   let body: unknown;
   try {
     body = await request.json();

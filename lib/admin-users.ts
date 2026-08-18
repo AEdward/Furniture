@@ -9,10 +9,13 @@ import { ADMIN_COOKIE_NAME, verifySessionToken } from "@/lib/admin-auth";
 // dependency) — salt:hash, both hex — never stored or logged in the
 // clear.
 
+export type AdminRole = "admin" | "editor";
+
 export type AdminUser = {
   id: number;
   name: string;
   email: string;
+  role: AdminRole;
   createdAt: string;
 };
 
@@ -47,6 +50,7 @@ function rowToUser(row: mysql.RowDataPacket): AdminUser {
     id: row.id as number,
     name: row.name as string,
     email: row.email as string,
+    role: (row.role as AdminRole) ?? "admin",
     createdAt:
       row.created_at instanceof Date ? row.created_at.toISOString() : String(row.created_at),
   };
@@ -60,10 +64,19 @@ export async function getAdminUserCount(): Promise<number> {
   return Number(rows[0]?.count ?? 0);
 }
 
+async function getAdminRoleCount(role: AdminRole): Promise<number> {
+  const db = getPool();
+  const [rows] = await db.query<mysql.RowDataPacket[]>(
+    "SELECT COUNT(*) AS count FROM admin_users WHERE role = ?",
+    [role]
+  );
+  return Number(rows[0]?.count ?? 0);
+}
+
 export async function getAllAdminUsers(): Promise<AdminUser[]> {
   const db = getPool();
   const [rows] = await db.query<mysql.RowDataPacket[]>(
-    "SELECT id, name, email, created_at FROM admin_users ORDER BY created_at ASC"
+    "SELECT id, name, email, role, created_at FROM admin_users ORDER BY created_at ASC"
   );
   return rows.map(rowToUser);
 }
@@ -74,7 +87,7 @@ export async function verifyAdminCredentials(
 ): Promise<AdminUser | null> {
   const db = getPool();
   const [rows] = await db.query<mysql.RowDataPacket[]>(
-    "SELECT id, name, email, password_hash, created_at FROM admin_users WHERE email = ? LIMIT 1",
+    "SELECT id, name, email, password_hash, role, created_at FROM admin_users WHERE email = ? LIMIT 1",
     [email.trim().toLowerCase()]
   );
   const row = rows[0];
@@ -89,9 +102,11 @@ export async function createAdminUser(input: {
   name: string;
   email: string;
   password: string;
+  role?: AdminRole;
 }): Promise<AdminUser> {
   const name = input.name.trim();
   const email = input.email.trim().toLowerCase();
+  const role: AdminRole = input.role === "editor" ? "editor" : "admin";
   if (!name) throw new AdminUserError("Name is required.");
   if (!EMAIL_PATTERN.test(email)) throw new AdminUserError("A valid email is required.");
   if (input.password.length < 8) {
@@ -102,10 +117,10 @@ export async function createAdminUser(input: {
   const passwordHash = await hashPassword(input.password);
   try {
     const [result] = await db.query<mysql.ResultSetHeader>(
-      "INSERT INTO admin_users (name, email, password_hash) VALUES (?, ?, ?)",
-      [name, email, passwordHash]
+      "INSERT INTO admin_users (name, email, password_hash, role) VALUES (?, ?, ?, ?)",
+      [name, email, passwordHash, role]
     );
-    return { id: result.insertId, name, email, createdAt: new Date().toISOString() };
+    return { id: result.insertId, name, email, role, createdAt: new Date().toISOString() };
   } catch (err) {
     if (err instanceof Error && (err as { code?: string }).code === "ER_DUP_ENTRY") {
       throw new AdminUserError("An admin with that email already exists.");
@@ -115,14 +130,31 @@ export async function createAdminUser(input: {
 }
 
 export async function deleteAdminUser(id: number): Promise<void> {
-  const count = await getAdminUserCount();
-  if (count <= 1) {
-    throw new AdminUserError("Can't delete the last admin account.");
+  const user = await getAdminUserById(id);
+  if (!user) throw new AdminUserError("Admin user not found.");
+  if (user.role === "admin" && (await getAdminRoleCount("admin")) <= 1) {
+    throw new AdminUserError("Can't remove the last admin account.");
   }
   const db = getPool();
   const [result] = await db.query<mysql.ResultSetHeader>(
     "DELETE FROM admin_users WHERE id = ?",
     [id]
+  );
+  if (result.affectedRows === 0) {
+    throw new AdminUserError("Admin user not found.");
+  }
+}
+
+export async function changeAdminRole(id: number, role: AdminRole): Promise<void> {
+  const user = await getAdminUserById(id);
+  if (!user) throw new AdminUserError("Admin user not found.");
+  if (user.role === "admin" && role === "editor" && (await getAdminRoleCount("admin")) <= 1) {
+    throw new AdminUserError("Can't demote the last admin account.");
+  }
+  const db = getPool();
+  const [result] = await db.query<mysql.ResultSetHeader>(
+    "UPDATE admin_users SET role = ? WHERE id = ?",
+    [role, id]
   );
   if (result.affectedRows === 0) {
     throw new AdminUserError("Admin user not found.");
@@ -147,7 +179,7 @@ export async function changeAdminPassword(id: number, newPassword: string): Prom
 export async function getAdminUserById(id: number): Promise<AdminUser | null> {
   const db = getPool();
   const [rows] = await db.query<mysql.RowDataPacket[]>(
-    "SELECT id, name, email, created_at FROM admin_users WHERE id = ? LIMIT 1",
+    "SELECT id, name, email, role, created_at FROM admin_users WHERE id = ? LIMIT 1",
     [id]
   );
   const row = rows[0];

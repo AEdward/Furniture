@@ -3,6 +3,7 @@ import { getOrderById } from "@/lib/db";
 import { formatPrice } from "@/lib/products";
 import OrderStatusSelect from "@/components/OrderStatusSelect";
 import PaymentStatusActions from "@/components/PaymentStatusActions";
+import { requireAdminPage } from "@/lib/admin-guard";
 
 const paymentStyles: Record<string, string> = {
   paid: "bg-walnut-500 text-walnut-50",
@@ -21,6 +22,7 @@ export default async function AdminOrderDetailPage({
 }: {
   params: { id: string };
 }) {
+  await requireAdminPage();
   const id = Number(params.id);
   const order = Number.isInteger(id) ? await getOrderById(id) : undefined;
   if (!order) notFound();

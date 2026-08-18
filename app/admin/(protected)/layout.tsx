@@ -13,7 +13,10 @@ export default async function AdminLayout({
 
   return (
     <div className="min-h-screen bg-cream md:flex">
-      <AdminNav currentUserName={currentUser?.name ?? null} />
+      <AdminNav
+        currentUserName={currentUser?.name ?? null}
+        currentUserRole={currentUser?.role ?? null}
+      />
       <main className="flex-1 px-6 py-8 md:px-10 md:py-10">
         <div className="mx-auto max-w-6xl">{children}</div>
       </main>

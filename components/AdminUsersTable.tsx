@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import type { AdminUser } from "@/lib/admin-users";
+import type { AdminRole, AdminUser } from "@/lib/admin-users";
 
 export default function AdminUsersTable({
   initialUsers,
@@ -17,6 +17,7 @@ export default function AdminUsersTable({
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [role, setRole] = useState<AdminRole>("editor");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -28,7 +29,7 @@ export default function AdminUsersTable({
       const res = await fetch("/api/admin/users", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, password }),
+        body: JSON.stringify({ name, email, password, role }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -39,12 +40,29 @@ export default function AdminUsersTable({
       setName("");
       setEmail("");
       setPassword("");
+      setRole("editor");
       router.refresh();
     } catch {
       setError("Network error — please try again.");
     } finally {
       setSubmitting(false);
     }
+  }
+
+  async function handleRoleChange(user: AdminUser, nextRole: AdminRole) {
+    if (nextRole === user.role) return;
+    const res = await fetch(`/api/admin/users/${user.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ role: nextRole }),
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      alert(data.error ?? "Failed to update role.");
+      return;
+    }
+    setUsers((prev) => prev.map((u) => (u.id === user.id ? { ...u, role: nextRole } : u)));
+    router.refresh();
   }
 
   async function handleRemove(user: AdminUser) {
@@ -83,6 +101,7 @@ export default function AdminUsersTable({
             <tr>
               <th className="px-5 py-3 font-medium">Name</th>
               <th className="px-5 py-3 font-medium">Email</th>
+              <th className="px-5 py-3 font-medium">Role</th>
               <th className="px-5 py-3 font-medium">Added</th>
               <th className="px-5 py-3 font-medium"></th>
             </tr>
@@ -99,6 +118,16 @@ export default function AdminUsersTable({
                   )}
                 </td>
                 <td className="px-5 py-3 text-ink/70">{user.email}</td>
+                <td className="px-5 py-3">
+                  <select
+                    value={user.role}
+                    onChange={(e) => handleRoleChange(user, e.target.value as AdminRole)}
+                    className="rounded-lg border border-walnut-200 bg-transparent px-2 py-1.5 text-sm focus:border-walnut-400 focus:outline-none"
+                  >
+                    <option value="admin">Admin</option>
+                    <option value="editor">Editor</option>
+                  </select>
+                </td>
                 <td className="px-5 py-3 text-ink/50">
                   {new Date(user.createdAt).toLocaleDateString()}
                 </td>
@@ -131,8 +160,8 @@ export default function AdminUsersTable({
         onSubmit={handleAdd}
         className="flex flex-col gap-4 rounded-2xl border border-walnut-100 bg-white/60 p-6"
       >
-        <h2 className="font-serif text-base font-semibold text-ink">Add an admin</h2>
-        <div className="grid gap-4 sm:grid-cols-3">
+        <h2 className="font-serif text-base font-semibold text-ink">Give someone access</h2>
+        <div className="grid gap-4 sm:grid-cols-4">
           <label className="flex flex-col gap-1.5 text-sm">
             Name
             <input
@@ -163,12 +192,23 @@ export default function AdminUsersTable({
               className="rounded-lg border border-walnut-200 px-3 py-2.5 focus:border-walnut-400 focus:outline-none"
             />
           </label>
+          <label className="flex flex-col gap-1.5 text-sm">
+            Role
+            <select
+              value={role}
+              onChange={(e) => setRole(e.target.value as AdminRole)}
+              className="rounded-lg border border-walnut-200 px-3 py-2.5 focus:border-walnut-400 focus:outline-none"
+            >
+              <option value="editor">Editor</option>
+              <option value="admin">Admin</option>
+            </select>
+          </label>
         </div>
         {error && (
           <p className="rounded-lg bg-danger-50 px-4 py-3 text-sm text-danger-500">{error}</p>
         )}
         <button type="submit" disabled={submitting} className="btn-primary self-start">
-          {submitting ? "Adding…" : "Add admin"}
+          {submitting ? "Adding…" : "Add user"}
         </button>
       </form>
     </div>
