@@ -52,6 +52,10 @@ export default function AddToCartPanel({ product }: { product: Product }) {
   const [color, setColor] = useState(product.colors[0] ?? "");
   const [material, setMaterial] = useState(product.materialOptions[0] ?? "");
   const [wood, setWood] = useState(product.woodOptions[0] ?? "");
+  const [notifyEmail, setNotifyEmail] = useState("");
+  const [notifySubmitted, setNotifySubmitted] = useState(false);
+  const [notifySubmitting, setNotifySubmitting] = useState(false);
+  const [notifyError, setNotifyError] = useState<string | null>(null);
 
   const outOfStock = product.availability === "out_of_stock";
   const madeToOrder = product.availability === "made_to_order";
@@ -60,6 +64,29 @@ export default function AddToCartPanel({ product }: { product: Product }) {
   const variantLabel = useMemo(() => {
     return [color, material, wood].filter(Boolean).join(" · ") || undefined;
   }, [color, material, wood]);
+
+  async function handleNotifySubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setNotifySubmitting(true);
+    setNotifyError(null);
+    try {
+      const res = await fetch("/api/back-in-stock", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ productSlug: product.slug, email: notifyEmail }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setNotifyError(data.error ?? "Something went wrong — please try again.");
+        return;
+      }
+      setNotifySubmitted(true);
+    } catch {
+      setNotifyError("Network error — please try again.");
+    } finally {
+      setNotifySubmitting(false);
+    }
+  }
 
   return (
     <div className="flex flex-col gap-5">
@@ -123,6 +150,31 @@ export default function AddToCartPanel({ product }: { product: Product }) {
           {t("View cart →")}
         </button>
       )}
+
+      {outOfStock &&
+        (notifySubmitted ? (
+          <p className="rounded-lg bg-walnut-50 px-4 py-3 text-sm text-walnut-700">
+            {t("We'll email you when it's back.")}
+          </p>
+        ) : (
+          <form onSubmit={handleNotifySubmit} className="flex flex-col gap-2">
+            <p className="text-sm font-medium text-ink">{t("Notify me when back in stock")}</p>
+            <div className="flex gap-2">
+              <input
+                required
+                type="email"
+                value={notifyEmail}
+                onChange={(e) => setNotifyEmail(e.target.value)}
+                placeholder={t("Email")}
+                className="flex-1 rounded-lg border border-walnut-200 px-3 py-2.5 text-sm focus:border-walnut-400 focus:outline-none"
+              />
+              <button type="submit" disabled={notifySubmitting} className="btn-secondary">
+                {notifySubmitting ? t("Submitting…") : t("Notify me")}
+              </button>
+            </div>
+            {notifyError && <p className="text-xs text-danger-500">{notifyError}</p>}
+          </form>
+        ))}
     </div>
   );
 }

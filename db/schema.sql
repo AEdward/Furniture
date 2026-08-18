@@ -184,3 +184,17 @@ CREATE TABLE IF NOT EXISTS reviews (
   FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
   INDEX idx_reviews_product_approved (product_id, approved)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- "Notify me when back in stock" signups. notified_at is set once the
+-- email goes out (see lib/db.ts updateProduct, which fires it the
+-- moment a product's availability moves away from out_of_stock).
+-- Dropped/recreated on reseed like the other customer-submitted tables.
+CREATE TABLE IF NOT EXISTS back_in_stock_requests (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  product_id VARCHAR(191) NOT NULL,
+  email VARCHAR(191) NOT NULL,
+  notified_at TIMESTAMP NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
+  UNIQUE KEY uniq_back_in_stock_product_email (product_id, email)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

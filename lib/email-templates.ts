@@ -74,6 +74,22 @@ export function orderStatusUpdateEmail(
   return { subject, html, text };
 }
 
+export function backInStockEmail(
+  productName: string,
+  productUrl: string,
+  settings: SiteSettings
+): { subject: string; html: string; text: string } {
+  const subject = `Back in stock: ${productName}`;
+  const html = wrapper(
+    settings.name,
+    `<p>Good news — <strong>${productName}</strong> is back in stock.</p>
+     <p><a href="${productUrl}">View it here</a> before it sells out again.</p>`
+  );
+  const text = `Good news — ${productName} is back in stock.\n\nView it here: ${productUrl}`;
+
+  return { subject, html, text };
+}
+
 export function contactNotificationEmail(
   message: ContactMessage,
   settings: SiteSettings
