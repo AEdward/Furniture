@@ -8,13 +8,16 @@ import StarRating from "@/components/StarRating";
 import RoomFitCalculator from "@/components/RoomFitCalculator";
 import DeliveryEstimator from "@/components/DeliveryEstimator";
 import ProductReviews from "@/components/ProductReviews";
+import WishlistButton from "@/components/WishlistButton";
 import {
   getApprovedReviews,
   getCompleteTheRoomProducts,
   getProductBySlug,
   getRelatedProducts,
   getSettings,
+  getWishlistProductIds,
 } from "@/lib/db";
+import { getCurrentCustomer } from "@/lib/customers";
 import { formatPrice } from "@/lib/products";
 import { getLocale } from "@/lib/i18n/get-locale";
 import { getDictionary } from "@/lib/i18n/get-dictionary";
@@ -54,13 +57,15 @@ export default async function ProductPage({
   if (!productRaw) notFound();
 
   const locale = await getLocale();
-  const [relatedRaw, completeTheRoomRaw, settingsRaw, dict, reviews] = await Promise.all([
+  const [relatedRaw, completeTheRoomRaw, settingsRaw, dict, reviews, customer] = await Promise.all([
     getRelatedProducts(productRaw),
     getCompleteTheRoomProducts(productRaw),
     getSettings(),
     getDictionary(locale),
     getApprovedReviews(productRaw.id),
+    getCurrentCustomer(),
   ]);
+  const wishlistedIds = customer ? await getWishlistProductIds(customer.id) : [];
   const t = createT(dict);
   const [product, related, completeTheRoom, settings] = await Promise.all([
     translateProduct(productRaw, locale),
@@ -182,8 +187,13 @@ export default async function ProductPage({
             {product.description}
           </p>
 
-          <div className="mt-8">
+          <div className="mt-8 flex flex-col gap-3">
             <AddToCartPanel product={product} />
+            <WishlistButton
+              productSlug={product.slug}
+              initialWishlisted={wishlistedIds.includes(product.id)}
+              loggedIn={!!customer}
+            />
           </div>
 
           <div className="mt-8 grid grid-cols-2 gap-3 border-t border-walnut-100 pt-6 text-xs text-ink/60 sm:grid-cols-4">

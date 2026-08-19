@@ -55,6 +55,7 @@ export default function Footer({ settings }: { settings: SiteSettings }) {
             <li><Link href="/about" className="hover:text-walnut-50">{t("Our Story")}</Link></li>
             <li><Link href="/contact" className="hover:text-walnut-50">{t("Contact")}</Link></li>
             <li><Link href="/shop" className="hover:text-walnut-50">{t("Shop All")}</Link></li>
+            <li><Link href="/track-order" className="hover:text-walnut-50">{t("Track order")}</Link></li>
           </ul>
         </div>
 

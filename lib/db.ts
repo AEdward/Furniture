@@ -160,6 +160,10 @@ export type OrderInput = {
   items: { slug: string; quantity: number; variant?: string }[];
   paymentMethod: PaymentMethod;
   couponCode?: string | null;
+  // Set when the customer was logged in at checkout, so the order shows
+  // up in their account order history. Guest checkout leaves this null —
+  // login is never required to buy.
+  customerId?: number | null;
   // Identifies "this browser's current checkout attempt" (see
   // lib/cart-context.tsx). If a still-pending order already exists for
   // this id, it's updated in place instead of inserting a new row —
@@ -292,11 +296,12 @@ export async function createOrder(input: OrderInput): Promise<OrderResult> {
     if (existingOrderId) {
       await conn.query(
         `UPDATE orders SET
-          customer_name = ?, customer_email = ?, customer_phone = ?,
+          customer_id = ?, customer_name = ?, customer_email = ?, customer_phone = ?,
           address = ?, city = ?, postal_code = ?, subtotal = ?, coupon_code = ?, discount_amount = ?,
           payment_method = ?, payment_status = 'pending', payment_provider = NULL, payment_ref = NULL
          WHERE id = ?`,
         [
+          input.customerId ?? null,
           input.customerName,
           input.customerEmail,
           input.customerPhone,
@@ -314,10 +319,11 @@ export async function createOrder(input: OrderInput): Promise<OrderResult> {
     } else {
       const [orderResult] = await conn.query<mysql.ResultSetHeader>(
         `INSERT INTO orders
-          (customer_name, customer_email, customer_phone, address, city, postal_code, subtotal,
+          (customer_id, customer_name, customer_email, customer_phone, address, city, postal_code, subtotal,
            coupon_code, discount_amount, status, payment_method, payment_status, cart_session_id)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'placed', ?, 'pending', ?)`,
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'placed', ?, 'pending', ?)`,
         [
+          input.customerId ?? null,
           input.customerName,
           input.customerEmail,
           input.customerPhone,
@@ -1702,4 +1708,91 @@ export async function deleteCoupon(id: number): Promise<void> {
   const db = getPool();
   const [result] = await db.query<mysql.ResultSetHeader>("DELETE FROM coupons WHERE id = ?", [id]);
   if (result.affectedRows === 0) throw new CouponError("Coupon not found.");
+}
+
+// ---------------------------------------------------------------------
+// Customer accounts: order history, wishlist, public order tracking
+// ---------------------------------------------------------------------
+
+export async function getOrdersByCustomerId(customerId: number): Promise<OrderSummary[]> {
+  const db = getPool();
+  const [rows] = await db.query<mysql.RowDataPacket[]>(
+    `SELECT o.id, o.customer_name, o.customer_email, o.subtotal, o.discount_amount, o.status,
+            o.payment_method, o.payment_status, o.created_at,
+            COALESCE(SUM(oi.quantity), 0) AS item_count
+     FROM orders o
+     LEFT JOIN order_items oi ON oi.order_id = o.id
+     WHERE o.customer_id = ?
+     GROUP BY o.id
+     ORDER BY o.created_at DESC`,
+    [customerId]
+  );
+  return rows.map((r) => ({
+    id: r.id,
+    customerName: r.customer_name,
+    customerEmail: r.customer_email,
+    subtotal: r.subtotal,
+    discountAmount: r.discount_amount ?? 0,
+    status: r.status,
+    paymentMethod: r.payment_method as PaymentMethod,
+    paymentStatus: r.payment_status as PaymentStatus,
+    createdAt: r.created_at,
+    itemCount: Number(r.item_count),
+  }));
+}
+
+// Public lookup for guest checkout customers — requires both the order
+// id and the email it was placed under, so a sequential id can't be
+// used to browse other people's orders.
+export async function trackOrder(id: number, email: string): Promise<Order | undefined> {
+  const order = await getOrderById(id);
+  if (!order) return undefined;
+  return order.customerEmail.toLowerCase() === email.trim().toLowerCase() ? order : undefined;
+}
+
+export type WishlistProduct = Product & { wishlistedAt: string };
+
+export async function getWishlist(customerId: number): Promise<WishlistProduct[]> {
+  const db = getPool();
+  const [rows] = await db.query<mysql.RowDataPacket[]>(
+    `SELECT p.*, w.created_at AS wishlisted_at
+     FROM wishlist_items w
+     JOIN products p ON p.id = w.product_id
+     WHERE w.customer_id = ?
+     ORDER BY w.created_at DESC`,
+    [customerId]
+  );
+  const products = await withReviewAggregates(
+    (rows as (ProductRow & { wishlisted_at: string })[]).map(rowToProduct)
+  );
+  return products.map((p, i) => ({ ...p, wishlistedAt: (rows[i] as { wishlisted_at: string }).wishlisted_at }));
+}
+
+export async function getWishlistProductIds(customerId: number): Promise<string[]> {
+  const db = getPool();
+  const [rows] = await db.query<mysql.RowDataPacket[]>(
+    "SELECT product_id FROM wishlist_items WHERE customer_id = ?",
+    [customerId]
+  );
+  return rows.map((r) => r.product_id);
+}
+
+export async function addToWishlist(customerId: number, productSlug: string): Promise<void> {
+  const product = await getProductBySlug(productSlug);
+  if (!product) throw new ProductError("Product not found.");
+  const db = getPool();
+  await db.query(
+    "INSERT IGNORE INTO wishlist_items (customer_id, product_id) VALUES (?, ?)",
+    [customerId, product.id]
+  );
+}
+
+export async function removeFromWishlist(customerId: number, productSlug: string): Promise<void> {
+  const product = await getProductBySlug(productSlug);
+  if (!product) throw new ProductError("Product not found.");
+  const db = getPool();
+  await db.query("DELETE FROM wishlist_items WHERE customer_id = ? AND product_id = ?", [
+    customerId,
+    product.id,
+  ]);
 }

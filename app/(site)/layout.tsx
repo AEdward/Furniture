@@ -4,6 +4,7 @@ import PageViewTracker from "@/components/PageViewTracker";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import { CartProvider } from "@/lib/cart-context";
 import { getNavPages, getSettings } from "@/lib/db";
+import { getCurrentCustomer } from "@/lib/customers";
 import { I18nProvider } from "@/lib/i18n/context";
 import { getDictionary } from "@/lib/i18n/get-dictionary";
 import { getLocale } from "@/lib/i18n/get-locale";
@@ -17,10 +18,11 @@ export default async function SiteLayout({
   children: React.ReactNode;
 }) {
   const locale = await getLocale();
-  const [settings, navPages, dict] = await Promise.all([
+  const [settings, navPages, dict, customer] = await Promise.all([
     getSettings(),
     getNavPages(),
     getDictionary(locale),
+    getCurrentCustomer(),
   ]);
   const rawNavLinks = navPages.map((p) => ({
     href: `/${p.slug}`,
@@ -40,6 +42,7 @@ export default async function SiteLayout({
           navPages={navLinks}
           translationEnabled={settings.translation.enabled}
           languages={settings.translation.languages}
+          customerName={customer?.name ?? null}
         />
         <main className="flex-1">{children}</main>
         <Footer settings={translatedSettings} />
