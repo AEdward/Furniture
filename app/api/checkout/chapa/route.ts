@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getOrderById, setOrderPaymentRef } from "@/lib/db";
+import { getOrderById, orderTotal, setOrderPaymentRef } from "@/lib/db";
 import { ChapaError, initializeChapaTransaction, isChapaConfigured } from "@/lib/chapa";
 
 // Starts a Chapa payment for an order that's already been created (via
@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const { checkoutUrl } = await initializeChapaTransaction({
-      amount: order.subtotal,
+      amount: orderTotal(order),
       email: order.customerEmail,
       firstName: firstName || order.customerName,
       lastName: rest.join(" ") || "Customer",

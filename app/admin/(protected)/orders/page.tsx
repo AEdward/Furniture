@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { getAllOrders } from "@/lib/db";
+import { getAllOrders, orderTotal } from "@/lib/db";
 import { formatPrice } from "@/lib/products";
 import { requireAdminPage } from "@/lib/admin-guard";
 
@@ -72,7 +72,7 @@ export default async function AdminOrdersPage() {
                     <div className="text-xs text-ink/40">{order.customerEmail}</div>
                   </td>
                   <td className="px-5 py-3 text-ink/70">{order.itemCount}</td>
-                  <td className="px-5 py-3 text-ink/70">{formatPrice(order.subtotal)}</td>
+                  <td className="px-5 py-3 text-ink/70">{formatPrice(orderTotal(order))}</td>
                   <td className="px-5 py-3">
                     <span
                       className={`rounded-full px-2.5 py-1 text-xs font-medium capitalize ${

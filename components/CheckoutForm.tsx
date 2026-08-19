@@ -31,6 +31,38 @@ export default function CheckoutForm({
     postalCode: "",
   });
 
+  const [couponInput, setCouponInput] = useState("");
+  const [appliedCoupon, setAppliedCoupon] = useState<{ code: string; discountAmount: number } | null>(
+    null
+  );
+  const [couponError, setCouponError] = useState<string | null>(null);
+  const [couponChecking, setCouponChecking] = useState(false);
+
+  const total = Math.max(0, subtotal - (appliedCoupon?.discountAmount ?? 0));
+
+  async function handleApplyCoupon(e: React.FormEvent) {
+    e.preventDefault();
+    setCouponChecking(true);
+    setCouponError(null);
+    try {
+      const res = await fetch("/api/coupons/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: couponInput, subtotal }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setCouponError(data.error ?? "Invalid coupon code.");
+        return;
+      }
+      setAppliedCoupon({ code: data.code, discountAmount: data.discountAmount });
+    } catch {
+      setCouponError("Network error — please try again.");
+    } finally {
+      setCouponChecking(false);
+    }
+  }
+
   if (isReady && lines.length === 0) {
     return (
       <div className="container-shop flex flex-col items-center py-24 text-center">
@@ -75,6 +107,7 @@ export default function CheckoutForm({
           ...form,
           paymentMethod,
           cartSessionId,
+          couponCode: appliedCoupon?.code ?? null,
           items: lines.map((l) => ({ slug: l.slug, quantity: l.quantity, variant: l.variant })),
         }),
       });
@@ -279,7 +312,7 @@ export default function CheckoutForm({
               : submitting
                 ? t("Placing order…")
                 : paymentMethod === "chapa"
-                  ? t("Place order — {price}", { price: formatPrice(subtotal) })
+                  ? t("Place order — {price}", { price: formatPrice(total) })
                   : t("Place order")}
           </button>
         </form>
@@ -300,9 +333,54 @@ export default function CheckoutForm({
               </li>
             ))}
           </ul>
-          <div className="mt-4 flex justify-between border-t border-walnut-100 pt-4 font-semibold text-ink">
-            <span>{t("Total")}</span>
+
+          <div className="mt-4 border-t border-walnut-100 pt-4">
+            {appliedCoupon ? (
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-ink/70">
+                  {t("Coupon code")}: <span className="font-mono">{appliedCoupon.code}</span>
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setAppliedCoupon(null)}
+                  className="text-xs font-medium text-danger-500 hover:underline"
+                >
+                  {t("Remove")}
+                </button>
+              </div>
+            ) : (
+              <form onSubmit={handleApplyCoupon} className="flex gap-2">
+                <input
+                  value={couponInput}
+                  onChange={(e) => setCouponInput(e.target.value)}
+                  placeholder={t("Coupon code")}
+                  className="flex-1 rounded-lg border border-walnut-200 px-3 py-2 text-sm focus:border-walnut-400 focus:outline-none"
+                />
+                <button
+                  type="submit"
+                  disabled={couponChecking || !couponInput.trim()}
+                  className="rounded-lg border border-walnut-200 px-3 py-2 text-sm font-medium text-ink/70 hover:border-walnut-400 disabled:opacity-50"
+                >
+                  {t("Apply")}
+                </button>
+              </form>
+            )}
+            {couponError && <p className="mt-2 text-xs text-danger-500">{couponError}</p>}
+          </div>
+
+          <div className="mt-4 flex justify-between text-sm text-ink/70">
+            <span>{t("Subtotal")}</span>
             <span>{formatPrice(subtotal)}</span>
+          </div>
+          {appliedCoupon && appliedCoupon.discountAmount > 0 && (
+            <div className="mt-2 flex justify-between text-sm text-ink/70">
+              <span>{t("Discount")}</span>
+              <span>-{formatPrice(appliedCoupon.discountAmount)}</span>
+            </div>
+          )}
+          <div className="mt-3 flex justify-between border-t border-walnut-100 pt-3 font-semibold text-ink">
+            <span>{t("Total")}</span>
+            <span>{formatPrice(total)}</span>
           </div>
         </div>
       </div>

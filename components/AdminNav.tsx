@@ -10,6 +10,7 @@ const links = [
   { href: "/admin", label: "Dashboard", adminOnly: false },
   { href: "/admin/products", label: "Products", adminOnly: false },
   { href: "/admin/orders", label: "Orders", adminOnly: true },
+  { href: "/admin/coupons", label: "Coupons", adminOnly: true },
   { href: "/admin/messages", label: "Messages", adminOnly: false },
   { href: "/admin/reviews", label: "Reviews", adminOnly: false },
   { href: "/admin/pages", label: "Pages", adminOnly: false },
