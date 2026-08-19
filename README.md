@@ -303,16 +303,26 @@ email isn't set up yet. Point it at any SMTP provider — Gmail App
 Passwords, SendGrid, Mailgun, Amazon SES — and set `SMTP_FROM` for the
 From address (defaults to `SMTP_USER`).
 
+## Customer accounts
+
+Separate from the admin login (`lib/customer-auth.ts` / `lib/customers.ts`,
+`customers` table) — a shopper can create an account to see order
+history (`/account/orders`) and save products to a wishlist
+(`/account/wishlist`), but an account is never required to buy: guest
+checkout still works exactly as before, and a signed-in customer's id is
+attached to an order only when they happen to be logged in at checkout.
+Anyone — logged in or not — can look up an order at `/track-order` with
+just the order number and the email it was placed under.
+
 ## What's real vs. placeholder
 
 - **Products, inventory, settings, and pages** — all real, stored in
   MySQL. Stock is decremented once payment is confirmed (see "Payment").
 - **Orders and payment** — real, via Chapa (see "Payment" above).
 - **Cart** — client-side only, persisted to the browser's `localStorage`
-  (`lib/cart-context.tsx`). Not tied to a user account.
-- **Contact form** — client-side only for now; shows a success state but
-  doesn't send anywhere. Point it at an email service or an `/api/contact`
-  route when needed.
+  (`lib/cart-context.tsx`).
+- **Contact form, reviews, coupons, back-in-stock signups** — all real,
+  stored in MySQL and manageable from `/admin`.
 
 ## Project structure
 

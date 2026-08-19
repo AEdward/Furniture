@@ -44,6 +44,7 @@ CREATE TABLE IF NOT EXISTS products (
 
 CREATE TABLE IF NOT EXISTS orders (
   id INT AUTO_INCREMENT PRIMARY KEY,
+  customer_id INT NULL,
   customer_name VARCHAR(191) NOT NULL,
   customer_email VARCHAR(191) NOT NULL,
   customer_phone VARCHAR(32) NOT NULL DEFAULT '',
@@ -75,7 +76,8 @@ CREATE TABLE IF NOT EXISTS orders (
 
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   INDEX idx_orders_payment_ref (payment_ref),
-  INDEX idx_orders_cart_session (cart_session_id)
+  INDEX idx_orders_cart_session (cart_session_id),
+  INDEX idx_orders_customer_id (customer_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS order_items (
@@ -215,4 +217,27 @@ CREATE TABLE IF NOT EXISTS back_in_stock_requests (
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
   UNIQUE KEY uniq_back_in_stock_product_email (product_id, email)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Customer (storefront) accounts — separate from admin_users, which is
+-- for /admin logins only. Preserved across reseeds like admin_users, so
+-- a customer's login survives a reseed even though their orders/
+-- wishlist (customer-submitted content, like reviews/messages) don't.
+CREATE TABLE IF NOT EXISTS customers (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(191) NOT NULL,
+  email VARCHAR(191) NOT NULL,
+  password_hash VARCHAR(255) NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY uniq_customers_email (email)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS wishlist_items (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  customer_id INT NOT NULL,
+  product_id VARCHAR(191) NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE CASCADE,
+  FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
+  UNIQUE KEY uniq_wishlist_customer_product (customer_id, product_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

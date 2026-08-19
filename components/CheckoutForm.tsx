@@ -12,8 +12,10 @@ type PaymentMethod = "chapa" | "cod" | "bank_transfer";
 
 export default function CheckoutForm({
   bankDetails,
+  prefill,
 }: {
   bankDetails: SiteSettings["bankDetails"];
+  prefill?: { customerName: string; customerEmail: string };
 }) {
   const { lines, subtotal, clearCart, isReady, cartSessionId } = useCart();
   const router = useRouter();
@@ -23,8 +25,8 @@ export default function CheckoutForm({
   const [error, setError] = useState<string | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("chapa");
   const [form, setForm] = useState({
-    customerName: "",
-    customerEmail: "",
+    customerName: prefill?.customerName ?? "",
+    customerEmail: prefill?.customerEmail ?? "",
     customerPhone: "",
     address: "",
     city: "",

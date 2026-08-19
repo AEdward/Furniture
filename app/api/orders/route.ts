@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createOrder, OrderError, type PaymentMethod } from "@/lib/db";
+import { getCurrentCustomer } from "@/lib/customers";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 // Permissive on purpose — accepts local (09...) and international
@@ -65,6 +66,11 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Your cart is empty." }, { status: 400 });
   }
 
+  // Derived from the session cookie, never from the request body — a
+  // client-supplied customerId would let anyone attach an order to a
+  // stranger's account just by sending an arbitrary id.
+  const currentCustomer = await getCurrentCustomer();
+
   try {
     const order = await createOrder({
       customerName,
@@ -76,6 +82,7 @@ export async function POST(request: Request) {
       items,
       paymentMethod,
       couponCode,
+      customerId: currentCustomer?.id ?? null,
       cartSessionId,
     });
     return NextResponse.json({ order }, { status: 201 });
