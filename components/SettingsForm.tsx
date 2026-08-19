@@ -17,6 +17,7 @@ export default function SettingsForm({ initial }: { initial: SiteSettings }) {
   const [description, setDescription] = useState(initial.description);
   const [email, setEmail] = useState(initial.email);
   const [phone, setPhone] = useState(initial.phone);
+  const [telegramUsername, setTelegramUsername] = useState(initial.telegramUsername);
   const [address, setAddress] = useState(initial.address.join("\n"));
   const [freeShippingThreshold, setFreeShippingThreshold] = useState(
     String(initial.freeShippingThreshold)
@@ -101,6 +102,7 @@ export default function SettingsForm({ initial }: { initial: SiteSettings }) {
       description,
       email,
       phone,
+      telegramUsername,
       address,
       freeShippingThreshold: Number(freeShippingThreshold),
       hero: {
@@ -206,6 +208,15 @@ export default function SettingsForm({ initial }: { initial: SiteSettings }) {
           <label className={labelClass}>
             Phone
             <input required value={phone} onChange={(e) => setPhone(e.target.value)} className={inputClass} />
+          </label>
+          <label className={labelClass}>
+            Telegram username (optional)
+            <input
+              value={telegramUsername}
+              onChange={(e) => setTelegramUsername(e.target.value.replace(/^@/, ""))}
+              placeholder="goldenwoodfurniture"
+              className={inputClass}
+            />
           </label>
           <label className={`${labelClass} sm:col-span-2`}>
             Address (one line per row)

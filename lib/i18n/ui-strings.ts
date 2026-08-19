@@ -218,6 +218,7 @@ export const UI_STRINGS = [
   "Message sent",
   "We'll get back to you soon.",
   "Chat on WhatsApp",
+  "Chat on Telegram",
 
   // Reviews
   "Reviews",
