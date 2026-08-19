@@ -11,8 +11,8 @@ export type SiteSettings = {
   email: string;
   phone: string;
   // Telegram @username (no "@", no URL) for the chat widget — e.g.
-  // "goldenwoodfurniture" becomes https://t.me/goldenwoodfurniture.
-  // Empty hides the button, unlike WhatsApp which always has a phone.
+  // "example" becomes https://t.me/example. Empty hides the button,
+  // unlike WhatsApp which always has a phone.
   telegramUsername: string;
   address: string[];
   freeShippingThreshold: number;
