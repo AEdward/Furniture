@@ -51,6 +51,8 @@ CREATE TABLE IF NOT EXISTS orders (
   city VARCHAR(191) NOT NULL,
   postal_code VARCHAR(32) NOT NULL,
   subtotal INT NOT NULL,
+  coupon_code VARCHAR(64) NULL,
+  discount_amount INT NOT NULL DEFAULT 0,
   status VARCHAR(32) NOT NULL DEFAULT 'placed',
 
   -- Payment. Separate from `status` above, which tracks fulfillment
@@ -154,6 +156,22 @@ CREATE TABLE IF NOT EXISTS admin_users (
 -- admin_users is preserved across reseeds (see comment above), so a
 -- fresh CREATE TABLE IF NOT EXISTS never runs against an existing one.
 ALTER TABLE admin_users ADD COLUMN IF NOT EXISTS role ENUM('admin', 'editor') NOT NULL DEFAULT 'admin' AFTER password_hash;
+
+-- Discount codes. Admin-managed configuration, not demo content — like
+-- admin_users, deliberately not dropped/reseeded so codes an admin sets
+-- up survive a reseed after a schema change.
+CREATE TABLE IF NOT EXISTS coupons (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  code VARCHAR(64) NOT NULL,
+  discount_type ENUM('percent', 'fixed') NOT NULL,
+  discount_value INT NOT NULL,
+  active TINYINT(1) NOT NULL DEFAULT 1,
+  max_uses INT NULL,
+  used_count INT NOT NULL DEFAULT 0,
+  expires_at TIMESTAMP NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY uniq_coupons_code (code)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Contact form submissions — previously the form just faked success
 -- client-side and the message went nowhere. Dropped/recreated on reseed

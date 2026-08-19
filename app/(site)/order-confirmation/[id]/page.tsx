@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { confirmOrderPayment, getOrderById, getSettings, markOrderPaymentFailed } from "@/lib/db";
+import { confirmOrderPayment, getOrderById, getSettings, markOrderPaymentFailed, orderTotal } from "@/lib/db";
 import { formatPrice } from "@/lib/products";
 import { getLocale } from "@/lib/i18n/get-locale";
 import { getDictionary } from "@/lib/i18n/get-dictionary";
@@ -85,7 +85,7 @@ export default async function OrderConfirmationPage({
             <RetryPaymentButton orderId={order.id} />
           </div>
           <p className="mt-4 text-sm text-ink/50">
-            {t("Order #{id}", { id: order.id })} · {formatPrice(order.subtotal)}
+            {t("Order #{id}", { id: order.id })} · {formatPrice(orderTotal(order))}
           </p>
         </div>
       </div>
@@ -129,9 +129,18 @@ export default async function OrderConfirmationPage({
             </li>
           ))}
         </ul>
+        {order.discountAmount > 0 && (
+          <div className="mt-3 flex justify-between border-t border-walnut-100 pt-3 text-sm text-ink/70">
+            <span>
+              {t("Discount")}
+              {order.couponCode ? ` (${order.couponCode})` : ""}
+            </span>
+            <span>-{formatPrice(order.discountAmount)}</span>
+          </div>
+        )}
         <div className="mt-4 flex justify-between border-t border-walnut-100 pt-4 font-semibold text-ink">
           <span>{t("Total")}</span>
-          <span>{formatPrice(order.subtotal)}</span>
+          <span>{formatPrice(orderTotal(order))}</span>
         </div>
 
         <div className="mt-6 border-t border-walnut-100 pt-4 text-sm text-ink/70">
@@ -145,7 +154,7 @@ export default async function OrderConfirmationPage({
         {order.paymentMethod === "cod" && (
           <div className="mt-6 rounded-xl bg-walnut-50/60 p-4 text-sm text-ink/70">
             {t("Pay {price} in cash when your order is delivered.", {
-              price: formatPrice(order.subtotal),
+              price: formatPrice(orderTotal(order)),
             })}
           </div>
         )}
@@ -169,7 +178,7 @@ export default async function OrderConfirmationPage({
             )}
             <p className="mt-2 text-xs text-ink/50">
               {t("Please transfer {price} to the account above, using your order number as the reference.", {
-                price: formatPrice(order.subtotal),
+                price: formatPrice(orderTotal(order)),
               })}
             </p>
             {settings.bankDetails.instructions && (

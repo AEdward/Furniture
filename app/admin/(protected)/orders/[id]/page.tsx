@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { getOrderById } from "@/lib/db";
+import { getOrderById, orderTotal } from "@/lib/db";
 import { formatPrice } from "@/lib/products";
 import OrderStatusSelect from "@/components/OrderStatusSelect";
 import PaymentStatusActions from "@/components/PaymentStatusActions";
@@ -50,9 +50,15 @@ export default async function AdminOrderDetailPage({
               </li>
             ))}
           </ul>
+          {order.discountAmount > 0 && (
+            <div className="mt-3 flex justify-between border-t border-walnut-100 pt-3 text-sm text-ink/70">
+              <span>Discount{order.couponCode ? ` (${order.couponCode})` : ""}</span>
+              <span>-{formatPrice(order.discountAmount)}</span>
+            </div>
+          )}
           <div className="mt-4 flex justify-between border-t border-walnut-100 pt-4 font-semibold text-ink">
             <span>Total</span>
-            <span>{formatPrice(order.subtotal)}</span>
+            <span>{formatPrice(orderTotal(order))}</span>
           </div>
         </div>
 

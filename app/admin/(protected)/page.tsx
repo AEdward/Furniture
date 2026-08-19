@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { getDashboardStats, getUnreadContactMessageCount } from "@/lib/db";
+import { getDashboardStats, getUnreadContactMessageCount, orderTotal } from "@/lib/db";
 import { formatPrice } from "@/lib/products";
 
 export const dynamic = "force-dynamic";
@@ -66,7 +66,7 @@ export default async function AdminDashboardPage() {
                     <p className="text-ink/50">{order.customerName}</p>
                   </div>
                   <div className="text-right">
-                    <p className="font-medium text-ink">{formatPrice(order.subtotal)}</p>
+                    <p className="font-medium text-ink">{formatPrice(orderTotal(order))}</p>
                     <p className="capitalize text-ink/50">{order.status}</p>
                   </div>
                 </li>

@@ -30,6 +30,8 @@ export async function POST(request: Request) {
   const paymentMethod = b.paymentMethod as PaymentMethod;
   const cartSessionId =
     typeof b.cartSessionId === "string" && b.cartSessionId.trim() ? b.cartSessionId.trim() : null;
+  const couponCode =
+    typeof b.couponCode === "string" && b.couponCode.trim() ? b.couponCode.trim() : null;
 
   if (!customerName || !address || !city || !postalCode) {
     return NextResponse.json({ error: "Please fill in all fields." }, { status: 400 });
@@ -73,6 +75,7 @@ export async function POST(request: Request) {
       postalCode,
       items,
       paymentMethod,
+      couponCode,
       cartSessionId,
     });
     return NextResponse.json({ order }, { status: 201 });

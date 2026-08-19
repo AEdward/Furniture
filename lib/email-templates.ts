@@ -17,6 +17,7 @@ type OrderConfirmationInput = {
   address: string;
   city: string;
   subtotal: number;
+  discountAmount: number;
   items: { name: string; price: number; quantity: number; variant?: string }[];
 };
 
@@ -38,17 +39,25 @@ export function orderConfirmationEmail(
     .map((item) => `- ${item.name}${item.variant ? ` (${item.variant})` : ""} × ${item.quantity}: ${formatPrice(item.price * item.quantity)}`)
     .join("\n");
 
+  const total = Math.max(0, order.subtotal - order.discountAmount);
+  const discountHtml =
+    order.discountAmount > 0
+      ? `<p>Discount: -${formatPrice(order.discountAmount)}</p>`
+      : "";
+  const discountText = order.discountAmount > 0 ? `Discount: -${formatPrice(order.discountAmount)}\n` : "";
+
   const subject = `Order confirmed — #${order.id}`;
   const html = wrapper(
     settings.name,
     `<p>Hi ${order.customerName},</p>
      <p>Thanks for your order! Here's a summary:</p>
      <table style="width: 100%; border-collapse: collapse;">${itemsHtml}</table>
-     <p style="font-weight: 600; margin-top: 12px;">Total: ${formatPrice(order.subtotal)}</p>
+     ${discountHtml}
+     <p style="font-weight: 600; margin-top: 12px;">Total: ${formatPrice(total)}</p>
      <p>Delivery to: ${order.address}, ${order.city}</p>
      <p>We'll email you again once your order ships.</p>`
   );
-  const text = `Hi ${order.customerName},\n\nThanks for your order! Order #${order.id}:\n${itemsText}\n\nTotal: ${formatPrice(order.subtotal)}\nDelivery to: ${order.address}, ${order.city}\n\nWe'll email you again once your order ships.`;
+  const text = `Hi ${order.customerName},\n\nThanks for your order! Order #${order.id}:\n${itemsText}\n\n${discountText}Total: ${formatPrice(total)}\nDelivery to: ${order.address}, ${order.city}\n\nWe'll email you again once your order ships.`;
 
   return { subject, html, text };
 }

@@ -159,6 +159,7 @@ export type OrderInput = {
   postalCode: string;
   items: { slug: string; quantity: number; variant?: string }[];
   paymentMethod: PaymentMethod;
+  couponCode?: string | null;
   // Identifies "this browser's current checkout attempt" (see
   // lib/cart-context.tsx). If a still-pending order already exists for
   // this id, it's updated in place instead of inserting a new row —
@@ -170,6 +171,8 @@ export type OrderInput = {
 export type OrderResult = {
   id: number;
   subtotal: number;
+  discountAmount: number;
+  couponCode: string | null;
   items: { slug: string; name: string; price: number; quantity: number; variant?: string }[];
 };
 
@@ -257,6 +260,25 @@ export async function createOrder(input: OrderInput): Promise<OrderResult> {
       throw new OrderError("Cart is empty.");
     }
 
+    // Re-validated here rather than trusting whatever the client showed
+    // during checkout — the coupon row is locked so a coupon can't be
+    // oversold past max_uses by two orders racing to redeem it.
+    let discountAmount = 0;
+    let couponCode: string | null = null;
+    if (input.couponCode) {
+      const [couponRows] = await conn.query<mysql.RowDataPacket[]>(
+        "SELECT * FROM coupons WHERE code = ? FOR UPDATE",
+        [input.couponCode.trim().toUpperCase()]
+      );
+      const couponRow = couponRows[0];
+      if (!couponRow) throw new OrderError("Invalid coupon code.");
+      const coupon = rowToCoupon(couponRow);
+      assertCouponUsable(coupon);
+      discountAmount = computeCouponDiscount(coupon, subtotal);
+      couponCode = coupon.code;
+      await conn.query("UPDATE coupons SET used_count = used_count + 1 WHERE id = ?", [coupon.id]);
+    }
+
     if (decrementsStockImmediately(input.paymentMethod)) {
       for (const item of lineItems) {
         await conn.query(
@@ -271,7 +293,7 @@ export async function createOrder(input: OrderInput): Promise<OrderResult> {
       await conn.query(
         `UPDATE orders SET
           customer_name = ?, customer_email = ?, customer_phone = ?,
-          address = ?, city = ?, postal_code = ?, subtotal = ?,
+          address = ?, city = ?, postal_code = ?, subtotal = ?, coupon_code = ?, discount_amount = ?,
           payment_method = ?, payment_status = 'pending', payment_provider = NULL, payment_ref = NULL
          WHERE id = ?`,
         [
@@ -282,6 +304,8 @@ export async function createOrder(input: OrderInput): Promise<OrderResult> {
           input.city,
           input.postalCode,
           subtotal,
+          couponCode,
+          discountAmount,
           input.paymentMethod,
           existingOrderId,
         ]
@@ -291,8 +315,8 @@ export async function createOrder(input: OrderInput): Promise<OrderResult> {
       const [orderResult] = await conn.query<mysql.ResultSetHeader>(
         `INSERT INTO orders
           (customer_name, customer_email, customer_phone, address, city, postal_code, subtotal,
-           status, payment_method, payment_status, cart_session_id)
-         VALUES (?, ?, ?, ?, ?, ?, ?, 'placed', ?, 'pending', ?)`,
+           coupon_code, discount_amount, status, payment_method, payment_status, cart_session_id)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'placed', ?, 'pending', ?)`,
         [
           input.customerName,
           input.customerEmail,
@@ -301,6 +325,8 @@ export async function createOrder(input: OrderInput): Promise<OrderResult> {
           input.city,
           input.postalCode,
           subtotal,
+          couponCode,
+          discountAmount,
           input.paymentMethod,
           input.cartSessionId,
         ]
@@ -326,13 +352,21 @@ export async function createOrder(input: OrderInput): Promise<OrderResult> {
       await sendEmail({
         to: input.customerEmail,
         ...orderConfirmationEmail(
-          { id: orderId, customerName: input.customerName, address: input.address, city: input.city, subtotal, items: lineItems },
+          {
+            id: orderId,
+            customerName: input.customerName,
+            address: input.address,
+            city: input.city,
+            subtotal,
+            discountAmount,
+            items: lineItems,
+          },
           settings
         ),
       });
     }
 
-    return { id: orderId, subtotal, items: lineItems };
+    return { id: orderId, subtotal, discountAmount, couponCode, items: lineItems };
   } catch (err) {
     await conn.rollback();
     throw err;
@@ -352,6 +386,8 @@ export type Order = {
   city: string;
   postalCode: string;
   subtotal: number;
+  discountAmount: number;
+  couponCode: string | null;
   status: string;
   paymentMethod: PaymentMethod;
   paymentStatus: PaymentStatus;
@@ -360,6 +396,12 @@ export type Order = {
   createdAt: string;
   items: { slug: string; name: string; price: number; quantity: number; variant?: string }[];
 };
+
+// The amount actually payable/charged — subtotal minus any coupon
+// discount. Chapa is charged this, not the raw subtotal.
+export function orderTotal(order: Pick<Order, "subtotal" | "discountAmount">): number {
+  return Math.max(0, order.subtotal - order.discountAmount);
+}
 
 function rowToOrder(order: mysql.RowDataPacket, items: Order["items"]): Order {
   return {
@@ -371,6 +413,8 @@ function rowToOrder(order: mysql.RowDataPacket, items: Order["items"]): Order {
     city: order.city,
     postalCode: order.postal_code,
     subtotal: order.subtotal,
+    discountAmount: order.discount_amount ?? 0,
+    couponCode: order.coupon_code ?? null,
     status: order.status,
     paymentMethod: order.payment_method as PaymentMethod,
     paymentStatus: order.payment_status as PaymentStatus,
@@ -560,6 +604,7 @@ export type OrderSummary = {
   customerName: string;
   customerEmail: string;
   subtotal: number;
+  discountAmount: number;
   status: string;
   paymentMethod: PaymentMethod;
   paymentStatus: PaymentStatus;
@@ -570,7 +615,7 @@ export type OrderSummary = {
 export async function getAllOrders(): Promise<OrderSummary[]> {
   const db = getPool();
   const [rows] = await db.query<mysql.RowDataPacket[]>(
-    `SELECT o.id, o.customer_name, o.customer_email, o.subtotal, o.status,
+    `SELECT o.id, o.customer_name, o.customer_email, o.subtotal, o.discount_amount, o.status,
             o.payment_method, o.payment_status, o.created_at,
             COALESCE(SUM(oi.quantity), 0) AS item_count
      FROM orders o
@@ -583,6 +628,7 @@ export async function getAllOrders(): Promise<OrderSummary[]> {
     customerName: r.customer_name,
     customerEmail: r.customer_email,
     subtotal: r.subtotal,
+    discountAmount: r.discount_amount ?? 0,
     status: r.status,
     paymentMethod: r.payment_method as PaymentMethod,
     paymentStatus: r.payment_status as PaymentStatus,
@@ -1529,4 +1575,131 @@ async function notifyBackInStock(product: Product): Promise<void> {
   } catch (err) {
     console.error("[back-in-stock] Failed to send notifications:", err);
   }
+}
+
+// ---------------------------------------------------------------------
+// Coupons (admin-managed discount codes)
+// ---------------------------------------------------------------------
+
+export type Coupon = {
+  id: number;
+  code: string;
+  discountType: "percent" | "fixed";
+  discountValue: number;
+  active: boolean;
+  maxUses: number | null;
+  usedCount: number;
+  expiresAt: string | null;
+  createdAt: string;
+};
+
+export class CouponError extends Error {}
+
+function rowToCoupon(row: mysql.RowDataPacket): Coupon {
+  return {
+    id: row.id,
+    code: row.code,
+    discountType: row.discount_type,
+    discountValue: row.discount_value,
+    active: !!row.active,
+    maxUses: row.max_uses ?? null,
+    usedCount: row.used_count,
+    expiresAt: row.expires_at ?? null,
+    createdAt: row.created_at,
+  };
+}
+
+function assertCouponUsable(coupon: Coupon): void {
+  if (!coupon.active) throw new CouponError("This coupon is no longer active.");
+  if (coupon.expiresAt && new Date(coupon.expiresAt).getTime() < Date.now()) {
+    throw new CouponError("This coupon has expired.");
+  }
+  if (coupon.maxUses !== null && coupon.usedCount >= coupon.maxUses) {
+    throw new CouponError("This coupon has reached its usage limit.");
+  }
+}
+
+export function computeCouponDiscount(coupon: Coupon, subtotal: number): number {
+  const raw =
+    coupon.discountType === "percent"
+      ? Math.round((subtotal * coupon.discountValue) / 100)
+      : coupon.discountValue;
+  return Math.max(0, Math.min(raw, subtotal));
+}
+
+// Preview-only — validates and computes the discount without consuming
+// a use. Used by the checkout page's "Apply" button before the order
+// actually exists; createOrder() re-validates for real inside its
+// transaction, since a client-supplied discount is never trusted.
+export async function previewCoupon(
+  code: string,
+  subtotal: number
+): Promise<{ coupon: Coupon; discountAmount: number }> {
+  const db = getPool();
+  const [rows] = await db.query<mysql.RowDataPacket[]>(
+    "SELECT * FROM coupons WHERE code = ? LIMIT 1",
+    [code.trim().toUpperCase()]
+  );
+  const row = rows[0];
+  if (!row) throw new CouponError("Invalid coupon code.");
+  const coupon = rowToCoupon(row);
+  assertCouponUsable(coupon);
+  return { coupon, discountAmount: computeCouponDiscount(coupon, subtotal) };
+}
+
+export async function getAllCoupons(): Promise<Coupon[]> {
+  const db = getPool();
+  const [rows] = await db.query<mysql.RowDataPacket[]>(
+    "SELECT * FROM coupons ORDER BY created_at DESC"
+  );
+  return rows.map(rowToCoupon);
+}
+
+export async function createCoupon(input: {
+  code: string;
+  discountType: "percent" | "fixed";
+  discountValue: number;
+  maxUses: number | null;
+  expiresAt: string | null;
+}): Promise<Coupon> {
+  const code = input.code.trim().toUpperCase();
+  if (!code) throw new CouponError("Code is required.");
+  if (!Number.isFinite(input.discountValue) || input.discountValue <= 0) {
+    throw new CouponError("Discount value must be a positive number.");
+  }
+  if (input.discountType === "percent" && input.discountValue > 100) {
+    throw new CouponError("Percent discount can't exceed 100.");
+  }
+
+  const db = getPool();
+  try {
+    const [result] = await db.query<mysql.ResultSetHeader>(
+      "INSERT INTO coupons (code, discount_type, discount_value, max_uses, expires_at) VALUES (?, ?, ?, ?, ?)",
+      [code, input.discountType, input.discountValue, input.maxUses, input.expiresAt]
+    );
+    const [rows] = await db.query<mysql.RowDataPacket[]>("SELECT * FROM coupons WHERE id = ?", [
+      result.insertId,
+    ]);
+    return rowToCoupon(rows[0]);
+  } catch (err) {
+    if (err instanceof Error && (err as { code?: string }).code === "ER_DUP_ENTRY") {
+      throw new CouponError(`A coupon with code "${code}" already exists.`);
+    }
+    throw err;
+  }
+}
+
+export async function setCouponActive(id: number, active: boolean): Promise<void> {
+  const db = getPool();
+  const [result] = await db.query<mysql.ResultSetHeader>(
+    "UPDATE coupons SET active = ? WHERE id = ?",
+    [active ? 1 : 0, id]
+  );
+  if (result.affectedRows === 0) throw new CouponError("Coupon not found.");
+}
+
+export async function deleteCoupon(id: number): Promise<void> {
+  const db = getPool();
+  const [result] = await db.query<mysql.ResultSetHeader>("DELETE FROM coupons WHERE id = ?", [id]);
+  if (result.affectedRows === 0) throw new CouponError("Coupon not found.");
 }

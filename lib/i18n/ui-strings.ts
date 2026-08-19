@@ -236,6 +236,8 @@ export const UI_STRINGS = [
   "Notify me when back in stock",
   "Notify me",
   "We'll email you when it's back.",
+  "Discount",
+  "Coupon code",
 
   // Language switcher
   "Language",
