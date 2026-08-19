@@ -82,6 +82,9 @@ export function parseSettingsInput(body: unknown): Partial<SiteSettings> {
     description: str(b.description, "Description"),
     email: str(b.email, "Email"),
     phone: str(b.phone, "Phone"),
+    telegramUsername: str(b.telegramUsername, "Telegram username", false)
+      .replace(/^https?:\/\/t\.me\//i, "")
+      .replace(/^@/, ""),
     address: list(b.address),
     freeShippingThreshold: num(b.freeShippingThreshold, "Free shipping threshold"),
 

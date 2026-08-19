@@ -68,8 +68,9 @@ export async function translateSettings(
 ): Promise<SiteSettings> {
   if (locale === "en") return settings;
 
-  // Excludes shortName (a single initial), email, and phone — those are
-  // literal data, not prose, and must not be run through translation.
+  // Excludes shortName (a single initial), email, phone, and
+  // telegramUsername — those are literal data, not prose, and must not
+  // be run through translation.
   const strings = [
     settings.tagline,
     settings.description,

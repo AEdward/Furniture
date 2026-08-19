@@ -10,6 +10,10 @@ export type SiteSettings = {
   description: string;
   email: string;
   phone: string;
+  // Telegram @username (no "@", no URL) for the chat widget — e.g.
+  // "goldenwoodfurniture" becomes https://t.me/goldenwoodfurniture.
+  // Empty hides the button, unlike WhatsApp which always has a phone.
+  telegramUsername: string;
   address: string[];
   freeShippingThreshold: number;
 
@@ -86,6 +90,7 @@ export const DEFAULT_SETTINGS: SiteSettings = {
     "Zemenay Furniture — solid materials, honest prices, and doors, kitchen cabinets, closets, sofas, dining sets, and beds built to last a lifetime.",
   email: "hello@zemenayfurniture.com",
   phone: "(555) 555-0148",
+  telegramUsername: "",
   address: ["Addis Ababa, Ethiopia"],
   freeShippingThreshold: 50000,
 
