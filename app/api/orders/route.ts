@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createOrder, OrderError, type PaymentMethod } from "@/lib/db";
 import { getCurrentCustomer } from "@/lib/customers";
+import { rateLimit } from "@/lib/rate-limit";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 // Permissive on purpose — accepts local (09...) and international
@@ -9,6 +10,12 @@ const PHONE_RE = /^\+?[0-9 ()-]{7,20}$/;
 const PAYMENT_METHODS: PaymentMethod[] = ["chapa", "cod", "bank_transfer"];
 
 export async function POST(request: Request) {
+  // Generous — legitimate checkout retries (a failed payment, editing
+  // the cart and re-submitting) shouldn't get anywhere near this;
+  // it's here to stop scripted stock-depletion or spam-order abuse.
+  const limited = rateLimit(request, "orders", 20, 10 * 60 * 1000);
+  if (limited) return limited;
+
   let body: unknown;
   try {
     body = await request.json();

@@ -4,10 +4,16 @@ import { createOtp } from "@/lib/otp";
 import { getSettings } from "@/lib/db";
 import { sendEmail } from "@/lib/mailer";
 import { otpEmail } from "@/lib/email-templates";
+import { rateLimit, rateLimitByKey } from "@/lib/rate-limit";
 
 export async function POST(request: Request) {
   const body = await request.json().catch(() => ({}));
   const email = typeof body.email === "string" ? body.email.trim() : "";
+
+  const limited =
+    rateLimit(request, "admin-forgot-password", 5, 15 * 60 * 1000) ||
+    (email ? rateLimitByKey(email, "admin-forgot-password-email", 3, 15 * 60 * 1000) : null);
+  if (limited) return limited;
 
   if (email) {
     const admin = await getAdminUserByEmail(email);

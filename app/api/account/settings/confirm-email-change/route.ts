@@ -1,12 +1,16 @@
 import { NextResponse } from "next/server";
 import { CustomerError, changeCustomerEmail, getCurrentCustomer } from "@/lib/customers";
 import { verifyOtp } from "@/lib/otp";
+import { rateLimit } from "@/lib/rate-limit";
 
 export async function POST(request: Request) {
   const customer = await getCurrentCustomer();
   if (!customer) {
     return NextResponse.json({ error: "Not signed in." }, { status: 401 });
   }
+
+  const limited = rateLimit(request, "confirm-email-change", 15, 15 * 60 * 1000);
+  if (limited) return limited;
 
   const body = await request.json().catch(() => ({}));
   const newEmail = typeof body.newEmail === "string" ? body.newEmail.trim() : "";

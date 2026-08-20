@@ -1,12 +1,16 @@
 import { NextResponse } from "next/server";
 import { AdminUserError, changeAdminEmail, getCurrentAdminUser } from "@/lib/admin-users";
 import { verifyOtp } from "@/lib/otp";
+import { rateLimit } from "@/lib/rate-limit";
 
 export async function POST(request: Request) {
   const user = await getCurrentAdminUser();
   if (!user) {
     return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
   }
+
+  const limited = rateLimit(request, "admin-confirm-email-change", 15, 15 * 60 * 1000);
+  if (limited) return limited;
 
   const body = await request.json().catch(() => ({}));
   const newEmail = typeof body.newEmail === "string" ? body.newEmail.trim() : "";

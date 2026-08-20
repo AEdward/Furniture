@@ -1,8 +1,12 @@
 import { NextResponse } from "next/server";
 import { createCustomerSessionToken, CUSTOMER_COOKIE_NAME } from "@/lib/customer-auth";
 import { createCustomer, CustomerError } from "@/lib/customers";
+import { rateLimit } from "@/lib/rate-limit";
 
 export async function POST(request: Request) {
+  const limited = rateLimit(request, "signup", 8, 15 * 60 * 1000);
+  if (limited) return limited;
+
   const body = await request.json().catch(() => ({}));
   const name = typeof body.name === "string" ? body.name : "";
   const email = typeof body.email === "string" ? body.email : "";
