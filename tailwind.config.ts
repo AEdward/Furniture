@@ -17,34 +17,30 @@ const config: Config = {
         cream: "rgb(var(--color-cream) / <alpha-value>)",
         sand: "rgb(var(--color-sand) / <alpha-value>)",
         white: "rgb(var(--color-surface) / <alpha-value>)",
-        // Golden Wood brand style guide v1.0 — Ebony Oak primary dark.
-        // Token kept as "walnut" for compatibility with existing
-        // component classes; 500/600/700 are the guide's exact Ebony
-        // Oak (#1B1610), the 50-400 light neutrals are unspecified by
-        // the guide and left as warm off-white/gray support tints.
+        // Golden Wood brand: charcoal/black primary. Token kept as
+        // "walnut" for compatibility with existing component classes,
+        // but the scale itself is now near-black rather than wood-toned.
         walnut: {
           50: "#F5F4F2",
           100: "#E7E4DF",
           200: "#CDC8C0",
           300: "#A29A8E",
           400: "#6E655A",
-          500: "#1B1610",
-          600: "#120D09",
-          700: "#0A0705",
-          800: "#060403",
-          900: "#030201",
+          500: "#2A2622",
+          600: "#1C1916",
+          700: "#141210",
+          800: "#0D0B0A",
+          900: "#060505",
         },
-        // Gold foil gradient — Foil Gold -> Antique Gold -> Deep
-        // Bronze, the guide's exact three primary/support gold stops
-        // (200/400/600 below), never used flat per the guide.
+        // Gold accent, matching the logo's sparkle mark.
         terracotta: {
           50: "#FBF6E9",
           100: "#F3E4B8",
-          200: "#E8C468",
-          300: "#D9B664",
-          400: "#C9A15C",
-          500: "#9E7D48",
-          600: "#7A5C2E",
+          200: "#E8CE85",
+          300: "#DCB758",
+          400: "#C9A227",
+          500: "#B08A1F",
+          600: "#8C6D18",
         },
         // True error/warning red — kept separate from the gold accent
         // scale above so low-stock/validation messaging still reads as
@@ -75,7 +71,7 @@ const config: Config = {
         accent: ["var(--font-accent)", "Georgia", "serif"],
       },
       boxShadow: {
-        soft: "0 10px 30px -12px rgba(27, 22, 16, 0.35)",
+        soft: "0 10px 30px -12px rgba(26, 25, 24, 0.3)",
       },
       borderRadius: {
         xl2: "1.25rem",
