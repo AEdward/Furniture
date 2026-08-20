@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { AdminUserError, changeAdminPassword } from "@/lib/admin-users";
 import { verifyOtp } from "@/lib/otp";
+import { rateLimit, rateLimitByKey } from "@/lib/rate-limit";
 
 export async function POST(request: Request) {
   const body = await request.json().catch(() => ({}));
@@ -11,6 +12,11 @@ export async function POST(request: Request) {
   if (!email || !code || !newPassword) {
     return NextResponse.json({ error: "Missing required fields." }, { status: 400 });
   }
+
+  const limited =
+    rateLimit(request, "admin-reset-password", 15, 15 * 60 * 1000) ||
+    rateLimitByKey(email, "admin-reset-password-email", 10, 15 * 60 * 1000);
+  if (limited) return limited;
 
   const adminId = await verifyOtp("admin", "password_reset", email, code);
   if (!adminId) {

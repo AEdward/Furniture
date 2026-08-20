@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { ADMIN_COOKIE_NAME, createSessionToken } from "@/lib/admin-auth";
 import { getAdminUserCount, verifyAdminCredentials } from "@/lib/admin-users";
+import { rateLimit, rateLimitByKey } from "@/lib/rate-limit";
 
 export async function POST(request: Request) {
   const body = await request.json().catch(() => ({}));
@@ -10,6 +11,14 @@ export async function POST(request: Request) {
   if (!email || !password) {
     return NextResponse.json({ error: "Email and password are required." }, { status: 400 });
   }
+
+  // Two limits: one per IP (stops one attacker trying many accounts)
+  // and one per email (stops the same attacker rotating IPs against
+  // one account) — either tripping blocks the request.
+  const limited =
+    rateLimit(request, "admin-login", 10, 10 * 60 * 1000) ||
+    rateLimitByKey(email, "admin-login-email", 8, 10 * 60 * 1000);
+  if (limited) return limited;
 
   if ((await getAdminUserCount()) === 0) {
     return NextResponse.json(

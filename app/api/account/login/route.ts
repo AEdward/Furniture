@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createCustomerSessionToken, CUSTOMER_COOKIE_NAME } from "@/lib/customer-auth";
 import { verifyCustomerCredentials } from "@/lib/customers";
+import { rateLimit, rateLimitByKey } from "@/lib/rate-limit";
 
 export async function POST(request: Request) {
   const body = await request.json().catch(() => ({}));
@@ -10,6 +11,11 @@ export async function POST(request: Request) {
   if (!email || !password) {
     return NextResponse.json({ error: "Email and password are required." }, { status: 400 });
   }
+
+  const limited =
+    rateLimit(request, "account-login", 10, 10 * 60 * 1000) ||
+    rateLimitByKey(email, "account-login-email", 8, 10 * 60 * 1000);
+  if (limited) return limited;
 
   const customer = await verifyCustomerCredentials(email, password);
   if (!customer) {

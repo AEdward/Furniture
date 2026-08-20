@@ -2,11 +2,15 @@ import { NextResponse } from "next/server";
 import { createContactMessage, getSettings } from "@/lib/db";
 import { sendEmail } from "@/lib/mailer";
 import { contactNotificationEmail } from "@/lib/email-templates";
+import { rateLimit } from "@/lib/rate-limit";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MAX_MESSAGE_LENGTH = 5000;
 
 export async function POST(request: Request) {
+  const limited = rateLimit(request, "contact", 5, 10 * 60 * 1000);
+  if (limited) return limited;
+
   let body: unknown;
   try {
     body = await request.json();

@@ -4,12 +4,16 @@ import { createOtp } from "@/lib/otp";
 import { getSettings } from "@/lib/db";
 import { sendEmail } from "@/lib/mailer";
 import { otpEmail } from "@/lib/email-templates";
+import { rateLimit } from "@/lib/rate-limit";
 
 export async function POST(request: Request) {
   const user = await getCurrentAdminUser();
   if (!user) {
     return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
   }
+
+  const limited = rateLimit(request, "admin-email-change-request", 5, 15 * 60 * 1000);
+  if (limited) return limited;
 
   const body = await request.json().catch(() => ({}));
   const newEmail = typeof body.newEmail === "string" ? body.newEmail.trim() : "";

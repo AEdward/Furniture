@@ -4,12 +4,19 @@ import { createOtp } from "@/lib/otp";
 import { getSettings } from "@/lib/db";
 import { sendEmail } from "@/lib/mailer";
 import { otpEmail } from "@/lib/email-templates";
+import { rateLimit } from "@/lib/rate-limit";
 
 export async function POST(request: Request) {
   const customer = await getCurrentCustomer();
   if (!customer) {
     return NextResponse.json({ error: "Not signed in." }, { status: 401 });
   }
+
+  // Already gated behind a signed-in session, but still rate-limited —
+  // a compromised or malicious session shouldn't be able to spam
+  // arbitrary target inboxes with verification codes.
+  const limited = rateLimit(request, "email-change-request", 5, 15 * 60 * 1000);
+  if (limited) return limited;
 
   const body = await request.json().catch(() => ({}));
   const newEmail = typeof body.newEmail === "string" ? body.newEmail.trim() : "";

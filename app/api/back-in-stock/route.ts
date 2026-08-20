@@ -1,9 +1,13 @@
 import { NextResponse } from "next/server";
 import { BackInStockError, createBackInStockRequest } from "@/lib/db";
+import { rateLimit } from "@/lib/rate-limit";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export async function POST(request: Request) {
+  const limited = rateLimit(request, "back-in-stock", 10, 10 * 60 * 1000);
+  if (limited) return limited;
+
   let body: unknown;
   try {
     body = await request.json();
