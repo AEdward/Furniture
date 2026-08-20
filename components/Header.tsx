@@ -31,6 +31,11 @@ export default function Header({
   const { itemCount, isReady } = useCart();
   const t = useT();
 
+  // Only the homepage has a full-bleed image hero for the header to
+  // float over transparently — every other page gets a normal solid
+  // white header, since there's no image behind it to read against.
+  const onHero = pathname === "/";
+
   const navLinks: NavLink[] = [
     { href: "/", label: t("Home") },
     { href: "/shop", label: t("Shop") },
@@ -39,11 +44,21 @@ export default function Header({
     { href: customerName ? "/account" : "/account/login", label: customerName ? t("My account") : t("Sign in") },
   ];
 
+  const iconButtonClass = onHero
+    ? "border-white/30 text-white/90 hover:border-terracotta-300 hover:text-terracotta-200"
+    : "border-walnut-200 text-walnut-600 hover:bg-walnut-50";
+
   return (
-    <header className="bg-plank-grain sticky top-0 z-40 border-b border-terracotta-600/30 bg-walnut-700">
+    <header
+      className={
+        onHero
+          ? "absolute inset-x-0 top-0 z-40 bg-transparent"
+          : "sticky top-0 z-40 border-b border-walnut-100 bg-white"
+      }
+    >
       <div className="container-shop flex h-20 items-center justify-between py-4">
         <Link href="/" onClick={() => setMenuOpen(false)}>
-          <Logo name={siteName} />
+          <Logo name={siteName} light={onHero} />
         </Link>
 
         <nav className="hidden items-center gap-8 md:flex">
@@ -57,9 +72,13 @@ export default function Header({
                 key={link.href}
                 href={link.href}
                 className={`text-xs font-medium uppercase tracking-[0.2em] transition-colors ${
-                  active
-                    ? "text-terracotta-200"
-                    : "text-walnut-50/70 hover:text-terracotta-200"
+                  onHero
+                    ? active
+                      ? "text-terracotta-200"
+                      : "text-white/80 hover:text-terracotta-200"
+                    : active
+                      ? "text-walnut-600"
+                      : "text-ink/70 hover:text-walnut-600"
                 }`}
               >
                 {link.label}
@@ -69,8 +88,8 @@ export default function Header({
         </nav>
 
         <div className="flex items-center gap-3">
-          <ThemeToggle dark />
-          <LanguageSwitcher enabled={translationEnabled} languages={languages} />
+          <ThemeToggle dark={onHero} />
+          <LanguageSwitcher enabled={translationEnabled} languages={languages} dark={onHero} />
 
           {customerName ? (
             <>
@@ -80,7 +99,7 @@ export default function Header({
           ) : (
             <Link
               href="/account/login"
-              className="hidden h-10 w-10 items-center justify-center rounded-full border border-walnut-50/20 text-walnut-50/80 transition-colors hover:border-terracotta-400 hover:text-terracotta-200 sm:flex"
+              className={`hidden h-10 w-10 items-center justify-center rounded-full border transition-colors sm:flex ${iconButtonClass}`}
               aria-label={t("Sign in")}
             >
               <svg
@@ -100,7 +119,7 @@ export default function Header({
 
           <Link
             href="/cart"
-            className="relative flex h-10 w-10 items-center justify-center rounded-full border border-walnut-50/20 text-walnut-50/80 transition-colors hover:border-terracotta-400 hover:text-terracotta-200"
+            className={`relative flex h-10 w-10 items-center justify-center rounded-full border transition-colors ${iconButtonClass}`}
             aria-label={t("View cart")}
           >
             <svg
@@ -124,7 +143,7 @@ export default function Header({
           </Link>
 
           <button
-            className="flex h-10 w-10 items-center justify-center rounded-full border border-walnut-50/20 text-walnut-50/80 md:hidden"
+            className={`flex h-10 w-10 items-center justify-center rounded-full border md:hidden ${iconButtonClass}`}
             aria-label={t("Toggle menu")}
             onClick={() => setMenuOpen((v) => !v)}
           >
@@ -147,13 +166,13 @@ export default function Header({
       </div>
 
       {menuOpen && (
-        <nav className="border-t border-walnut-50/10 bg-walnut-700 md:hidden">
+        <nav className="border-t border-walnut-100 bg-white md:hidden">
           <div className="container-shop flex flex-col gap-1 py-3">
             {navLinks.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
-                className="rounded-lg px-2 py-2.5 text-xs font-medium uppercase tracking-[0.2em] text-walnut-50/80 hover:bg-walnut-500/40 hover:text-terracotta-200"
+                className="rounded-lg px-2 py-2.5 text-xs font-medium uppercase tracking-[0.2em] text-ink/80 hover:bg-walnut-50"
                 onClick={() => setMenuOpen(false)}
               >
                 {link.label}

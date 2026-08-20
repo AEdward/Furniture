@@ -48,16 +48,35 @@ export default async function HomePage() {
 
   return (
     <div>
-      <section className="bg-plank-grain relative overflow-hidden border-b border-terracotta-600/20 bg-walnut-700">
-        <div className="container-shop grid gap-10 py-16 md:grid-cols-2 md:items-center md:py-24">
-          <div>
+      {/* Full-bleed image hero — the header floats transparently over
+          this section only (see Header.tsx's onHero check); a dark
+          gradient over the photo keeps the text legible. Falls back to
+          a plain dark panel until an admin uploads a hero image at
+          /portal2026/settings/hero. */}
+      <section className="relative flex min-h-[560px] items-center overflow-hidden bg-walnut-700 pt-20">
+        {hero.imageUrl ? (
+          <Image
+            src={hero.imageUrl}
+            alt=""
+            fill
+            sizes="100vw"
+            className="object-cover"
+            priority
+          />
+        ) : (
+          <div className="bg-plank-grain absolute inset-0" />
+        )}
+        <div className="absolute inset-0 bg-gradient-to-r from-walnut-700/95 via-walnut-700/60 to-walnut-700/20" />
+
+        <div className="container-shop relative py-16">
+          <div className="max-w-xl">
             <p className="text-xs font-semibold uppercase tracking-[0.3em] text-terracotta-400">
               {settings.tagline}
             </p>
-            <h1 className="mt-4 font-serif text-5xl uppercase leading-[1.05] tracking-tight text-walnut-50 sm:text-6xl">
+            <h1 className="mt-4 font-serif text-5xl uppercase leading-[1.05] tracking-tight text-white sm:text-6xl">
               {hero.heading}
             </h1>
-            <p className="mt-5 max-w-md text-base leading-relaxed text-walnut-100/70">
+            <p className="mt-5 max-w-md text-base leading-relaxed text-white/70">
               {hero.subheading}
             </p>
             <div className="mt-8 flex flex-wrap gap-4">
@@ -70,49 +89,12 @@ export default async function HomePage() {
               </Link>
               <Link
                 href="/about"
-                className="inline-flex items-center justify-center rounded-full border border-walnut-50/30 px-6 py-3 text-xs font-semibold uppercase tracking-[0.2em] text-walnut-50 transition-colors hover:border-terracotta-400 hover:text-terracotta-200"
+                className="inline-flex items-center justify-center rounded-full border border-white/30 px-6 py-3 text-xs font-semibold uppercase tracking-[0.2em] text-white transition-colors hover:border-terracotta-400 hover:text-terracotta-200"
               >
                 {t("Our story")}
               </Link>
             </div>
           </div>
-
-          {hero.imageUrl ? (
-            <div className="relative aspect-square overflow-hidden rounded-xl border border-terracotta-400/40">
-              <Image
-                src={hero.imageUrl}
-                alt={hero.heading}
-                fill
-                sizes="(min-width: 768px) 50vw, 100vw"
-                className="object-cover"
-                priority
-              />
-            </div>
-          ) : (
-            <div className="grid grid-cols-2 gap-4 rounded-xl border border-terracotta-400/30 bg-walnut-800/40 p-4">
-              {featured.slice(0, 4).map((product) => (
-                <div
-                  key={product.id}
-                  className="flex aspect-square items-center justify-center rounded-lg border border-terracotta-600/30 bg-walnut-500"
-                >
-                  {product.imageUrl ? (
-                    <Image
-                      src={product.imageUrl}
-                      alt={product.name}
-                      width={200}
-                      height={200}
-                      className="h-full w-full rounded-lg object-cover"
-                    />
-                  ) : (
-                    <FurnitureIcon
-                      name={product.icon}
-                      className="h-14 w-14 text-terracotta-300/80 sm:h-16 sm:w-16"
-                    />
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
         </div>
       </section>
 
@@ -130,15 +112,15 @@ export default async function HomePage() {
             <Link
               key={category}
               href={`/shop?category=${encodeURIComponent(category)}`}
-              className="bg-plank-grain group relative flex flex-col items-center gap-3 overflow-hidden rounded-xl border border-walnut-100 bg-walnut-700 py-8 text-center transition-shadow hover:shadow-soft"
+              className="group flex flex-col items-center gap-3 rounded-xl border border-walnut-100 bg-white py-8 text-center shadow-sm transition-shadow hover:shadow-soft"
             >
-              <span className="flex h-14 w-14 items-center justify-center rounded-full border border-terracotta-400/60 bg-walnut-500 transition-transform group-hover:scale-105">
+              <span className="flex h-14 w-14 items-center justify-center rounded-full bg-walnut-50 transition-transform group-hover:scale-105">
                 <FurnitureIcon
                   name={categoryIcon[category]}
-                  className="h-7 w-7 text-terracotta-300"
+                  className="h-7 w-7 text-terracotta-500"
                 />
               </span>
-              <span className="text-xs font-semibold uppercase tracking-[0.15em] text-walnut-50">
+              <span className="text-xs font-semibold uppercase tracking-[0.15em] text-ink">
                 {t(category)}
               </span>
             </Link>
@@ -176,7 +158,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <section className="border-y border-walnut-100 bg-cream py-14">
+      <section className="border-y border-walnut-100 bg-white py-14">
         <div className="container-shop grid gap-8 sm:grid-cols-3 lg:grid-cols-5">
           {trustPoints.map((v) => (
             <div key={v.title} className="flex flex-col items-center gap-2 text-center">
@@ -192,38 +174,38 @@ export default async function HomePage() {
 
       <section className="container-shop py-16">
         <div className="grid gap-6 sm:grid-cols-2">
-          <div className="bg-plank-grain flex flex-col justify-center gap-3 rounded-xl border border-terracotta-600/20 bg-walnut-700 p-10">
-            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-terracotta-400">
+          <div className="flex flex-col justify-center gap-3 rounded-xl border border-walnut-100 bg-white p-10 shadow-sm">
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-terracotta-500">
               {t("Custom furniture")}
             </p>
-            <h3 className="font-serif text-2xl uppercase tracking-tight text-walnut-50">
+            <h3 className="font-serif text-2xl uppercase tracking-tight text-ink">
               {t("Create furniture that fits your space")}
             </h3>
-            <p className="max-w-sm text-sm leading-relaxed text-walnut-100/70">
+            <p className="max-w-sm text-sm leading-relaxed text-ink/60">
               {t("Tell us the piece you have in mind — we'll work out the size, wood, and finish with you.")}
             </p>
             <Link
               href="/contact"
-              className="mt-2 inline-flex w-fit items-center gap-2 rounded-full border border-terracotta-400/60 px-5 py-2.5 text-xs font-semibold uppercase tracking-[0.2em] text-terracotta-300 transition-colors hover:bg-terracotta-400/10"
+              className="mt-2 inline-flex w-fit items-center gap-2 rounded-full border border-terracotta-400 px-5 py-2.5 text-xs font-semibold uppercase tracking-[0.2em] text-terracotta-600 transition-colors hover:bg-terracotta-50"
             >
               {t("Get in touch")}
               <span aria-hidden>&rarr;</span>
             </Link>
           </div>
 
-          <div className="bg-plank-grain flex flex-col justify-center gap-3 rounded-xl border border-terracotta-600/20 bg-walnut-700 p-10">
-            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-terracotta-400">
+          <div className="flex flex-col justify-center gap-3 rounded-xl border border-walnut-100 bg-white p-10 shadow-sm">
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-terracotta-500">
               {t("Visit us")}
             </p>
-            <h3 className="font-serif text-2xl uppercase tracking-tight text-walnut-50">
+            <h3 className="font-serif text-2xl uppercase tracking-tight text-ink">
               {t("We'd love to welcome you")}
             </h3>
-            <p className="max-w-sm text-sm leading-relaxed text-walnut-100/70">
+            <p className="max-w-sm text-sm leading-relaxed text-ink/60">
               {settings.address.join(", ")}
             </p>
             <Link
               href="/contact"
-              className="mt-2 inline-flex w-fit items-center gap-2 rounded-full border border-terracotta-400/60 px-5 py-2.5 text-xs font-semibold uppercase tracking-[0.2em] text-terracotta-300 transition-colors hover:bg-terracotta-400/10"
+              className="mt-2 inline-flex w-fit items-center gap-2 rounded-full border border-terracotta-400 px-5 py-2.5 text-xs font-semibold uppercase tracking-[0.2em] text-terracotta-600 transition-colors hover:bg-terracotta-50"
             >
               {t("Contact")}
               <span aria-hidden>&rarr;</span>

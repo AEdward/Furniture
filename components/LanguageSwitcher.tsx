@@ -9,9 +9,11 @@ export type LanguageOption = { code: string; label: string };
 export default function LanguageSwitcher({
   enabled,
   languages,
+  dark = false,
 }: {
   enabled: boolean;
   languages: LanguageOption[];
+  dark?: boolean;
 }) {
   const locale = useLocale();
   const t = useT();
@@ -45,7 +47,11 @@ export default function LanguageSwitcher({
         onClick={() => setOpen((v) => !v)}
         aria-label={t("Language")}
         disabled={isPending}
-        className="flex h-10 items-center gap-1 rounded-full border border-walnut-50/20 px-3 text-sm font-medium text-walnut-50/80 transition-colors hover:border-terracotta-400 hover:text-terracotta-200 disabled:opacity-50"
+        className={`flex h-10 items-center gap-1 rounded-full border px-3 text-sm font-medium transition-colors disabled:opacity-50 ${
+          dark
+            ? "border-white/30 text-white/90 hover:border-terracotta-300 hover:text-terracotta-200"
+            : "border-walnut-200 text-walnut-600 hover:bg-walnut-50"
+        }`}
       >
         {current.label}
         <svg viewBox="0 0 20 20" fill="currentColor" className="h-3.5 w-3.5">

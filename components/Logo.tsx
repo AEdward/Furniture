@@ -6,10 +6,12 @@
 // logo file being uploaded.
 const GOLD_GRADIENT = "bg-gradient-to-r from-terracotta-200 via-terracotta-400 to-terracotta-600 bg-clip-text text-transparent";
 
-function Mark({ className }: { className?: string }) {
+function Mark({ className, light }: { className?: string; light?: boolean }) {
   return (
     <span
-      className={`inline-flex shrink-0 items-center justify-center rounded-lg border border-terracotta-400/60 bg-walnut-500 ${className ?? "h-9 w-9"}`}
+      className={`inline-flex shrink-0 items-center justify-center rounded-lg border border-terracotta-400/60 ${
+        light ? "bg-white/10 backdrop-blur-sm" : "bg-walnut-500"
+      } ${className ?? "h-9 w-9"}`}
     >
       <span className={`font-serif text-sm tracking-tight ${GOLD_GRADIENT}`}>GW</span>
     </span>
@@ -20,17 +22,21 @@ export default function Logo({
   className,
   variant = "horizontal",
   name = "Golden Wood Furniture",
+  light = false,
 }: {
   className?: string;
   variant?: "horizontal" | "stacked";
   name?: string;
+  // For use over a dark hero image (transparent header) — lightens
+  // the mark's background so it doesn't blend into the photo.
+  light?: boolean;
 }) {
   const wordmark = name.replace(" Furniture", "").toUpperCase();
 
   if (variant === "stacked") {
     return (
       <span className={`inline-flex flex-col items-center ${className ?? ""}`}>
-        <Mark className="h-12 w-12 rounded-xl" />
+        <Mark className="h-12 w-12 rounded-xl" light={light} />
         <span className={`mt-3 font-serif text-3xl tracking-tight ${GOLD_GRADIENT}`}>
           {wordmark}
         </span>
@@ -47,7 +53,7 @@ export default function Logo({
 
   return (
     <span className={`inline-flex items-center gap-2.5 ${className ?? ""}`}>
-      <Mark />
+      <Mark light={light} />
       <span className={`font-serif text-xl tracking-tight ${GOLD_GRADIENT}`}>
         {wordmark}
       </span>
