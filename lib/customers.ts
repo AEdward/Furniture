@@ -181,6 +181,28 @@ export async function getCustomerByEmail(email: string): Promise<Customer | null
   return row ? rowToCustomer(row) : null;
 }
 
+export type CustomerAdminSummary = Customer & { orderCount: number; totalSpent: number };
+
+// Admin-facing list (/admin/customers) — order stats are a LEFT JOIN
+// here rather than in lib/db.ts's order functions, since this is a
+// customer-account view, not an order-management one.
+export async function getAllCustomersAdmin(): Promise<CustomerAdminSummary[]> {
+  const db = getPool();
+  const [rows] = await db.query<mysql.RowDataPacket[]>(
+    `SELECT c.*, COUNT(o.id) AS order_count,
+            COALESCE(SUM(CASE WHEN o.payment_status = 'paid' THEN o.subtotal - o.discount_amount ELSE 0 END), 0) AS total_spent
+     FROM customers c
+     LEFT JOIN orders o ON o.customer_id = c.id
+     GROUP BY c.id
+     ORDER BY c.created_at DESC`
+  );
+  return rows.map((row) => ({
+    ...rowToCustomer(row),
+    orderCount: Number(row.order_count),
+    totalSpent: Number(row.total_spent),
+  }));
+}
+
 export async function getCustomerById(id: number): Promise<Customer | null> {
   const db = getPool();
   const [rows] = await db.query<mysql.RowDataPacket[]>(
