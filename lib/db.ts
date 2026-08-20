@@ -288,12 +288,16 @@ export async function createOrder(input: OrderInput): Promise<OrderResult> {
       await conn.query("UPDATE coupons SET used_count = used_count + 1 WHERE id = ?", [coupon.id]);
     }
 
+    const lowStockAlerts: Product[] = [];
     if (decrementsStockImmediately(input.paymentMethod)) {
       for (const item of lineItems) {
-        await conn.query(
-          "UPDATE products SET stock = stock - ? WHERE slug = ? AND availability = 'in_stock'",
-          [item.quantity, item.slug]
+        const { crossedLowStock, product } = await applyStockDelta(
+          conn,
+          item.slug,
+          -item.quantity,
+          "Sold (order placed)"
         );
+        if (crossedLowStock && product) lowStockAlerts.push(product);
       }
     }
 
@@ -381,6 +385,9 @@ export async function createOrder(input: OrderInput): Promise<OrderResult> {
         body: `${input.customerName} — ${lineItems.length} item${lineItems.length === 1 ? "" : "s"}`,
         link: `/admin/orders/${orderId}`,
       });
+    }
+    for (const product of lowStockAlerts) {
+      await notifyLowStock(product);
     }
 
     return { id: orderId, subtotal, discountAmount, couponCode, items: lineItems };
@@ -532,18 +539,20 @@ export async function confirmOrderPayment(
       return { alreadyConfirmed: true };
     }
 
+    const lowStockAlerts: Product[] = [];
     if (!decrementsStockImmediately(order.payment_method as PaymentMethod)) {
       const [itemRows] = await conn.query<mysql.RowDataPacket[]>(
         "SELECT product_slug, quantity FROM order_items WHERE order_id = ?",
         [orderId]
       );
       for (const item of itemRows) {
-        await conn.query(
-          `UPDATE products
-           SET stock = GREATEST(stock - ?, 0)
-           WHERE slug = ? AND availability = 'in_stock'`,
-          [item.quantity, item.product_slug]
+        const { crossedLowStock, product } = await applyStockDelta(
+          conn,
+          item.product_slug,
+          -item.quantity,
+          "Sold (payment confirmed)"
         );
+        if (crossedLowStock && product) lowStockAlerts.push(product);
       }
     }
 
@@ -553,6 +562,9 @@ export async function confirmOrderPayment(
     );
 
     await conn.commit();
+    for (const product of lowStockAlerts) {
+      await notifyLowStock(product);
+    }
     return { alreadyConfirmed: false };
   } catch (err) {
     await conn.rollback();
@@ -591,10 +603,7 @@ export async function markOrderPaymentFailed(
         [orderId]
       );
       for (const item of itemRows) {
-        await conn.query(
-          "UPDATE products SET stock = stock + ? WHERE slug = ? AND availability = 'in_stock'",
-          [item.quantity, item.product_slug]
-        );
+        await applyStockDelta(conn, item.product_slug, item.quantity, "Restocked (payment failed)");
       }
     }
 
@@ -857,6 +866,122 @@ export async function deleteProduct(slug: string): Promise<void> {
   if (result.affectedRows === 0) {
     throw new ProductError("Product not found.");
   }
+}
+
+// ---------------------------------------------------------------------
+// Admin: stock management
+// ---------------------------------------------------------------------
+
+export type StockAdjustment = {
+  id: number;
+  delta: number;
+  reason: string;
+  adminUserId: number | null;
+  createdAt: string;
+};
+
+function rowToStockAdjustment(row: mysql.RowDataPacket): StockAdjustment {
+  return {
+    id: row.id,
+    delta: row.delta,
+    reason: row.reason,
+    adminUserId: row.admin_user_id ?? null,
+    createdAt: row.created_at,
+  };
+}
+
+// Applies a stock delta to a product on a given connection (so it can
+// participate in the caller's transaction, e.g. an order being placed),
+// logs it to stock_adjustments, and reports whether the change just
+// crossed the product's low-stock threshold from above it to at-or-
+// below it — so the caller notifies admins once per dip, not on every
+// sale while a product is already low. A no-op for made-to-order/
+// out-of-stock items, which aren't tracked against a stock count.
+async function applyStockDelta(
+  conn: mysql.PoolConnection,
+  slug: string,
+  delta: number,
+  reason: string,
+  adminUserId: number | null = null
+): Promise<{ crossedLowStock: boolean; product?: Product }> {
+  const [rows] = await conn.query<mysql.RowDataPacket[]>(
+    "SELECT * FROM products WHERE slug = ? FOR UPDATE",
+    [slug]
+  );
+  const row = rows[0] as ProductRow | undefined;
+  if (!row || row.availability !== "in_stock") return { crossedLowStock: false };
+
+  const before = row.stock;
+  const after = Math.max(0, before + delta);
+  await conn.query("UPDATE products SET stock = ? WHERE id = ?", [after, row.id]);
+  await conn.query(
+    "INSERT INTO stock_adjustments (product_id, delta, reason, admin_user_id) VALUES (?, ?, ?, ?)",
+    [row.id, after - before, reason, adminUserId]
+  );
+
+  const crossedLowStock = before > row.low_stock_threshold && after <= row.low_stock_threshold;
+  return {
+    crossedLowStock,
+    product: crossedLowStock ? rowToProduct({ ...row, stock: after }) : undefined,
+  };
+}
+
+async function notifyLowStock(product: Product): Promise<void> {
+  await notifyAllAdmins({
+    type: "low_stock",
+    title: `${product.name} is low on stock`,
+    body: `Only ${product.stock} left (threshold: ${product.lowStockThreshold ?? 5}).`,
+    link: `/admin/products/${product.slug}/edit`,
+  });
+}
+
+// Manual restock/correction from /admin/products/[slug]/stock — always
+// runs on its own short transaction (never shares one with an order).
+export async function adjustProductStock(
+  slug: string,
+  delta: number,
+  reason: string,
+  adminUserId: number | null
+): Promise<Product> {
+  const db = getPool();
+  const conn = await db.getConnection();
+  try {
+    await conn.beginTransaction();
+    const [rows] = await conn.query<mysql.RowDataPacket[]>(
+      "SELECT id FROM products WHERE slug = ? LIMIT 1",
+      [slug]
+    );
+    if (!rows[0]) throw new ProductError("Product not found.");
+
+    const { crossedLowStock, product } = await applyStockDelta(conn, slug, delta, reason, adminUserId);
+    await conn.commit();
+
+    if (crossedLowStock && product) {
+      await notifyLowStock(product);
+    }
+  } catch (err) {
+    await conn.rollback();
+    throw err;
+  } finally {
+    conn.release();
+  }
+
+  const updated = await getProductBySlug(slug);
+  if (!updated) throw new ProductError("Product not found.");
+  return updated;
+}
+
+export async function getStockAdjustments(productSlug: string): Promise<StockAdjustment[]> {
+  const db = getPool();
+  const [rows] = await db.query<mysql.RowDataPacket[]>(
+    `SELECT sa.* FROM stock_adjustments sa
+     JOIN products p ON p.id = sa.product_id
+     WHERE p.slug = ?
+     ORDER BY sa.created_at DESC
+     LIMIT 50`,
+    [productSlug]
+  );
+  return rows.map(rowToStockAdjustment);
 }
 
 // ---------------------------------------------------------------------

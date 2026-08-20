@@ -48,11 +48,9 @@ export default async function AdminProductsPage() {
                 <td className="px-5 py-3">
                   <span
                     className={
-                      product.stock === 0
+                      product.stock <= (product.lowStockThreshold ?? 5)
                         ? "font-medium text-danger-500"
-                        : product.stock <= 5
-                          ? "font-medium text-danger-500"
-                          : "text-ink/70"
+                        : "text-ink/70"
                     }
                   >
                     {product.stock}
@@ -74,6 +72,12 @@ export default async function AdminProductsPage() {
                 </td>
                 <td className="px-5 py-3">
                   <div className="flex items-center justify-end gap-4">
+                    <Link
+                      href={`/admin/products/${product.slug}/stock`}
+                      className="text-sm font-medium text-walnut-600 hover:underline"
+                    >
+                      Stock
+                    </Link>
                     <Link
                       href={`/admin/products/${product.slug}/edit`}
                       className="text-sm font-medium text-walnut-600 hover:underline"
