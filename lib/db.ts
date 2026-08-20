@@ -890,6 +890,20 @@ export async function deleteProduct(slug: string): Promise<void> {
   }
 }
 
+// Used by the admin products page's "select all/some, delete" bulk
+// action. Order/order_items keep their own snapshot of product name,
+// price, etc. (see db/schema.sql) rather than a foreign key to
+// products, so deleting a product here never touches past orders.
+export async function deleteProducts(slugs: string[]): Promise<number> {
+  if (slugs.length === 0) return 0;
+  const db = getPool();
+  const [result] = await db.query<mysql.ResultSetHeader>(
+    "DELETE FROM products WHERE slug IN (?)",
+    [slugs]
+  );
+  return result.affectedRows;
+}
+
 // ---------------------------------------------------------------------
 // Admin: stock management
 // ---------------------------------------------------------------------
