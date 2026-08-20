@@ -73,6 +73,89 @@ You need [Node.js](https://nodejs.org) 18+ and a MySQL-compatible server
 
    Open **http://localhost:3000**.
 
+## Deploying to cPanel
+
+This app is currently deployed via **cPanel's "Setup Node.js App"**
+(Phusion Passenger), which runs it as a long-lived Node process —
+that's what `server.js` is for: Passenger requires() a plain `.js`
+file as its entry point rather than running an npm script, so
+`server.js` is a small wrapper around Next's programmatic server API
+that listens on whatever port Passenger hands it via `PORT`. Nothing
+else about the app changes for this — same build, same routes, same
+database.
+
+**One-time setup:**
+
+1. **Database.** In cPanel → MySQL® Databases, create a database and a
+   user with full privileges on it, and note the host (usually
+   `localhost`), database name, username, and password — cPanel
+   prefixes both the database and username with your cPanel account
+   name (e.g. `cpaneluser_zemenay`).
+
+2. **Upload the code.** Either `git clone` the repo into a directory
+   under your account (via cPanel's Git Version Control feature, or
+   SSH if enabled) — this is much easier for future updates than
+   re-uploading a zip every time. Any directory works; it doesn't need
+   to be under `public_html`, since Passenger serves the app directly
+   and cPanel handles the reverse proxy to your domain.
+
+3. **cPanel → Setup Node.js App → Create Application:**
+   - **Node.js version:** 18 or newer.
+   - **Application mode:** Production.
+   - **Application root:** the directory you cloned into.
+   - **Application URL:** the domain/subdomain this should serve.
+   - **Application startup file:** `server.js`.
+   - Save. cPanel wires up the domain to proxy into the app for you —
+     no manual `.htaccess` needed.
+
+4. **Environment variables.** In that same Node.js App page, add each
+   variable from `.env.example` under "Environment variables" (there's
+   no `.env.local` file read on cPanel — this UI is where they live
+   instead). At minimum: `DB_HOST`, `DB_PORT`, `DB_USER`,
+   `DB_PASSWORD`, `DB_NAME` (from step 1), `ADMIN_EMAIL`,
+   `ADMIN_PASSWORD`, `ADMIN_SESSION_SECRET` (a long random string —
+   generate one with `openssl rand -hex 32`), and `APP_BASE_URL` (your
+   real domain, e.g. `https://zemenayfurniture.com`). Everything else
+   in `.env.example` (SMTP, Chapa, Google Translate, Sentry) is
+   optional and inert until you fill it in — add those whenever
+   they're ready, no code changes needed either time.
+
+5. **Install, build, and seed.** Click "Run NPM Install" on the
+   Node.js App page (installs dependencies with the right Node
+   version) — it does not run the build, so open a terminal in the
+   app's environment (the Node.js App page gives you the exact
+   `source .../activate` command to enter it, or use cPanel's Terminal
+   app) and run:
+
+   ```bash
+   npm run build
+   npm run seed
+   ```
+
+   `npm run seed` creates the schema and the bootstrap admin account
+   from `ADMIN_EMAIL`/`ADMIN_PASSWORD` — safe to run again later too;
+   it only reseeds demo/catalog content, never admin accounts, orders,
+   or customers (see the comments in `db/seed.ts` for exactly which
+   tables that applies to).
+
+6. **Restart** the app from the Node.js App page, then visit your
+   domain and `/admin/login`.
+
+**Redeploying after code changes:** `git pull`, re-run "Run NPM
+Install" if `package.json` changed, `npm run build`, then Restart from
+the Node.js App page. `public/uploads/` (product photos, etc.) lives
+on disk in the app's own directory — a `git pull` won't touch it, but
+don't delete or recreate the app root without moving that folder
+first.
+
+**One thing worth testing after your first deploy:** product/variant
+photo uploads go through `sharp` (see "What's real vs. placeholder"
+below), which ships a prebuilt native binary. It works on essentially
+all cPanel hosts, but if yours is unusual, uploads silently fall back
+to storing the original file unoptimized rather than failing — upload
+one test photo and check it looks compressed (smaller file size than
+what you uploaded) to confirm it's actually running.
+
 ## Admin dashboard
 
 **http://localhost:3000/admin** — sign in with `ADMIN_PASSWORD`. It's a
