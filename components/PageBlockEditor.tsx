@@ -224,7 +224,7 @@ export default function PageBlockEditor({ mode, initial }: Props) {
         setSubmitting(false);
         return;
       }
-      router.push("/admin/pages");
+      router.push("/portal2026/pages");
       router.refresh();
     } catch {
       setError("Network error — please try again.");
@@ -355,7 +355,7 @@ export default function PageBlockEditor({ mode, initial }: Props) {
         <button type="submit" disabled={submitting} className="btn-primary">
           {submitting ? "Saving…" : mode === "create" ? "Create page" : "Save changes"}
         </button>
-        <button type="button" onClick={() => router.push("/admin/pages")} className="btn-secondary">
+        <button type="button" onClick={() => router.push("/portal2026/pages")} className="btn-secondary">
           Cancel
         </button>
       </div>

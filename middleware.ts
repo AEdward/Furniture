@@ -9,10 +9,10 @@ import {
 } from "@/lib/admin-auth";
 
 const PUBLIC_ADMIN_PATHS = new Set([
-  "/admin/login",
+  "/portal2026/login",
   "/api/admin/login",
   "/api/admin/logout",
-  "/admin/forgot-password",
+  "/portal2026/forgot-password",
   "/api/admin/forgot-password",
   "/api/admin/reset-password",
 ]);
@@ -22,15 +22,15 @@ const GATE_DURATION_SECONDS = 400 * 24 * 60 * 60;
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Everything under /admin (pages and API alike) is gated behind
+  // Everything under /portal2026 (pages and API alike) is gated behind
   // ADMIN_GATE_KEY, if set — a shared secret appended as ?key=... the
   // first time, after which a long-lived signed cookie remembers this
-  // browser. Without it, /admin/* 404s outright (not a redirect to a
+  // browser. Without it, /portal2026/* 404s outright (not a redirect to a
   // login form — there's nothing here for an anonymous scanner to
-  // find), so a bot or a curious visitor probing /admin gets nothing.
-  // Unset, this is a no-op and /admin behaves exactly as before — kept
+  // find), so a bot or a curious visitor probing /portal2026 gets nothing.
+  // Unset, this is a no-op and /portal2026 behaves exactly as before — kept
   // optional so local dev never needs an extra secret to try the app.
-  if (pathname === "/admin" || pathname.startsWith("/admin/")) {
+  if (pathname === "/portal2026" || pathname.startsWith("/portal2026/")) {
     const gateKey = process.env.ADMIN_GATE_KEY;
     if (gateKey) {
       const gated = await verifyGateToken(request.cookies.get(ADMIN_GATE_COOKIE_NAME)?.value);
@@ -49,7 +49,7 @@ export async function middleware(request: NextRequest) {
           httpOnly: true,
           sameSite: "lax",
           secure: process.env.NODE_ENV === "production",
-          path: "/admin",
+          path: "/portal2026",
           maxAge: GATE_DURATION_SECONDS,
         });
         return res;
@@ -68,7 +68,7 @@ export async function middleware(request: NextRequest) {
     if (pathname.startsWith("/api/admin")) {
       return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
     }
-    const loginUrl = new URL("/admin/login", request.url);
+    const loginUrl = new URL("/portal2026/login", request.url);
     loginUrl.searchParams.set("from", pathname);
     return NextResponse.redirect(loginUrl);
   }
@@ -77,5 +77,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/admin/:path*", "/api/admin/:path*"],
+  matcher: ["/portal2026/:path*", "/api/admin/:path*"],
 };

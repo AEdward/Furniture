@@ -14,18 +14,18 @@ The real logo, mark, and full favicon/app-icon set are in place
 `public/android-chrome-*.png`, `public/site.webmanifest`), wired up via
 `app/layout.tsx` metadata and `components/Logo.tsx`.
 
-**Still placeholder:** contact email/phone (editable at `/admin/settings`,
+**Still placeholder:** contact email/phone (editable at `/portal2026/settings`,
 just not confirmed real numbers yet). The product catalog is a
 representative starter set (28 products across doors, kitchen cabinets,
 closets, sofas, dining tables & chairs, and beds), not Zemenay's actual
-current inventory — replace it product-by-product in `/admin/products`
+current inventory — replace it product-by-product in `/portal2026/products`
 or wholesale via `lib/products.ts` + `npm run seed`.
 
 ## Stack
 
 Next.js 14 (App Router) · TypeScript · Tailwind CSS · MySQL (`mysql2`)
 
-Every product can have a real uploaded photo (`/admin` → edit a product →
+Every product can have a real uploaded photo (`/portal2026` → edit a product →
 "Product photo"). Until one's uploaded, products fall back to inline SVG
 line-art on a gradient background, so the catalog never shows a broken
 image.
@@ -153,7 +153,7 @@ database.
    existed, `git pull` and re-run `npm install`.
 
 6. **Restart** the app from the Node.js App page, then visit your
-   domain and `/admin/login`.
+   domain and `/portal2026/login`.
 
 **Redeploying after code changes:** `git pull`, re-run "Run NPM
 Install" if `package.json` changed, `npm run build`, then Restart from
@@ -172,10 +172,10 @@ what you uploaded) to confirm it's actually running.
 
 ## Admin dashboard
 
-**http://localhost:3000/admin** — sign in with `ADMIN_PASSWORD`. It's a
+**http://localhost:3000/portal2026** — sign in with `ADMIN_PASSWORD`. It's a
 single shared password (no per-user accounts), meant for the shop owner /
 small team, not a multi-role permission system. Access is a signed,
-httpOnly cookie (`middleware.ts` guards every `/admin` and `/api/admin`
+httpOnly cookie (`middleware.ts` guards every `/portal2026` and `/api/admin`
 route).
 
 - **Dashboard** — product/order counts, revenue, low-stock list, recent orders
@@ -196,7 +196,7 @@ route).
 
 ## Analytics
 
-**http://localhost:3000/admin/analytics** — three self-hosted panels, no
+**http://localhost:3000/portal2026/analytics** — three self-hosted panels, no
 third-party account or API key required:
 
 - **Sales** — computed directly from `orders`/`order_items`: revenue and
@@ -229,12 +229,12 @@ admin-configurable; nothing is hardcoded.
   every string falls back to English (or whatever's been filled in by
   hand) instead of calling the API.
 - **Turning translation on/off, and adding/removing languages**:
-  `/admin/settings` → "Language & translation". Languages are a simple
+  `/portal2026/settings` → "Language & translation". Languages are a simple
   `code | Label` list (e.g. `am | አማርኛ`) — add a line to offer a new
   language, remove one to stop offering it. A separate checkbox turns
   automatic Google Translate on or off; existing manual translations
   and the language list itself are unaffected either way.
-- **Filling in / correcting translations by hand**: `/admin/translations`
+- **Filling in / correcting translations by hand**: `/portal2026/translations`
   lists every English string the site can show — the fixed UI
   vocabulary (nav, buttons, labels) plus any product/settings/page text
   that's actually been viewed in that language — with a tab per
@@ -258,7 +258,7 @@ admin-configurable; nothing is hardcoded.
   LanguageSwitcher.tsx` → `POST /api/locale`, which checks the locale
   is `en` or a currently configured language), read server-side by
   `lib/i18n/get-locale.ts`.
-- **Scope**: the customer-facing storefront only — `/admin` stays
+- **Scope**: the customer-facing storefront only — `/portal2026` stays
   English, since it's the shop owner's own tool, not customer-facing.
   Historical order line items (on the confirmation page) show the name
   as recorded at purchase time, not re-translated.
@@ -266,15 +266,15 @@ admin-configurable; nothing is hardcoded.
 ## Content management
 
 Nothing customer-facing is hardcoded in a way the shop owner can't reach
-from `/admin`:
+from `/portal2026`:
 
-- **Site settings** (`/admin/settings`) — one record in the `settings`
+- **Site settings** (`/portal2026/settings`) — one record in the `settings`
   table (`lib/settings.ts` / `lib/db.ts`) drives the site name, tagline,
   contact info, the home page hero, and every delivery/warranty/returns/
   payment detail shown on product pages. Previously this lived in static
   code files (`lib/site-config.ts`, `lib/policies.ts`) — both are gone;
   everything reads from the database now.
-- **Pages** (`/admin/pages`) — a `pages` table holds admin-authored pages
+- **Pages** (`/portal2026/pages`) — a `pages` table holds admin-authored pages
   as an ordered list of typed content blocks: **Hero** (heading/
   subheading/image/button), **Text** (heading + paragraphs), and
   **Image + Text** (image left or right of a text block). Reorder blocks
@@ -317,7 +317,7 @@ generic e-commerce template:
   doesn't fork price or stock), but the selection follows the item into
   the cart, the order record, and the confirmation page as a variant label
 - Delivery, assembly, warranty, returns, and payment-method info — all
-  from `/admin/settings`, not hardcoded per product
+  from `/portal2026/settings`, not hardcoded per product
 - Two cross-sell rails: same-category "You may also like" and
   cross-category "Complete the project"
 
@@ -330,14 +330,14 @@ automatic bundle discount pricing for "Complete the project".
 
 ## Rebranding for a client
 
-- **`/admin/settings`** — name, tagline, contact info, hero, and all
+- **`/portal2026/settings`** — name, tagline, contact info, hero, and all
   policy content. No code changes needed.
 - **`components/Logo.tsx`** + **`public/brand/`** — swap the logo PNGs and
   update the `src` paths (and regenerate `public/favicon*` etc. if the
   new client needs their own icon set).
 - **`lib/products.ts`** (`PRODUCT_SEED`) — the starter product catalog.
   Replace with the real catalog, then run `npm run seed` again — or just
-  use `/admin/products` once live.
+  use `/portal2026/products` once live.
 - **`tailwind.config.ts`** — the `walnut` / `terracotta` / `sand` color
   scale. Swap the hex values to match brand colors; every component
   already references these tokens rather than hardcoded colors. (`danger`
@@ -379,7 +379,7 @@ payment actually clears.
   instead of redirecting to pay — it never silently pretends a payment
   succeeded. Set `APP_BASE_URL` too if you're not on `localhost:3000`
   (used to build the callback/return URLs Chapa redirects to).
-- **Admin**: `/admin/orders` shows a Payment column (pending/paid/failed)
+- **Admin**: `/portal2026/orders` shows a Payment column (pending/paid/failed)
   alongside fulfillment status; the order detail page shows the payment
   provider and transaction reference.
 
@@ -415,7 +415,7 @@ just the order number and the email it was placed under.
 - **Cart** — client-side only, persisted to the browser's `localStorage`
   (`lib/cart-context.tsx`).
 - **Contact form, reviews, coupons, back-in-stock signups** — all real,
-  stored in MySQL and manageable from `/admin`.
+  stored in MySQL and manageable from `/portal2026`.
 
 ## Project structure
 
@@ -441,6 +441,6 @@ lib/                  Product types/seed data, db access, settings, pages/blocks
                        cart context, admin auth, validation, translate.ts, chapa.ts
   i18n/                Locale/dictionary/context (see "Language" above)
 db/                   schema.sql + seed script (products, settings, About page)
-middleware.ts          Protects /admin and /api/admin routes
+middleware.ts          Protects /portal2026 and /api/admin routes
 public/uploads/        Admin-uploaded images (gitignored)
 ```
