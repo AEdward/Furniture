@@ -4,6 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import FurnitureIcon from "@/components/FurnitureIcon";
 import type { IconName } from "@/lib/products";
+import { useVariantImage } from "@/components/VariantImageContext";
 
 export default function ProductGallery({
   images,
@@ -17,7 +18,10 @@ export default function ProductGallery({
   gradient: string;
 }) {
   const [active, setActive] = useState(0);
-  const activeImage = images[active];
+  const { variantImageUrl, setVariantImageUrl } = useVariantImage();
+  // A selected color/material/wood option with its own photo takes over
+  // the hero image until the shopper picks a thumbnail themselves.
+  const activeImage = variantImageUrl ?? images[active];
 
   return (
     <div className="flex flex-col gap-3">
@@ -44,7 +48,10 @@ export default function ProductGallery({
             <button
               key={url}
               type="button"
-              onClick={() => setActive(i)}
+              onClick={() => {
+                setActive(i);
+                setVariantImageUrl(null);
+              }}
               className={`relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg border-2 transition-colors ${
                 i === active ? "border-walnut-500" : "border-transparent hover:border-walnut-200"
               }`}
