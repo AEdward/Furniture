@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import ThemeToggle from "@/components/ThemeToggle";
+import NotificationBell from "@/components/NotificationBell";
 import type { AdminRole } from "@/lib/admin-users";
 
 const links = [
@@ -16,7 +17,9 @@ const links = [
   { href: "/admin/pages", label: "Pages", adminOnly: false },
   { href: "/admin/translations", label: "Translations", adminOnly: false },
   { href: "/admin/analytics", label: "Analytics", adminOnly: false },
+  { href: "/admin/customers", label: "Customers", adminOnly: true },
   { href: "/admin/users", label: "Users", adminOnly: true },
+  { href: "/admin/audit-log", label: "Audit log", adminOnly: true },
   { href: "/admin/settings", label: "Settings", adminOnly: true },
 ];
 
@@ -49,6 +52,7 @@ export default function AdminNav({
           Admin
         </Link>
         <div className="flex items-center gap-2">
+          <NotificationBell apiBase="/api/admin/notifications" align="left" />
           <ThemeToggle />
           <button
             type="button"
@@ -83,7 +87,10 @@ export default function AdminNav({
           >
             Admin
           </Link>
-          <ThemeToggle />
+          <div className="flex items-center gap-1.5">
+            <NotificationBell apiBase="/api/admin/notifications" align="left" />
+            <ThemeToggle />
+          </div>
         </div>
 
         <nav className="flex flex-1 flex-col gap-1 overflow-y-auto px-3">
