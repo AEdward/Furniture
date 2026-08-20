@@ -6,6 +6,7 @@ import type { PageBlock } from "@/lib/pages";
 import { getPool } from "@/lib/db-pool";
 import { sendEmail } from "@/lib/mailer";
 import { backInStockEmail, orderConfirmationEmail, orderStatusUpdateEmail } from "@/lib/email-templates";
+import { notifyAllAdmins, notifyCustomer } from "@/lib/notifications";
 
 export { ORDER_STATUSES, type OrderStatus };
 
@@ -374,6 +375,12 @@ export async function createOrder(input: OrderInput): Promise<OrderResult> {
           settings
         ),
       });
+      await notifyAllAdmins({
+        type: "new_order",
+        title: `New order #${orderId}`,
+        body: `${input.customerName} — ${lineItems.length} item${lineItems.length === 1 ? "" : "s"}`,
+        link: `/admin/orders/${orderId}`,
+      });
     }
 
     return { id: orderId, subtotal, discountAmount, couponCode, items: lineItems };
@@ -661,7 +668,7 @@ export async function updateOrderStatus(
   }
 
   const [rows] = await db.query<mysql.RowDataPacket[]>(
-    "SELECT customer_name, customer_email FROM orders WHERE id = ?",
+    "SELECT customer_id, customer_name, customer_email FROM orders WHERE id = ?",
     [id]
   );
   const order = rows[0];
@@ -671,6 +678,13 @@ export async function updateOrderStatus(
       to: order.customer_email,
       ...orderStatusUpdateEmail({ id, customerName: order.customer_name, status }, settings),
     });
+    if (order.customer_id) {
+      await notifyCustomer(order.customer_id, {
+        type: "order_status",
+        title: `Order #${id} is now "${status}"`,
+        link: `/account/orders`,
+      });
+    }
   }
 }
 
@@ -1366,6 +1380,12 @@ export async function createContactMessage(input: {
     "SELECT id, name, email, message, read_at, created_at FROM contact_messages WHERE id = ?",
     [result.insertId]
   );
+  await notifyAllAdmins({
+    type: "new_message",
+    title: `New message from ${input.name}`,
+    body: input.message.slice(0, 140),
+    link: "/admin/messages",
+  });
   return rowToContactMessage(rows[0]);
 }
 
@@ -1457,6 +1477,12 @@ export async function createReview(input: {
     "SELECT * FROM reviews WHERE id = ?",
     [result.insertId]
   );
+  await notifyAllAdmins({
+    type: "new_review",
+    title: `New review from ${input.customerName}`,
+    body: `${input.rating}★ — ${input.comment.slice(0, 120)}`,
+    link: "/admin/reviews",
+  });
   return rowToReview(rows[0]);
 }
 
@@ -1492,6 +1518,28 @@ export async function setReviewApproved(id: number, approved: boolean): Promise<
   );
   if (result.affectedRows === 0) {
     throw new ReviewError("Review not found.");
+  }
+
+  if (approved) {
+    const [reviewRows] = await db.query<mysql.RowDataPacket[]>(
+      "SELECT customer_email FROM reviews WHERE id = ?",
+      [id]
+    );
+    const email = reviewRows[0]?.customer_email as string | undefined;
+    if (email) {
+      const [customerRows] = await db.query<mysql.RowDataPacket[]>(
+        "SELECT id FROM customers WHERE email = ? LIMIT 1",
+        [email.trim().toLowerCase()]
+      );
+      const customerId = customerRows[0]?.id as number | undefined;
+      if (customerId) {
+        await notifyCustomer(customerId, {
+          type: "review_approved",
+          title: "Your review is now live",
+          link: "/account",
+        });
+      }
+    }
   }
 }
 
@@ -1581,6 +1629,18 @@ async function notifyBackInStock(product: Product): Promise<void> {
 
     for (const row of rows) {
       await sendEmail({ to: row.email, ...template });
+      const [customerRows] = await db.query<mysql.RowDataPacket[]>(
+        "SELECT id FROM customers WHERE email = ? LIMIT 1",
+        [String(row.email).trim().toLowerCase()]
+      );
+      const customerId = customerRows[0]?.id as number | undefined;
+      if (customerId) {
+        await notifyCustomer(customerId, {
+          type: "back_in_stock",
+          title: `${product.name} is back in stock`,
+          link: `/shop/${product.slug}`,
+        });
+      }
     }
 
     const ids = rows.map((r) => r.id);
