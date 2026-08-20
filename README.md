@@ -138,6 +138,20 @@ database.
    or customers (see the comments in `db/seed.ts` for exactly which
    tables that applies to).
 
+   If `npm run build` fails with `Module not found` errors pointing at
+   this project's own files (`@/lib/...`, `@/components/...`), check
+   `npm ls --depth=0` — if `typescript` and `tailwindcss` are missing
+   from the list, `npm install` silently skipped devDependencies. Some
+   hosts (cPanel's "Production" Application Mode among them) export
+   `NODE_ENV=production` in the shell before you ever run `npm
+   install`, and npm's default behavior in that case is to skip
+   devDependencies — even though this project needs `typescript` and
+   `tailwindcss` *at build time*, regardless of what mode it runs in
+   afterward. The repo's `.npmrc` (`include=dev`) already fixes this
+   for every future install, terminal or the "Run NPM Install" button
+   alike — if you're hitting this on a checkout from before that file
+   existed, `git pull` and re-run `npm install`.
+
 6. **Restart** the app from the Node.js App page, then visit your
    domain and `/admin/login`.
 
