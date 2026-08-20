@@ -8,6 +8,7 @@ import { createT } from "@/lib/i18n/t";
 import { translateSettings } from "@/lib/i18n/translate-content";
 import { isChapaConfigured, verifyChapaTransaction } from "@/lib/chapa";
 import RetryPaymentButton from "@/components/RetryPaymentButton";
+import BankReceiptUpload from "@/components/BankReceiptUpload";
 
 export default async function OrderConfirmationPage({
   params,
@@ -184,6 +185,12 @@ export default async function OrderConfirmationPage({
             {settings.bankDetails.instructions && (
               <p className="mt-2 text-xs text-ink/50">{settings.bankDetails.instructions}</p>
             )}
+            <BankReceiptUpload
+              orderId={order.id}
+              customerEmail={order.customerEmail}
+              initialReceiptUrl={order.paymentReceiptUrl}
+              alreadyPaid={false}
+            />
           </div>
         )}
       </div>

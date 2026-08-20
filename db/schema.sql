@@ -255,6 +255,10 @@ ALTER TABLE customers ADD COLUMN IF NOT EXISTS postal_code VARCHAR(32) NOT NULL 
 ALTER TABLE products ADD COLUMN IF NOT EXISTS low_stock_threshold INT NOT NULL DEFAULT 5 AFTER stock;
 ALTER TABLE products ADD COLUMN IF NOT EXISTS variant_images_json TEXT NOT NULL DEFAULT '{}' AFTER wood_options_json;
 
+-- Proof-of-payment photo a customer uploads for a bank_transfer order,
+-- so the shop owner can verify the transfer before marking it paid.
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_receipt_url VARCHAR(500) NULL AFTER payment_ref;
+
 -- One-time verification codes, shared by both account systems
 -- (customers + admin_users) — `purpose` disambiguates the flow and
 -- `account_type` which table the account lives in, since the two can

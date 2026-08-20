@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import { getOrderById, orderTotal } from "@/lib/db";
 import { formatPrice } from "@/lib/products";
@@ -87,6 +88,23 @@ export default async function AdminOrderDetailPage({
                 Via {order.paymentProvider}
                 {order.paymentRef && ` · ${order.paymentRef}`}
               </p>
+            )}
+            {order.paymentMethod === "bank_transfer" && (
+              <div className="mt-3">
+                <p className="text-xs font-medium text-ink">Transfer receipt</p>
+                {order.paymentReceiptUrl ? (
+                  <a
+                    href={order.paymentReceiptUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="relative mt-2 block h-32 w-32 overflow-hidden rounded-lg border border-walnut-100"
+                  >
+                    <Image src={order.paymentReceiptUrl} alt="Payment receipt" fill className="object-cover" />
+                  </a>
+                ) : (
+                  <p className="mt-1 text-xs text-ink/50">Not uploaded yet.</p>
+                )}
+              </div>
             )}
             {order.paymentStatus === "pending" && <PaymentStatusActions orderId={order.id} />}
           </div>

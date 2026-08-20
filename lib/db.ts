@@ -417,6 +417,7 @@ export type Order = {
   paymentStatus: PaymentStatus;
   paymentProvider: string | null;
   paymentRef: string | null;
+  paymentReceiptUrl: string | null;
   createdAt: string;
   items: { slug: string; name: string; price: number; quantity: number; variant?: string }[];
 };
@@ -444,6 +445,7 @@ function rowToOrder(order: mysql.RowDataPacket, items: Order["items"]): Order {
     paymentStatus: order.payment_status as PaymentStatus,
     paymentProvider: order.payment_provider ?? null,
     paymentRef: order.payment_ref ?? null,
+    paymentReceiptUrl: order.payment_receipt_url ?? null,
     createdAt: order.created_at,
     items,
   };
@@ -619,6 +621,26 @@ export async function markOrderPaymentFailed(
   } finally {
     conn.release();
   }
+}
+
+// Customer-uploaded proof of a bank transfer, for a shop owner to check
+// before marking the order paid. Callers are expected to have already
+// verified the order belongs to this customer (see trackOrder) and that
+// it's actually a bank_transfer order.
+export async function setOrderPaymentReceipt(orderId: number, url: string): Promise<void> {
+  const db = getPool();
+  const [result] = await db.query<mysql.ResultSetHeader>(
+    "UPDATE orders SET payment_receipt_url = ? WHERE id = ?",
+    [url, orderId]
+  );
+  if (result.affectedRows === 0) throw new OrderError("Order not found.");
+
+  await notifyAllAdmins({
+    type: "payment_receipt",
+    title: `Receipt uploaded for order #${orderId}`,
+    body: "A bank transfer receipt was uploaded — review it before marking the order paid.",
+    link: `/portal2026/orders/${orderId}`,
+  });
 }
 
 // ---------------------------------------------------------------------
