@@ -12,6 +12,10 @@ export type Customer = {
   id: number;
   name: string;
   email: string;
+  phone: string;
+  address: string;
+  city: string;
+  postalCode: string;
   createdAt: string;
 };
 
@@ -46,6 +50,10 @@ function rowToCustomer(row: mysql.RowDataPacket): Customer {
     id: row.id,
     name: row.name,
     email: row.email,
+    phone: row.phone ?? "",
+    address: row.address ?? "",
+    city: row.city ?? "",
+    postalCode: row.postal_code ?? "",
     createdAt: row.created_at,
   };
 }
@@ -72,7 +80,16 @@ export async function createCustomer(input: {
       "INSERT INTO customers (name, email, password_hash) VALUES (?, ?, ?)",
       [name, email, passwordHash]
     );
-    return { id: result.insertId, name, email, createdAt: new Date().toISOString() };
+    return {
+      id: result.insertId,
+      name,
+      email,
+      phone: "",
+      address: "",
+      city: "",
+      postalCode: "",
+      createdAt: new Date().toISOString(),
+    };
   } catch (err) {
     if (err instanceof Error && (err as { code?: string }).code === "ER_DUP_ENTRY") {
       throw new CustomerError("An account with that email already exists.");
@@ -87,13 +104,56 @@ export async function verifyCustomerCredentials(
 ): Promise<Customer | null> {
   const db = getPool();
   const [rows] = await db.query<mysql.RowDataPacket[]>(
-    "SELECT id, name, email, password_hash, created_at FROM customers WHERE email = ? LIMIT 1",
+    "SELECT * FROM customers WHERE email = ? LIMIT 1",
     [email.trim().toLowerCase()]
   );
   const row = rows[0];
   if (!row) return null;
   const valid = await verifyPassword(password, row.password_hash as string);
   return valid ? rowToCustomer(row) : null;
+}
+
+export async function updateCustomerProfile(
+  id: number,
+  input: { name: string; phone: string; address: string; city: string; postalCode: string }
+): Promise<Customer> {
+  const name = input.name.trim();
+  if (!name) throw new CustomerError("Name is required.");
+
+  const db = getPool();
+  const [result] = await db.query<mysql.ResultSetHeader>(
+    "UPDATE customers SET name = ?, phone = ?, address = ?, city = ?, postal_code = ? WHERE id = ?",
+    [name, input.phone.trim(), input.address.trim(), input.city.trim(), input.postalCode.trim(), id]
+  );
+  if (result.affectedRows === 0) {
+    throw new CustomerError("Account not found.");
+  }
+  const updated = await getCustomerById(id);
+  if (!updated) throw new CustomerError("Account not found.");
+  return updated;
+}
+
+// OTP-verified — the caller must have already confirmed a code sent to
+// newEmail (see /api/account/settings/change-email) before calling this.
+export async function changeCustomerEmail(id: number, newEmail: string): Promise<void> {
+  const email = newEmail.trim().toLowerCase();
+  if (!EMAIL_PATTERN.test(email)) throw new CustomerError("A valid email is required.");
+
+  const db = getPool();
+  try {
+    const [result] = await db.query<mysql.ResultSetHeader>(
+      "UPDATE customers SET email = ? WHERE id = ?",
+      [email, id]
+    );
+    if (result.affectedRows === 0) {
+      throw new CustomerError("Account not found.");
+    }
+  } catch (err) {
+    if (err instanceof Error && (err as { code?: string }).code === "ER_DUP_ENTRY") {
+      throw new CustomerError("An account with that email already exists.");
+    }
+    throw err;
+  }
 }
 
 export async function changeCustomerPassword(id: number, newPassword: string): Promise<void> {
@@ -114,7 +174,7 @@ export async function changeCustomerPassword(id: number, newPassword: string): P
 export async function getCustomerByEmail(email: string): Promise<Customer | null> {
   const db = getPool();
   const [rows] = await db.query<mysql.RowDataPacket[]>(
-    "SELECT id, name, email, created_at FROM customers WHERE email = ? LIMIT 1",
+    "SELECT * FROM customers WHERE email = ? LIMIT 1",
     [email.trim().toLowerCase()]
   );
   const row = rows[0];
@@ -124,7 +184,7 @@ export async function getCustomerByEmail(email: string): Promise<Customer | null
 export async function getCustomerById(id: number): Promise<Customer | null> {
   const db = getPool();
   const [rows] = await db.query<mysql.RowDataPacket[]>(
-    "SELECT id, name, email, created_at FROM customers WHERE id = ? LIMIT 1",
+    "SELECT * FROM customers WHERE id = ? LIMIT 1",
     [id]
   );
   const row = rows[0];

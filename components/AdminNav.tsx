@@ -121,6 +121,9 @@ export default function AdminNav({
               )}
             </p>
           )}
+          <Link href="/admin/profile" className="text-sm text-ink/50 hover:text-walnut-600">
+            My profile
+          </Link>
           <Link href="/" className="text-sm text-ink/50 hover:text-walnut-600">
             View site ↗
           </Link>
