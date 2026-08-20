@@ -96,6 +96,31 @@ export async function verifyCustomerCredentials(
   return valid ? rowToCustomer(row) : null;
 }
 
+export async function changeCustomerPassword(id: number, newPassword: string): Promise<void> {
+  if (newPassword.length < 8) {
+    throw new CustomerError("Password must be at least 8 characters.");
+  }
+  const db = getPool();
+  const passwordHash = await hashPassword(newPassword);
+  const [result] = await db.query<mysql.ResultSetHeader>(
+    "UPDATE customers SET password_hash = ? WHERE id = ?",
+    [passwordHash, id]
+  );
+  if (result.affectedRows === 0) {
+    throw new CustomerError("Account not found.");
+  }
+}
+
+export async function getCustomerByEmail(email: string): Promise<Customer | null> {
+  const db = getPool();
+  const [rows] = await db.query<mysql.RowDataPacket[]>(
+    "SELECT id, name, email, created_at FROM customers WHERE email = ? LIMIT 1",
+    [email.trim().toLowerCase()]
+  );
+  const row = rows[0];
+  return row ? rowToCustomer(row) : null;
+}
+
 export async function getCustomerById(id: number): Promise<Customer | null> {
   const db = getPool();
   const [rows] = await db.query<mysql.RowDataPacket[]>(

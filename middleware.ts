@@ -12,6 +12,9 @@ const PUBLIC_ADMIN_PATHS = new Set([
   "/admin/login",
   "/api/admin/login",
   "/api/admin/logout",
+  "/admin/forgot-password",
+  "/api/admin/forgot-password",
+  "/api/admin/reset-password",
 ]);
 
 const GATE_DURATION_SECONDS = 400 * 24 * 60 * 60;
