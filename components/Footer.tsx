@@ -13,13 +13,13 @@ export default function Footer({ settings }: { settings: SiteSettings }) {
       <div className="container-shop grid gap-10 py-14 md:grid-cols-4">
         <div>
           <span className="inline-flex items-center gap-2.5">
-            <span className="flex h-9 w-9 items-center justify-center">
+            <span className="relative flex h-9 w-9 shrink-0 overflow-hidden rounded-lg">
               <Image
-                src="/brand/golden-wood-mark-transparent.png"
+                src="/brand/golden-wood-icon.png"
                 alt=""
-                width={352}
-                height={352}
-                className="h-full w-full object-contain"
+                fill
+                sizes="36px"
+                className="object-cover"
               />
             </span>
             <span className="font-serif text-xl font-semibold uppercase tracking-[0.1em] text-walnut-50">

@@ -1,19 +1,16 @@
-// Golden Wood Furniture wordmark, per the brand style guide v1.0: a
-// gold foil gradient (Foil Gold -> Antique Gold -> Deep Bronze) on
-// Anton display type, with an italic Cormorant Garamond "Furniture"
-// subline and a double underline beneath it. Built as text/CSS rather
-// than a raster image — crisp at any size, and doesn't depend on a
-// logo file being uploaded.
+import Image from "next/image";
+
+// Golden Wood Furniture wordmark: the real icon artwork
+// (public/brand/golden-wood-icon.png) as the mark, paired with a gold
+// foil gradient (Foil Gold -> Antique Gold -> Deep Bronze) Anton
+// wordmark and an italic Cormorant Garamond "Furniture" subline, per
+// the brand style guide v1.0.
 const GOLD_GRADIENT = "bg-gradient-to-r from-terracotta-200 via-terracotta-400 to-terracotta-600 bg-clip-text text-transparent";
 
-function Mark({ className, light }: { className?: string; light?: boolean }) {
+function Mark({ className }: { className?: string }) {
   return (
-    <span
-      className={`inline-flex shrink-0 items-center justify-center rounded-lg border border-terracotta-400/60 ${
-        light ? "bg-white/10 backdrop-blur-sm" : "bg-walnut-500"
-      } ${className ?? "h-9 w-9"}`}
-    >
-      <span className={`font-serif text-sm tracking-tight ${GOLD_GRADIENT}`}>GW</span>
+    <span className={`relative inline-block shrink-0 overflow-hidden rounded-lg ${className ?? "h-9 w-9"}`}>
+      <Image src="/brand/golden-wood-icon.png" alt="" fill sizes="48px" className="object-cover" priority />
     </span>
   );
 }
@@ -22,13 +19,13 @@ export default function Logo({
   className,
   variant = "horizontal",
   name = "Golden Wood Furniture",
-  light = false,
 }: {
   className?: string;
   variant?: "horizontal" | "stacked";
   name?: string;
-  // For use over a dark hero image (transparent header) — lightens
-  // the mark's background so it doesn't blend into the photo.
+  // Kept for callers that still pass it (e.g. the transparent header
+  // over the hero image) — the real icon artwork reads fine on both
+  // light and dark backgrounds, so it's a no-op now.
   light?: boolean;
 }) {
   const wordmark = name.replace(" Furniture", "").toUpperCase();
@@ -36,7 +33,7 @@ export default function Logo({
   if (variant === "stacked") {
     return (
       <span className={`inline-flex flex-col items-center ${className ?? ""}`}>
-        <Mark className="h-12 w-12 rounded-xl" light={light} />
+        <Mark className="h-16 w-16 rounded-xl" />
         <span className={`mt-3 font-serif text-3xl tracking-tight ${GOLD_GRADIENT}`}>
           {wordmark}
         </span>
@@ -53,7 +50,7 @@ export default function Logo({
 
   return (
     <span className={`inline-flex items-center gap-2.5 ${className ?? ""}`}>
-      <Mark light={light} />
+      <Mark />
       <span className={`font-serif text-xl tracking-tight ${GOLD_GRADIENT}`}>
         {wordmark}
       </span>
