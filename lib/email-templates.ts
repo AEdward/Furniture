@@ -99,6 +99,28 @@ export function backInStockEmail(
   return { subject, html, text };
 }
 
+export function otpEmail(
+  purpose: "password_reset" | "email_change",
+  code: string,
+  settings: SiteSettings
+): { subject: string; html: string; text: string } {
+  const label = purpose === "password_reset" ? "Reset your password" : "Confirm your new email";
+  const explain =
+    purpose === "password_reset"
+      ? "Use this code to reset your password. It expires in 10 minutes."
+      : "Use this code to confirm your new email address. It expires in 10 minutes.";
+  const subject = `${label} — your verification code`;
+  const html = wrapper(
+    settings.name,
+    `<p>${explain}</p>
+     <p style="font-size: 32px; font-weight: 700; letter-spacing: 6px; margin: 20px 0;">${code}</p>
+     <p style="color: #7a7268; font-size: 13px;">If you didn't request this, you can safely ignore this email.</p>`
+  );
+  const text = `${explain}\n\nYour code: ${code}\n\nIf you didn't request this, you can safely ignore this email.`;
+
+  return { subject, html, text };
+}
+
 export function contactNotificationEmail(
   message: ContactMessage,
   settings: SiteSettings

@@ -1,6 +1,7 @@
 "use client";
 
 import { Suspense, useState } from "react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import Logo from "@/components/Logo";
 
@@ -82,6 +83,12 @@ function LoginForm() {
       <button type="submit" disabled={submitting} className="btn-primary mt-6 w-full">
         {submitting ? "Signing in…" : "Sign in"}
       </button>
+
+      <p className="mt-4 text-center text-sm text-ink/50">
+        <Link href="/admin/forgot-password" className="hover:text-walnut-600">
+          Forgot password?
+        </Link>
+      </p>
     </form>
   );
 }

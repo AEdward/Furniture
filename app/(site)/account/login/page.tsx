@@ -70,6 +70,11 @@ export default function AccountLoginPage() {
           <button type="submit" disabled={submitting} className="btn-primary">
             {submitting ? "Signing in…" : "Sign in"}
           </button>
+          <p className="text-center text-sm text-ink/50">
+            <Link href="/account/forgot-password" className="hover:text-walnut-600">
+              Forgot password?
+            </Link>
+          </p>
         </form>
 
         <p className="mt-6 text-sm text-ink/60">

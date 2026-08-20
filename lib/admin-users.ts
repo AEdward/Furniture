@@ -176,6 +176,16 @@ export async function changeAdminPassword(id: number, newPassword: string): Prom
   }
 }
 
+export async function getAdminUserByEmail(email: string): Promise<AdminUser | null> {
+  const db = getPool();
+  const [rows] = await db.query<mysql.RowDataPacket[]>(
+    "SELECT id, name, email, role, created_at FROM admin_users WHERE email = ? LIMIT 1",
+    [email.trim().toLowerCase()]
+  );
+  const row = rows[0];
+  return row ? rowToUser(row) : null;
+}
+
 export async function getAdminUserById(id: number): Promise<AdminUser | null> {
   const db = getPool();
   const [rows] = await db.query<mysql.RowDataPacket[]>(
