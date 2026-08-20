@@ -161,6 +161,42 @@ export async function changeAdminRole(id: number, role: AdminRole): Promise<void
   }
 }
 
+export async function updateAdminName(id: number, name: string): Promise<void> {
+  const trimmed = name.trim();
+  if (!trimmed) throw new AdminUserError("Name is required.");
+  const db = getPool();
+  const [result] = await db.query<mysql.ResultSetHeader>(
+    "UPDATE admin_users SET name = ? WHERE id = ?",
+    [trimmed, id]
+  );
+  if (result.affectedRows === 0) {
+    throw new AdminUserError("Admin user not found.");
+  }
+}
+
+// OTP-verified — the caller must have already confirmed a code sent to
+// newEmail before calling this.
+export async function changeAdminEmail(id: number, newEmail: string): Promise<void> {
+  const email = newEmail.trim().toLowerCase();
+  if (!EMAIL_PATTERN.test(email)) throw new AdminUserError("A valid email is required.");
+
+  const db = getPool();
+  try {
+    const [result] = await db.query<mysql.ResultSetHeader>(
+      "UPDATE admin_users SET email = ? WHERE id = ?",
+      [email, id]
+    );
+    if (result.affectedRows === 0) {
+      throw new AdminUserError("Admin user not found.");
+    }
+  } catch (err) {
+    if (err instanceof Error && (err as { code?: string }).code === "ER_DUP_ENTRY") {
+      throw new AdminUserError("An admin with that email already exists.");
+    }
+    throw err;
+  }
+}
+
 export async function changeAdminPassword(id: number, newPassword: string): Promise<void> {
   if (newPassword.length < 8) {
     throw new AdminUserError("Password must be at least 8 characters.");

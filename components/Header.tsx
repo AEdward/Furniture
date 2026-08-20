@@ -7,6 +7,8 @@ import { useCart } from "@/lib/cart-context";
 import Logo from "@/components/Logo";
 import LanguageSwitcher, { type LanguageOption } from "@/components/LanguageSwitcher";
 import ThemeToggle from "@/components/ThemeToggle";
+import AccountMenu from "@/components/AccountMenu";
+import NotificationBell from "@/components/NotificationBell";
 import { useT } from "@/lib/i18n/context";
 
 type NavLink = { href: string; label: string };
@@ -70,25 +72,31 @@ export default function Header({
           <ThemeToggle />
           <LanguageSwitcher enabled={translationEnabled} languages={languages} />
 
-          <Link
-            href={customerName ? "/account" : "/account/login"}
-            className="hidden h-10 w-10 items-center justify-center rounded-full border border-walnut-200 text-walnut-600 transition-colors hover:bg-walnut-100 sm:flex"
-            aria-label={customerName ? t("My account") : t("Sign in")}
-            title={customerName ?? undefined}
-          >
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth={1.6}
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="h-5 w-5"
+          {customerName ? (
+            <>
+              <NotificationBell apiBase="/api/account/notifications" />
+              <AccountMenu customerName={customerName} />
+            </>
+          ) : (
+            <Link
+              href="/account/login"
+              className="hidden h-10 w-10 items-center justify-center rounded-full border border-walnut-200 text-walnut-600 transition-colors hover:bg-walnut-100 sm:flex"
+              aria-label={t("Sign in")}
             >
-              <circle cx="12" cy="8" r="3.5" />
-              <path d="M4.5 20c1.4-3.6 4.4-5.5 7.5-5.5s6.1 1.9 7.5 5.5" />
-            </svg>
-          </Link>
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={1.6}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="h-5 w-5"
+              >
+                <circle cx="12" cy="8" r="3.5" />
+                <path d="M4.5 20c1.4-3.6 4.4-5.5 7.5-5.5s6.1 1.9 7.5 5.5" />
+              </svg>
+            </Link>
+          )}
 
           <Link
             href="/cart"

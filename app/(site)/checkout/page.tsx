@@ -14,7 +14,18 @@ export default async function CheckoutPage() {
   return (
     <CheckoutForm
       bankDetails={settings.bankDetails}
-      prefill={customer ? { customerName: customer.name, customerEmail: customer.email } : undefined}
+      prefill={
+        customer
+          ? {
+              customerName: customer.name,
+              customerEmail: customer.email,
+              customerPhone: customer.phone,
+              address: customer.address,
+              city: customer.city,
+              postalCode: customer.postalCode,
+            }
+          : undefined
+      }
     />
   );
 }

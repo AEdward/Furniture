@@ -31,6 +31,27 @@ export default async function AccountPage() {
           <h2 className="font-serif text-lg font-semibold text-ink">Wishlist</h2>
           <p className="mt-1 text-sm text-ink/60">Items you've saved for later.</p>
         </Link>
+        <Link
+          href="/account/profile"
+          className="rounded-2xl border border-walnut-100 p-6 transition-shadow hover:shadow-soft"
+        >
+          <h2 className="font-serif text-lg font-semibold text-ink">Profile</h2>
+          <p className="mt-1 text-sm text-ink/60">Your name, phone, and default delivery address.</p>
+        </Link>
+        <Link
+          href="/account/settings"
+          className="rounded-2xl border border-walnut-100 p-6 transition-shadow hover:shadow-soft"
+        >
+          <h2 className="font-serif text-lg font-semibold text-ink">Account settings</h2>
+          <p className="mt-1 text-sm text-ink/60">Change your email or password.</p>
+        </Link>
+        <Link
+          href="/account/notifications"
+          className="rounded-2xl border border-walnut-100 p-6 transition-shadow hover:shadow-soft"
+        >
+          <h2 className="font-serif text-lg font-semibold text-ink">Notifications</h2>
+          <p className="mt-1 text-sm text-ink/60">Updates on your orders and account.</p>
+        </Link>
       </div>
 
       <div className="mt-8">

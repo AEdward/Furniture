@@ -15,7 +15,14 @@ export default function CheckoutForm({
   prefill,
 }: {
   bankDetails: SiteSettings["bankDetails"];
-  prefill?: { customerName: string; customerEmail: string };
+  prefill?: {
+    customerName: string;
+    customerEmail: string;
+    customerPhone?: string;
+    address?: string;
+    city?: string;
+    postalCode?: string;
+  };
 }) {
   const { lines, subtotal, clearCart, isReady, cartSessionId } = useCart();
   const router = useRouter();
@@ -27,10 +34,10 @@ export default function CheckoutForm({
   const [form, setForm] = useState({
     customerName: prefill?.customerName ?? "",
     customerEmail: prefill?.customerEmail ?? "",
-    customerPhone: "",
-    address: "",
-    city: "",
-    postalCode: "",
+    customerPhone: prefill?.customerPhone ?? "",
+    address: prefill?.address ?? "",
+    city: prefill?.city ?? "",
+    postalCode: prefill?.postalCode ?? "",
   });
 
   const [couponInput, setCouponInput] = useState("");
