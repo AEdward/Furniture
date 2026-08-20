@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { formatPrice } from "@/lib/products";
+import BankReceiptUpload from "@/components/BankReceiptUpload";
 
 type TrackedOrder = {
   id: number;
@@ -10,6 +11,10 @@ type TrackedOrder = {
   subtotal: number;
   discountAmount: number;
   createdAt: string;
+  customerEmail: string;
+  paymentMethod: string;
+  paymentStatus: string;
+  paymentReceiptUrl: string | null;
   items: { name: string; price: number; quantity: number; variant?: string }[];
 };
 
@@ -107,6 +112,15 @@ export default function TrackOrderPage() {
               <span>Total</span>
               <span>{formatPrice(order.subtotal - order.discountAmount)}</span>
             </div>
+
+            {order.paymentMethod === "bank_transfer" && (
+              <BankReceiptUpload
+                orderId={order.id}
+                customerEmail={order.customerEmail}
+                initialReceiptUrl={order.paymentReceiptUrl}
+                alreadyPaid={order.paymentStatus === "paid"}
+              />
+            )}
           </div>
         )}
 

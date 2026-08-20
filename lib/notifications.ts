@@ -13,7 +13,8 @@ export type NotificationType =
   | "low_stock"
   | "order_status"
   | "back_in_stock"
-  | "review_approved";
+  | "review_approved"
+  | "payment_receipt";
 
 export type Notification = {
   id: number;
