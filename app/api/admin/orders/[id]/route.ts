@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { confirmOrderPayment, markOrderPaymentFailed, OrderError, updateOrderStatus } from "@/lib/db";
 import { ORDER_STATUSES, type OrderStatus } from "@/lib/order-status";
 import { requireAdminApi } from "@/lib/admin-guard";
+import { logAdminAction } from "@/lib/audit-log";
 
 export async function PATCH(
   request: Request,
@@ -24,6 +25,7 @@ export async function PATCH(
         return NextResponse.json({ error: "Invalid status." }, { status: 400 });
       }
       await updateOrderStatus(id, status);
+      await logAdminAction(gate, "update_status", "order", id, { status });
     }
 
     // Manual override for cod/bank_transfer (and a fallback for chapa,
@@ -33,8 +35,10 @@ export async function PATCH(
     if (typeof body.paymentStatus === "string") {
       if (body.paymentStatus === "paid") {
         await confirmOrderPayment(id, "admin", null);
+        await logAdminAction(gate, "mark_paid", "order", id);
       } else if (body.paymentStatus === "failed") {
         await markOrderPaymentFailed(id, null);
+        await logAdminAction(gate, "mark_payment_failed", "order", id);
       } else {
         return NextResponse.json({ error: "Invalid payment status." }, { status: 400 });
       }

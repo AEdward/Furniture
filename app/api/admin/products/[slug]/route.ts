@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { deleteProduct, ProductError, updateProduct } from "@/lib/db";
 import { parseProductInput, ValidationError } from "@/lib/validate-product";
+import { getCurrentAdminUser } from "@/lib/admin-users";
+import { logAdminAction } from "@/lib/audit-log";
 
 export async function PUT(
   request: Request,
@@ -16,6 +18,8 @@ export async function PUT(
   try {
     const input = parseProductInput(body);
     const product = await updateProduct(params.slug, input);
+    const admin = await getCurrentAdminUser();
+    if (admin) await logAdminAction(admin, "update", "product", product.slug, { name: product.name });
     return NextResponse.json({ product });
   } catch (err) {
     if (err instanceof ValidationError || err instanceof ProductError) {
@@ -32,6 +36,8 @@ export async function DELETE(
 ) {
   try {
     await deleteProduct(params.slug);
+    const admin = await getCurrentAdminUser();
+    if (admin) await logAdminAction(admin, "delete", "product", params.slug);
     return NextResponse.json({ ok: true });
   } catch (err) {
     if (err instanceof ProductError) {
