@@ -51,6 +51,9 @@ export default function ProductForm({ mode, initial }: Props) {
   const [imageUrl, setImageUrl] = useState<string | null>(initial?.imageUrl ?? null);
   const [images, setImages] = useState<string[]>(initial?.images ?? []);
   const [stock, setStock] = useState(initial ? String(initial.stock) : "0");
+  const [lowStockThreshold, setLowStockThreshold] = useState(
+    initial?.lowStockThreshold !== undefined ? String(initial.lowStockThreshold) : "5"
+  );
   const [featured, setFeatured] = useState(initial?.featured ?? false);
   const [isNew, setIsNew] = useState(initial?.new ?? false);
 
@@ -124,6 +127,7 @@ export default function ProductForm({ mode, initial }: Props) {
       colors,
       materialOptions,
       woodOptions,
+      lowStockThreshold: lowStockThreshold === "" ? 5 : Number(lowStockThreshold),
     };
 
     try {
@@ -253,17 +257,38 @@ export default function ProductForm({ mode, initial }: Props) {
               </label>
 
               {availability === "in_stock" ? (
-                <label className={labelClass}>
-                  Stock
-                  <input
-                    required
-                    type="number"
-                    min={0}
-                    value={stock}
-                    onChange={(e) => setStock(e.target.value)}
-                    className={inputClass}
-                  />
-                </label>
+                <>
+                  <label className={labelClass}>
+                    Stock
+                    <input
+                      required
+                      type="number"
+                      min={0}
+                      value={stock}
+                      onChange={(e) => setStock(e.target.value)}
+                      className={inputClass}
+                    />
+                    {mode === "edit" && (
+                      <a
+                        href={`/admin/products/${initial!.slug}/stock`}
+                        className="mt-1 block text-xs font-normal text-walnut-600 hover:underline"
+                      >
+                        Log a restock instead (keeps a history) →
+                      </a>
+                    )}
+                  </label>
+                  <label className={labelClass}>
+                    Low-stock alert threshold
+                    <input
+                      required
+                      type="number"
+                      min={0}
+                      value={lowStockThreshold}
+                      onChange={(e) => setLowStockThreshold(e.target.value)}
+                      className={inputClass}
+                    />
+                  </label>
+                </>
               ) : (
                 <label className={labelClass}>
                   Lead time (working days)
