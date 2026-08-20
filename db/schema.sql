@@ -241,3 +241,86 @@ CREATE TABLE IF NOT EXISTS wishlist_items (
   FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
   UNIQUE KEY uniq_wishlist_customer_product (customer_id, product_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Saved profile fields for storefront accounts, plus a low-stock
+-- notification threshold override per product. Idempotent ALTERs since
+-- both customers and products are NOT always dropped/recreated (products
+-- is dropped by db/seed.ts, but this also needs to work against a live
+-- DB that only ever runs schema.sql).
+ALTER TABLE customers ADD COLUMN IF NOT EXISTS phone VARCHAR(32) NOT NULL DEFAULT '' AFTER email;
+ALTER TABLE customers ADD COLUMN IF NOT EXISTS address VARCHAR(191) NOT NULL DEFAULT '' AFTER phone;
+ALTER TABLE customers ADD COLUMN IF NOT EXISTS city VARCHAR(191) NOT NULL DEFAULT '' AFTER address;
+ALTER TABLE customers ADD COLUMN IF NOT EXISTS postal_code VARCHAR(32) NOT NULL DEFAULT '' AFTER city;
+
+ALTER TABLE products ADD COLUMN IF NOT EXISTS low_stock_threshold INT NOT NULL DEFAULT 5 AFTER stock;
+ALTER TABLE products ADD COLUMN IF NOT EXISTS variant_images_json TEXT NOT NULL DEFAULT '{}' AFTER wood_options_json;
+
+-- One-time verification codes, shared by both account systems
+-- (customers + admin_users) — `purpose` disambiguates the flow and
+-- `account_type` which table the account lives in, since the two can
+-- share an email address. Not dropped/reseeded: codes are short-lived
+-- (checked against expires_at) so stale rows are harmless, and there's
+-- no reason to lose in-flight codes on a reseed.
+CREATE TABLE IF NOT EXISTS otp_codes (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  account_type ENUM('customer', 'admin') NOT NULL,
+  purpose ENUM('password_reset', 'email_change') NOT NULL,
+  account_id INT NOT NULL,
+  email VARCHAR(191) NOT NULL,
+  code_hash VARCHAR(191) NOT NULL,
+  expires_at TIMESTAMP NOT NULL,
+  used_at TIMESTAMP NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_otp_lookup (account_type, purpose, account_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- In-app notifications for both sides of the site. recipient_id is an
+-- admin_users.id or customers.id depending on recipient_type — no FK,
+-- since either parent row can legitimately be deleted while old
+-- notifications remain (same tradeoff as page_views). Not dropped on
+-- reseed, same reasoning as otp_codes.
+CREATE TABLE IF NOT EXISTS notifications (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  recipient_type ENUM('admin', 'customer') NOT NULL,
+  recipient_id INT NOT NULL,
+  type VARCHAR(64) NOT NULL,
+  title VARCHAR(191) NOT NULL,
+  body TEXT NULL,
+  link VARCHAR(255) NULL,
+  read_at TIMESTAMP NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_notifications_recipient (recipient_type, recipient_id, read_at),
+  INDEX idx_notifications_created_at (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Append-only trail of admin mutations, since multiple admin/editor
+-- accounts now exist and admins can touch customer accounts. Logged at
+-- the API-route level, not threaded through lib/db.ts function
+-- signatures. admin_user_id is nullable (not FK'd) so the log entry
+-- survives if the admin account is later deleted.
+CREATE TABLE IF NOT EXISTS admin_audit_log (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  admin_user_id INT NULL,
+  admin_name VARCHAR(191) NOT NULL,
+  action VARCHAR(64) NOT NULL,
+  entity_type VARCHAR(64) NOT NULL,
+  entity_id VARCHAR(64) NULL,
+  details_json TEXT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_audit_created_at (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Every manual stock change (restock, correction) plus automatic
+-- decrements on sale, so admins can see where a stock number came from.
+-- product_id keeps its FK since products IDs are stable across reseeds
+-- (fixed slugs in lib/products.ts's PRODUCT_SEED).
+CREATE TABLE IF NOT EXISTS stock_adjustments (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  product_id VARCHAR(191) NOT NULL,
+  delta INT NOT NULL,
+  reason VARCHAR(191) NOT NULL,
+  admin_user_id INT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
+  INDEX idx_stock_adjustments_product (product_id, created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

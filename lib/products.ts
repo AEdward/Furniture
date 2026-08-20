@@ -74,6 +74,13 @@ export type Product = {
   colors: string[];
   materialOptions: string[];
   woodOptions: string[];
+  // Admin-configurable "notify me when this drops below N" threshold
+  // (item 12) — falls back to a site-wide default when unset.
+  lowStockThreshold?: number;
+  // Maps a color/material/wood option label (e.g. "Walnut") to an
+  // uploaded image URL, so the gallery can swap photos when a customer
+  // changes their selection instead of just showing a text label.
+  variantImages?: Record<string, string>;
 };
 
 export function formatDimensionsSummary(d: Dimensions): string {

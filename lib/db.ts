@@ -45,6 +45,8 @@ type ProductRow = {
   colors_json: string;
   material_options_json: string;
   wood_options_json: string;
+  low_stock_threshold: number;
+  variant_images_json: string;
 };
 
 function rowToProduct(row: ProductRow): Product {
@@ -88,6 +90,8 @@ function rowToProduct(row: ProductRow): Product {
     colors: JSON.parse(row.colors_json),
     materialOptions: JSON.parse(row.material_options_json),
     woodOptions: JSON.parse(row.wood_options_json),
+    lowStockThreshold: row.low_stock_threshold,
+    variantImages: row.variant_images_json ? JSON.parse(row.variant_images_json) : {},
   };
 }
 
@@ -709,6 +713,8 @@ export type ProductInput = {
   colors: string[];
   materialOptions: string[];
   woodOptions: string[];
+  lowStockThreshold?: number;
+  variantImages?: Record<string, string>;
 };
 
 export class ProductError extends Error {}
@@ -748,10 +754,12 @@ function productInputParams(input: ProductInput): unknown[] {
     JSON.stringify(input.materialOptions),
     JSON.stringify(input.woodOptions),
     JSON.stringify(input.images ?? []),
+    input.lowStockThreshold ?? 5,
+    JSON.stringify(input.variantImages ?? {}),
   ];
 }
 
-const PRODUCT_INSERT_PLACEHOLDERS = Array(33).fill("?").join(", ");
+const PRODUCT_INSERT_PLACEHOLDERS = Array(35).fill("?").join(", ");
 
 export async function createProduct(input: ProductInput): Promise<Product> {
   const db = getPool();
@@ -770,7 +778,8 @@ export async function createProduct(input: ProductInput): Promise<Product> {
        sku, availability, lead_time_days, rating, review_count,
        width_cm, depth_cm, height_cm, seat_height_cm, seat_depth_cm, arm_height_cm, leg_height_cm, weight_kg,
        frame_material, upholstery_material, legs_material, foam_density,
-       colors_json, material_options_json, wood_options_json, images_json)
+       colors_json, material_options_json, wood_options_json, images_json,
+       low_stock_threshold, variant_images_json)
      VALUES (?, ?, ${PRODUCT_INSERT_PLACEHOLDERS})`,
     [input.slug, input.slug, ...productInputParams(input)]
   );
@@ -806,7 +815,8 @@ export async function updateProduct(
       width_cm = ?, depth_cm = ?, height_cm = ?, seat_height_cm = ?, seat_depth_cm = ?,
       arm_height_cm = ?, leg_height_cm = ?, weight_kg = ?,
       frame_material = ?, upholstery_material = ?, legs_material = ?, foam_density = ?,
-      colors_json = ?, material_options_json = ?, wood_options_json = ?, images_json = ?
+      colors_json = ?, material_options_json = ?, wood_options_json = ?, images_json = ?,
+      low_stock_threshold = ?, variant_images_json = ?
      WHERE slug = ?`,
     [input.slug, input.slug, ...productInputParams(input), slug]
   );
@@ -847,8 +857,6 @@ export type DashboardStats = {
   recentOrders: OrderSummary[];
 };
 
-const LOW_STOCK_THRESHOLD = 5;
-
 export async function getDashboardStats(): Promise<DashboardStats> {
   const db = getPool();
 
@@ -859,8 +867,7 @@ export async function getDashboardStats(): Promise<DashboardStats> {
     "SELECT COUNT(*) AS count, COALESCE(SUM(subtotal), 0) AS revenue FROM orders WHERE status != 'cancelled' AND payment_status = 'paid'"
   );
   const [lowStockRows] = await db.query<mysql.RowDataPacket[]>(
-    "SELECT * FROM products WHERE availability = 'in_stock' AND stock <= ? ORDER BY stock ASC LIMIT 8",
-    [LOW_STOCK_THRESHOLD]
+    "SELECT * FROM products WHERE availability = 'in_stock' AND stock <= low_stock_threshold ORDER BY stock ASC LIMIT 8"
   );
   const allOrders = await getAllOrders();
 

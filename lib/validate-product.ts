@@ -154,5 +154,18 @@ export function parseProductInput(body: unknown): ProductInput {
     colors: parseList(b.colors),
     materialOptions: parseList(b.materialOptions),
     woodOptions: parseList(b.woodOptions),
+    lowStockThreshold: parseOptionalNumber(b.lowStockThreshold) ?? 5,
+    variantImages: parseVariantImages(b.variantImages),
   };
+}
+
+function parseVariantImages(value: unknown): Record<string, string> {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) return {};
+  const out: Record<string, string> = {};
+  for (const [label, url] of Object.entries(value as Record<string, unknown>)) {
+    if (typeof label === "string" && label.trim() && typeof url === "string" && url.trim()) {
+      out[label.trim()] = url.trim();
+    }
+  }
+  return out;
 }
