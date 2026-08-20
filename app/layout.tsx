@@ -1,7 +1,21 @@
 import type { Metadata, Viewport } from "next";
+import { Anton, Cormorant_Garamond, Jost } from "next/font/google";
 import "./globals.css";
 import { getSettings } from "@/lib/db";
 import { getLocale } from "@/lib/i18n/get-locale";
+
+// Golden Wood brand style guide v1.0 typography — Anton (display,
+// headlines/wordmark), Cormorant Garamond italic (accent, taglines/
+// subline), Jost (body/UI). Deliberately different from the other
+// company branch on this template, which uses system font stacks.
+const anton = Anton({ subsets: ["latin"], weight: "400", variable: "--font-display" });
+const cormorant = Cormorant_Garamond({
+  subsets: ["latin"],
+  weight: ["500", "600"],
+  style: ["italic"],
+  variable: "--font-accent",
+});
+const jost = Jost({ subsets: ["latin"], weight: ["400", "500", "600"], variable: "--font-body" });
 
 // Settings (and most page content) are DB-backed and admin-editable at
 // any time, so nothing in this app should be statically cached at build
@@ -31,7 +45,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export const viewport: Viewport = {
-  themeColor: "#1a1a1a",
+  themeColor: "#1B1610",
 };
 
 export default async function RootLayout({
@@ -45,7 +59,7 @@ export default async function RootLayout({
   const locale = await getLocale();
 
   return (
-    <html lang={locale} suppressHydrationWarning>
+    <html lang={locale} suppressHydrationWarning className={`${anton.variable} ${cormorant.variable} ${jost.variable}`}>
       <body className="flex min-h-screen flex-col bg-cream font-sans text-ink antialiased">
         {/* Sets data-theme from localStorage before first paint, so a
             returning visitor's dark-mode choice never flashes light

@@ -14,7 +14,7 @@ function currentTheme(): Theme {
   return systemPrefersDark() ? "dark" : "light";
 }
 
-export default function ThemeToggle() {
+export default function ThemeToggle({ dark = false }: { dark?: boolean }) {
   // Starts null so the server-rendered icon matches the client's first
   // render (no window/localStorage access during SSR); corrected
   // immediately on mount, before the user can meaningfully notice.
@@ -38,7 +38,11 @@ export default function ThemeToggle() {
       type="button"
       onClick={toggle}
       aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
-      className="flex h-10 w-10 items-center justify-center rounded-full border border-walnut-200 text-walnut-600 transition-colors hover:bg-walnut-100"
+      className={`flex h-10 w-10 items-center justify-center rounded-full border transition-colors ${
+        dark
+          ? "border-walnut-50/20 text-walnut-50/80 hover:border-terracotta-400 hover:text-terracotta-200"
+          : "border-walnut-200 text-walnut-600 hover:bg-walnut-100"
+      }`}
     >
       {isDark ? (
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" className="h-4.5 w-4.5">

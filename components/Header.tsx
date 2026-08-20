@@ -40,8 +40,8 @@ export default function Header({
   ];
 
   return (
-    <header className="sticky top-0 z-40 border-b border-walnut-100/60 bg-cream/90 backdrop-blur">
-      <div className="container-shop flex h-18 items-center justify-between py-4">
+    <header className="bg-plank-grain sticky top-0 z-40 border-b border-terracotta-600/30 bg-walnut-700">
+      <div className="container-shop flex h-20 items-center justify-between py-4">
         <Link href="/" onClick={() => setMenuOpen(false)}>
           <Logo name={siteName} />
         </Link>
@@ -56,10 +56,10 @@ export default function Header({
               <Link
                 key={link.href}
                 href={link.href}
-                className={`text-sm font-medium tracking-wide transition-colors ${
+                className={`text-xs font-medium uppercase tracking-[0.2em] transition-colors ${
                   active
-                    ? "text-walnut-600"
-                    : "text-ink/70 hover:text-walnut-600"
+                    ? "text-terracotta-200"
+                    : "text-walnut-50/70 hover:text-terracotta-200"
                 }`}
               >
                 {link.label}
@@ -69,7 +69,7 @@ export default function Header({
         </nav>
 
         <div className="flex items-center gap-3">
-          <ThemeToggle />
+          <ThemeToggle dark />
           <LanguageSwitcher enabled={translationEnabled} languages={languages} />
 
           {customerName ? (
@@ -80,7 +80,7 @@ export default function Header({
           ) : (
             <Link
               href="/account/login"
-              className="hidden h-10 w-10 items-center justify-center rounded-full border border-walnut-200 text-walnut-600 transition-colors hover:bg-walnut-100 sm:flex"
+              className="hidden h-10 w-10 items-center justify-center rounded-full border border-walnut-50/20 text-walnut-50/80 transition-colors hover:border-terracotta-400 hover:text-terracotta-200 sm:flex"
               aria-label={t("Sign in")}
             >
               <svg
@@ -100,7 +100,7 @@ export default function Header({
 
           <Link
             href="/cart"
-            className="relative flex h-10 w-10 items-center justify-center rounded-full border border-walnut-200 text-walnut-600 transition-colors hover:bg-walnut-100"
+            className="relative flex h-10 w-10 items-center justify-center rounded-full border border-walnut-50/20 text-walnut-50/80 transition-colors hover:border-terracotta-400 hover:text-terracotta-200"
             aria-label={t("View cart")}
           >
             <svg
@@ -117,14 +117,14 @@ export default function Header({
               <circle cx="17" cy="20" r="1.2" />
             </svg>
             {isReady && itemCount > 0 && (
-              <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-walnut-700 text-[11px] font-semibold text-terracotta-200">
+              <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-terracotta-400 text-[11px] font-semibold text-walnut-700">
                 {itemCount}
               </span>
             )}
           </Link>
 
           <button
-            className="flex h-10 w-10 items-center justify-center rounded-full border border-walnut-200 text-walnut-600 md:hidden"
+            className="flex h-10 w-10 items-center justify-center rounded-full border border-walnut-50/20 text-walnut-50/80 md:hidden"
             aria-label={t("Toggle menu")}
             onClick={() => setMenuOpen((v) => !v)}
           >
@@ -147,13 +147,13 @@ export default function Header({
       </div>
 
       {menuOpen && (
-        <nav className="border-t border-walnut-100/60 bg-cream md:hidden">
+        <nav className="border-t border-walnut-50/10 bg-walnut-700 md:hidden">
           <div className="container-shop flex flex-col gap-1 py-3">
             {navLinks.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
-                className="rounded-lg px-2 py-2.5 text-sm font-medium text-ink/80 hover:bg-walnut-100"
+                className="rounded-lg px-2 py-2.5 text-xs font-medium uppercase tracking-[0.2em] text-walnut-50/80 hover:bg-walnut-500/40 hover:text-terracotta-200"
                 onClick={() => setMenuOpen(false)}
               >
                 {link.label}

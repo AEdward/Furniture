@@ -1,4 +1,20 @@
-import Image from "next/image";
+// Golden Wood Furniture wordmark, per the brand style guide v1.0: a
+// gold foil gradient (Foil Gold -> Antique Gold -> Deep Bronze) on
+// Anton display type, with an italic Cormorant Garamond "Furniture"
+// subline and a double underline beneath it. Built as text/CSS rather
+// than a raster image — crisp at any size, and doesn't depend on a
+// logo file being uploaded.
+const GOLD_GRADIENT = "bg-gradient-to-r from-terracotta-200 via-terracotta-400 to-terracotta-600 bg-clip-text text-transparent";
+
+function Mark({ className }: { className?: string }) {
+  return (
+    <span
+      className={`inline-flex shrink-0 items-center justify-center rounded-lg border border-terracotta-400/60 bg-walnut-500 ${className ?? "h-9 w-9"}`}
+    >
+      <span className={`font-serif text-sm tracking-tight ${GOLD_GRADIENT}`}>GW</span>
+    </span>
+  );
+}
 
 export default function Logo({
   className,
@@ -9,33 +25,31 @@ export default function Logo({
   variant?: "horizontal" | "stacked";
   name?: string;
 }) {
+  const wordmark = name.replace(" Furniture", "").toUpperCase();
+
   if (variant === "stacked") {
     return (
-      <span className={`inline-flex items-center justify-center ${className ?? ""}`}>
-        <Image
-          src="/brand/golden-wood-logo-full-transparent.png"
-          alt={name}
-          width={900}
-          height={560}
-          priority
-          className="h-32 w-auto"
-        />
+      <span className={`inline-flex flex-col items-center ${className ?? ""}`}>
+        <Mark className="h-12 w-12 rounded-xl" />
+        <span className={`mt-3 font-serif text-3xl tracking-tight ${GOLD_GRADIENT}`}>
+          {wordmark}
+        </span>
+        <span className="mt-1 font-accent text-sm italic uppercase tracking-[0.35em] text-walnut-300">
+          Furniture
+        </span>
+        <span className="mt-2 flex flex-col gap-0.5">
+          <span className="h-px w-16 bg-gradient-to-r from-transparent via-terracotta-400 to-transparent" />
+          <span className="h-px w-16 bg-gradient-to-r from-transparent via-terracotta-400 to-transparent" />
+        </span>
       </span>
     );
   }
 
   return (
     <span className={`inline-flex items-center gap-2.5 ${className ?? ""}`}>
-      <Image
-        src="/brand/golden-wood-mark-transparent.png"
-        alt=""
-        width={352}
-        height={352}
-        priority
-        className="h-9 w-9"
-      />
-      <span className="font-serif text-2xl font-semibold uppercase tracking-[0.15em] text-ink">
-        {name.replace(" Furniture", "")}
+      <Mark />
+      <span className={`font-serif text-xl tracking-tight ${GOLD_GRADIENT}`}>
+        {wordmark}
       </span>
     </span>
   );

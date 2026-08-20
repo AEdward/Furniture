@@ -32,45 +32,53 @@ export default async function HomePage() {
   ]);
   const { hero } = settings;
 
-  const valueProps = [
+  const trustPoints = [
+    { title: t("Quality materials"), body: t("Solid wood and hardware built to outlast the house it's in.") },
+    { title: t("Expert craftsmanship"), body: t("Every joint and grain match is done by hand.") },
     {
       title: t("Free delivery over {amount}", { amount: formatPrice(settings.freeShippingThreshold) }),
       body: t("Delivered and installed, no surprise fees at checkout."),
     },
     {
-      title: t("{days}-day returns", { days: settings.returns.periodDays }),
-      body: t("Not the right fit? Send it back for a full refund."),
-    },
-    {
       title: t("{years}-year warranty", { years: settings.warranty.tiers[0]?.years ?? 5 }),
-      body: t("Every piece is built to last and backed to match."),
+      body: t("Every piece is backed to match."),
     },
+    { title: t("Dedicated support"), body: t("We're here to help before and after delivery.") },
   ];
 
   return (
     <div>
-      <section className="border-b border-walnut-100 bg-gradient-to-b from-sand to-cream">
+      <section className="bg-plank-grain relative overflow-hidden border-b border-terracotta-600/20 bg-walnut-700">
         <div className="container-shop grid gap-10 py-16 md:grid-cols-2 md:items-center md:py-24">
           <div>
-            <p className="section-label">{settings.tagline}</p>
-            <h1 className="mt-3 font-serif text-4xl font-semibold leading-tight text-ink sm:text-5xl">
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-terracotta-400">
+              {settings.tagline}
+            </p>
+            <h1 className="mt-4 font-serif text-5xl uppercase leading-[1.05] tracking-tight text-walnut-50 sm:text-6xl">
               {hero.heading}
             </h1>
-            <p className="mt-5 max-w-md text-base leading-relaxed text-ink/70">
+            <p className="mt-5 max-w-md text-base leading-relaxed text-walnut-100/70">
               {hero.subheading}
             </p>
             <div className="mt-8 flex flex-wrap gap-4">
-              <Link href={hero.ctaHref} className="btn-primary">
+              <Link
+                href={hero.ctaHref}
+                className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-terracotta-200 via-terracotta-400 to-terracotta-600 px-6 py-3 text-xs font-semibold uppercase tracking-[0.2em] text-walnut-700 transition-opacity hover:opacity-90"
+              >
                 {hero.ctaLabel}
+                <span aria-hidden>&rarr;</span>
               </Link>
-              <Link href="/about" className="btn-secondary">
+              <Link
+                href="/about"
+                className="inline-flex items-center justify-center rounded-full border border-walnut-50/30 px-6 py-3 text-xs font-semibold uppercase tracking-[0.2em] text-walnut-50 transition-colors hover:border-terracotta-400 hover:text-terracotta-200"
+              >
                 {t("Our story")}
               </Link>
             </div>
           </div>
 
           {hero.imageUrl ? (
-            <div className="relative aspect-square overflow-hidden rounded-2xl">
+            <div className="relative aspect-square overflow-hidden rounded-xl border border-terracotta-400/40">
               <Image
                 src={hero.imageUrl}
                 alt={hero.heading}
@@ -81,11 +89,11 @@ export default async function HomePage() {
               />
             </div>
           ) : (
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-4 rounded-xl border border-terracotta-400/30 bg-walnut-800/40 p-4">
               {featured.slice(0, 4).map((product) => (
                 <div
                   key={product.id}
-                  className={`flex aspect-square items-center justify-center rounded-2xl bg-gradient-to-br ${product.gradient}`}
+                  className="flex aspect-square items-center justify-center rounded-lg border border-terracotta-600/30 bg-walnut-500"
                 >
                   {product.imageUrl ? (
                     <Image
@@ -93,12 +101,12 @@ export default async function HomePage() {
                       alt={product.name}
                       width={200}
                       height={200}
-                      className="h-full w-full rounded-2xl object-cover"
+                      className="h-full w-full rounded-lg object-cover"
                     />
                   ) : (
                     <FurnitureIcon
                       name={product.icon}
-                      className="h-16 w-16 text-walnut-500/70 sm:h-20 sm:w-20"
+                      className="h-14 w-14 text-terracotta-300/80 sm:h-16 sm:w-16"
                     />
                   )}
                 </div>
@@ -112,23 +120,27 @@ export default async function HomePage() {
         <div className="mb-8 flex items-end justify-between">
           <div>
             <p className="section-label">{t("Browse")}</p>
-            <h2 className="mt-2 font-serif text-3xl font-semibold text-ink">
+            <h2 className="mt-2 font-serif text-3xl uppercase tracking-tight text-ink">
               {t("Shop by category")}
             </h2>
           </div>
         </div>
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
           {categories.map((category) => (
             <Link
               key={category}
               href={`/shop?category=${encodeURIComponent(category)}`}
-              className="group flex flex-col items-center gap-3 rounded-2xl border border-walnut-100 bg-white/60 p-6 text-center transition-shadow hover:shadow-soft"
+              className="bg-plank-grain group relative flex flex-col items-center gap-3 overflow-hidden rounded-xl border border-walnut-100 bg-walnut-700 py-8 text-center transition-shadow hover:shadow-soft"
             >
-              <FurnitureIcon
-                name={categoryIcon[category]}
-                className="h-10 w-10 text-walnut-500 transition-transform group-hover:scale-110"
-              />
-              <span className="text-sm font-medium text-ink">{t(category)}</span>
+              <span className="flex h-14 w-14 items-center justify-center rounded-full border border-terracotta-400/60 bg-walnut-500 transition-transform group-hover:scale-105">
+                <FurnitureIcon
+                  name={categoryIcon[category]}
+                  className="h-7 w-7 text-terracotta-300"
+                />
+              </span>
+              <span className="text-xs font-semibold uppercase tracking-[0.15em] text-walnut-50">
+                {t(category)}
+              </span>
             </Link>
           ))}
         </div>
@@ -139,7 +151,7 @@ export default async function HomePage() {
           <div className="mb-8 flex items-end justify-between">
             <div>
               <p className="section-label">{t("Featured")}</p>
-              <h2 className="mt-2 font-serif text-3xl font-semibold text-ink">
+              <h2 className="mt-2 font-serif text-3xl uppercase tracking-tight text-ink">
                 {t("Customer favorites")}
               </h2>
             </div>
@@ -164,16 +176,59 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <section className="container-shop py-16">
-        <div className="grid gap-8 sm:grid-cols-3">
-          {valueProps.map((v) => (
-            <div key={v.title} className="rounded-2xl border border-walnut-100 p-6">
-              <h3 className="font-serif text-lg font-semibold text-ink">
+      <section className="border-y border-walnut-100 bg-cream py-14">
+        <div className="container-shop grid gap-8 sm:grid-cols-3 lg:grid-cols-5">
+          {trustPoints.map((v) => (
+            <div key={v.title} className="flex flex-col items-center gap-2 text-center">
+              <span className="h-1 w-8 rounded-full bg-gradient-to-r from-terracotta-200 via-terracotta-400 to-terracotta-600" />
+              <h3 className="font-serif text-sm uppercase tracking-wide text-ink">
                 {v.title}
               </h3>
-              <p className="mt-2 text-sm leading-relaxed text-ink/70">{v.body}</p>
+              <p className="text-xs leading-relaxed text-ink/60">{v.body}</p>
             </div>
           ))}
+        </div>
+      </section>
+
+      <section className="container-shop py-16">
+        <div className="grid gap-6 sm:grid-cols-2">
+          <div className="bg-plank-grain flex flex-col justify-center gap-3 rounded-xl border border-terracotta-600/20 bg-walnut-700 p-10">
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-terracotta-400">
+              {t("Custom furniture")}
+            </p>
+            <h3 className="font-serif text-2xl uppercase tracking-tight text-walnut-50">
+              {t("Create furniture that fits your space")}
+            </h3>
+            <p className="max-w-sm text-sm leading-relaxed text-walnut-100/70">
+              {t("Tell us the piece you have in mind — we'll work out the size, wood, and finish with you.")}
+            </p>
+            <Link
+              href="/contact"
+              className="mt-2 inline-flex w-fit items-center gap-2 rounded-full border border-terracotta-400/60 px-5 py-2.5 text-xs font-semibold uppercase tracking-[0.2em] text-terracotta-300 transition-colors hover:bg-terracotta-400/10"
+            >
+              {t("Get in touch")}
+              <span aria-hidden>&rarr;</span>
+            </Link>
+          </div>
+
+          <div className="bg-plank-grain flex flex-col justify-center gap-3 rounded-xl border border-terracotta-600/20 bg-walnut-700 p-10">
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-terracotta-400">
+              {t("Visit us")}
+            </p>
+            <h3 className="font-serif text-2xl uppercase tracking-tight text-walnut-50">
+              {t("We'd love to welcome you")}
+            </h3>
+            <p className="max-w-sm text-sm leading-relaxed text-walnut-100/70">
+              {settings.address.join(", ")}
+            </p>
+            <Link
+              href="/contact"
+              className="mt-2 inline-flex w-fit items-center gap-2 rounded-full border border-terracotta-400/60 px-5 py-2.5 text-xs font-semibold uppercase tracking-[0.2em] text-terracotta-300 transition-colors hover:bg-terracotta-400/10"
+            >
+              {t("Contact")}
+              <span aria-hidden>&rarr;</span>
+            </Link>
+          </div>
         </div>
       </section>
     </div>

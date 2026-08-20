@@ -15,27 +15,30 @@ html {
    prefers-color-scheme. The inline script in app/layout.tsx sets
    data-theme before first paint so there's no flash of the wrong
    theme. */
+/* Ivory Linen (#F3ECDD) light ground / Ebony Oak (#1B1610) text and
+   dark ground — the brand style guide's neutral pairing, in place of
+   this template's generic cream/near-black default. */
 :root {
-  --color-cream: 250 248 244;
-  --color-sand: 239 235 227;
-  --color-ink: 26 25 24;
+  --color-cream: 243 236 221;
+  --color-sand: 233 223 200;
+  --color-ink: 27 22 16;
   --color-surface: 255 255 255;
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --color-cream: 22 19 15;
-    --color-sand: 28 24 18;
-    --color-ink: 240 236 229;
-    --color-surface: 32 28 22;
+    --color-cream: 27 22 16;
+    --color-sand: 33 27 20;
+    --color-ink: 243 236 221;
+    --color-surface: 38 31 23;
   }
 }
 
 :root[data-theme="dark"] {
-  --color-cream: 22 19 15;
-  --color-sand: 28 24 18;
-  --color-ink: 240 236 229;
-  --color-surface: 32 28 22;
+  --color-cream: 27 22 16;
+  --color-sand: 33 27 20;
+  --color-ink: 243 236 221;
+  --color-surface: 38 31 23;
 }
 
 /* A few more walnut utilities get targeted dark-mode overrides for the
@@ -121,4 +124,16 @@ select {
 
 .section-label {
   @apply text-xs font-semibold uppercase tracking-[0.2em] text-terracotta-400;
+}
+
+/* Subtle wood-plank texture for dark (walnut) surfaces, per the brand
+   style guide's "Texture & Pattern" spec — CSS-only, no image asset. */
+.bg-plank-grain {
+  background-image: repeating-linear-gradient(
+    90deg,
+    rgb(255 255 255 / 0.025) 0px,
+    rgb(255 255 255 / 0.025) 1px,
+    transparent 1px,
+    transparent 96px
+  );
 }
