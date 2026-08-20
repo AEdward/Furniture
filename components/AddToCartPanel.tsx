@@ -1,10 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/lib/cart-context";
 import type { Product } from "@/lib/products";
 import { useT } from "@/lib/i18n/context";
+import { useVariantImage } from "@/components/VariantImageContext";
 
 function VariantGroup({
   label,
@@ -47,11 +48,20 @@ export default function AddToCartPanel({ product }: { product: Product }) {
   const { addItem } = useCart();
   const router = useRouter();
   const t = useT();
+  const { setVariantImageUrl } = useVariantImage();
   const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);
   const [color, setColor] = useState(product.colors[0] ?? "");
   const [material, setMaterial] = useState(product.materialOptions[0] ?? "");
   const [wood, setWood] = useState(product.woodOptions[0] ?? "");
+
+  // Whichever selected option has an associated photo wins — color is
+  // checked first since it's the most visually distinguishing choice,
+  // then material, then wood.
+  useEffect(() => {
+    const variantImages = product.variantImages ?? {};
+    setVariantImageUrl(variantImages[color] ?? variantImages[material] ?? variantImages[wood] ?? null);
+  }, [color, material, wood, product.variantImages, setVariantImageUrl]);
   const [notifyEmail, setNotifyEmail] = useState("");
   const [notifySubmitted, setNotifySubmitted] = useState(false);
   const [notifySubmitting, setNotifySubmitting] = useState(false);

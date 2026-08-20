@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import ProductGallery from "@/components/ProductGallery";
 import ProductCard from "@/components/ProductCard";
 import AddToCartPanel from "@/components/AddToCartPanel";
+import { VariantImageProvider } from "@/components/VariantImageContext";
 import StarRating from "@/components/StarRating";
 import RoomFitCalculator from "@/components/RoomFitCalculator";
 import DeliveryEstimator from "@/components/DeliveryEstimator";
@@ -146,6 +147,7 @@ export default async function ProductPage({
         <span className="text-ink/70">{product.name}</span>
       </nav>
 
+      <VariantImageProvider>
       <div className="grid gap-10 lg:grid-cols-2">
         <ProductGallery
           images={[product.imageUrl, ...(product.images ?? [])].filter(
@@ -212,6 +214,7 @@ export default async function ProductPage({
           </div>
         </div>
       </div>
+      </VariantImageProvider>
 
       <nav className="sticky top-[73px] z-30 mt-16 flex flex-wrap gap-x-6 gap-y-2 border-y border-walnut-100 bg-cream/95 py-3 text-sm text-ink/60 backdrop-blur">
         {sectionNav.map((s) => (

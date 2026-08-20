@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import FurnitureIcon from "@/components/FurnitureIcon";
@@ -86,6 +86,25 @@ export default function ProductForm({ mode, initial }: Props) {
     initial?.materialOptions.join("\n") ?? ""
   );
   const [woodOptions, setWoodOptions] = useState(initial?.woodOptions.join("\n") ?? "");
+  const [variantImages, setVariantImages] = useState<Record<string, string>>(
+    initial?.variantImages ?? {}
+  );
+
+  const variantOptionLabels = useMemo(() => {
+    const lines = [colors, materialOptions, woodOptions].flatMap((v) =>
+      v.split(/[\n,]/).map((s) => s.trim()).filter(Boolean)
+    );
+    return Array.from(new Set(lines));
+  }, [colors, materialOptions, woodOptions]);
+
+  function setVariantImage(label: string, url: string | null) {
+    setVariantImages((prev) => {
+      const next = { ...prev };
+      if (url) next[label] = url;
+      else delete next[label];
+      return next;
+    });
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -128,6 +147,7 @@ export default function ProductForm({ mode, initial }: Props) {
       materialOptions,
       woodOptions,
       lowStockThreshold: lowStockThreshold === "" ? 5 : Number(lowStockThreshold),
+      variantImages,
     };
 
     try {
@@ -439,6 +459,26 @@ export default function ProductForm({ mode, initial }: Props) {
               </label>
             </div>
           </div>
+
+          {variantOptionLabels.length > 0 && (
+            <div className={sectionClass}>
+              <h2 className={sectionTitleClass}>Variant images</h2>
+              <p className="text-xs text-ink/50">
+                Give a color, style, or wood option its own photo so the gallery swaps to it when a
+                shopper selects it. Optional — options without one just keep showing the default photos.
+              </p>
+              <div className="grid gap-4 sm:grid-cols-3">
+                {variantOptionLabels.map((label) => (
+                  <ImageUpload
+                    key={label}
+                    value={variantImages[label] ?? null}
+                    onChange={(url) => setVariantImage(label, url)}
+                    label={label}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
 
           <div className="flex gap-6 rounded-2xl border border-walnut-100 bg-white/60 p-6">
             <label className="flex items-center gap-2 text-sm">
