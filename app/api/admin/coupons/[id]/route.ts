@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { CouponError, deleteCoupon, setCouponActive } from "@/lib/db";
 import { requireAdminApi } from "@/lib/admin-guard";
+import { logAdminAction } from "@/lib/audit-log";
 
 export async function PATCH(
   request: Request,
@@ -19,6 +20,7 @@ export async function PATCH(
 
   try {
     await setCouponActive(id, active);
+    await logAdminAction(gate, active ? "activate" : "deactivate", "coupon", id);
     return NextResponse.json({ ok: true });
   } catch (err) {
     if (err instanceof CouponError) {
@@ -43,6 +45,7 @@ export async function DELETE(
 
   try {
     await deleteCoupon(id);
+    await logAdminAction(gate, "delete", "coupon", id);
     return NextResponse.json({ ok: true });
   } catch (err) {
     if (err instanceof CouponError) {

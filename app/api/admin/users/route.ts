@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { AdminUserError, createAdminUser } from "@/lib/admin-users";
 import { requireAdminApi } from "@/lib/admin-guard";
+import { logAdminAction } from "@/lib/audit-log";
 
 export async function POST(request: Request) {
   const gate = await requireAdminApi();
@@ -14,6 +15,7 @@ export async function POST(request: Request) {
 
   try {
     const user = await createAdminUser({ name, email, password, role });
+    await logAdminAction(gate, "create", "admin_user", user.id, { email: user.email, role: user.role });
     return NextResponse.json({ user }, { status: 201 });
   } catch (err) {
     if (err instanceof AdminUserError) {

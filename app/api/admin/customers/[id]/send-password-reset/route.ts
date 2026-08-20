@@ -5,6 +5,7 @@ import { createOtp } from "@/lib/otp";
 import { getSettings } from "@/lib/db";
 import { sendEmail } from "@/lib/mailer";
 import { otpEmail } from "@/lib/email-templates";
+import { logAdminAction } from "@/lib/audit-log";
 
 // Admin-triggered password reset — sends the customer a reset code by
 // email. Deliberately does NOT log the admin into the customer's
@@ -32,6 +33,7 @@ export async function POST(
   const code = await createOtp("customer", "password_reset", customer.id, customer.email);
   const settings = await getSettings();
   await sendEmail({ to: customer.email, ...otpEmail("password_reset", code, settings) });
+  await logAdminAction(admin, "send_password_reset", "customer", customer.id, { email: customer.email });
 
   return NextResponse.json({ ok: true });
 }

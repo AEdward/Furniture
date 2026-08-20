@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { updateSettings } from "@/lib/db";
 import { parseSettingsInput, SettingsValidationError } from "@/lib/validate-settings";
 import { requireAdminApi } from "@/lib/admin-guard";
+import { logAdminAction } from "@/lib/audit-log";
 
 export async function PUT(request: Request) {
   const gate = await requireAdminApi();
@@ -17,6 +18,7 @@ export async function PUT(request: Request) {
   try {
     const input = parseSettingsInput(body);
     const settings = await updateSettings(input);
+    await logAdminAction(gate, "update", "settings");
     return NextResponse.json({ settings });
   } catch (err) {
     if (err instanceof SettingsValidationError) {

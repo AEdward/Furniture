@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { CouponError, createCoupon, getAllCoupons } from "@/lib/db";
 import { requireAdminApi } from "@/lib/admin-guard";
+import { logAdminAction } from "@/lib/audit-log";
 
 export const dynamic = "force-dynamic";
 
@@ -29,6 +30,7 @@ export async function POST(request: Request) {
 
   try {
     const coupon = await createCoupon({ code, discountType, discountValue, maxUses, expiresAt });
+    await logAdminAction(gate, "create", "coupon", coupon.id, { code: coupon.code });
     return NextResponse.json({ coupon }, { status: 201 });
   } catch (err) {
     if (err instanceof CouponError) {

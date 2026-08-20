@@ -6,6 +6,7 @@ import {
   deleteAdminUser,
 } from "@/lib/admin-users";
 import { requireAdminApi } from "@/lib/admin-guard";
+import { logAdminAction } from "@/lib/audit-log";
 
 export async function PATCH(
   request: Request,
@@ -26,9 +27,11 @@ export async function PATCH(
   try {
     if (password) {
       await changeAdminPassword(id, password);
+      await logAdminAction(gate, "reset_password", "admin_user", id);
     }
     if (role) {
       await changeAdminRole(id, role);
+      await logAdminAction(gate, "change_role", "admin_user", id, { role });
     }
     return NextResponse.json({ ok: true });
   } catch (err) {
@@ -54,6 +57,7 @@ export async function DELETE(
 
   try {
     await deleteAdminUser(id);
+    await logAdminAction(gate, "delete", "admin_user", id);
     return NextResponse.json({ ok: true });
   } catch (err) {
     if (err instanceof AdminUserError) {
