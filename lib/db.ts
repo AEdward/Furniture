@@ -383,7 +383,7 @@ export async function createOrder(input: OrderInput): Promise<OrderResult> {
         type: "new_order",
         title: `New order #${orderId}`,
         body: `${input.customerName} — ${lineItems.length} item${lineItems.length === 1 ? "" : "s"}`,
-        link: `/admin/orders/${orderId}`,
+        link: `/portal2026/orders/${orderId}`,
       });
     }
     for (const product of lowStockAlerts) {
@@ -931,11 +931,11 @@ async function notifyLowStock(product: Product): Promise<void> {
     type: "low_stock",
     title: `${product.name} is low on stock`,
     body: `Only ${product.stock} left (threshold: ${product.lowStockThreshold ?? 5}).`,
-    link: `/admin/products/${product.slug}/edit`,
+    link: `/portal2026/products/${product.slug}/edit`,
   });
 }
 
-// Manual restock/correction from /admin/products/[slug]/stock — always
+// Manual restock/correction from /portal2026/products/[slug]/stock — always
 // runs on its own short transaction (never shares one with an order).
 export async function adjustProductStock(
   slug: string,
@@ -1509,7 +1509,7 @@ export async function createContactMessage(input: {
     type: "new_message",
     title: `New message from ${input.name}`,
     body: input.message.slice(0, 140),
-    link: "/admin/messages",
+    link: "/portal2026/messages",
   });
   return rowToContactMessage(rows[0]);
 }
@@ -1606,7 +1606,7 @@ export async function createReview(input: {
     type: "new_review",
     title: `New review from ${input.customerName}`,
     body: `${input.rating}★ — ${input.comment.slice(0, 120)}`,
-    link: "/admin/reviews",
+    link: "/portal2026/reviews",
   });
   return rowToReview(rows[0]);
 }

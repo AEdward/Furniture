@@ -8,19 +8,19 @@ import NotificationBell from "@/components/NotificationBell";
 import type { AdminRole } from "@/lib/admin-users";
 
 const links = [
-  { href: "/admin", label: "Dashboard", adminOnly: false },
-  { href: "/admin/products", label: "Products", adminOnly: false },
-  { href: "/admin/orders", label: "Orders", adminOnly: true },
-  { href: "/admin/coupons", label: "Coupons", adminOnly: true },
-  { href: "/admin/messages", label: "Messages", adminOnly: false },
-  { href: "/admin/reviews", label: "Reviews", adminOnly: false },
-  { href: "/admin/pages", label: "Pages", adminOnly: false },
-  { href: "/admin/translations", label: "Translations", adminOnly: false },
-  { href: "/admin/analytics", label: "Analytics", adminOnly: false },
-  { href: "/admin/customers", label: "Customers", adminOnly: true },
-  { href: "/admin/users", label: "Users", adminOnly: true },
-  { href: "/admin/audit-log", label: "Audit log", adminOnly: true },
-  { href: "/admin/settings", label: "Settings", adminOnly: true },
+  { href: "/portal2026", label: "Dashboard", adminOnly: false },
+  { href: "/portal2026/products", label: "Products", adminOnly: false },
+  { href: "/portal2026/orders", label: "Orders", adminOnly: true },
+  { href: "/portal2026/coupons", label: "Coupons", adminOnly: true },
+  { href: "/portal2026/messages", label: "Messages", adminOnly: false },
+  { href: "/portal2026/reviews", label: "Reviews", adminOnly: false },
+  { href: "/portal2026/pages", label: "Pages", adminOnly: false },
+  { href: "/portal2026/translations", label: "Translations", adminOnly: false },
+  { href: "/portal2026/analytics", label: "Analytics", adminOnly: false },
+  { href: "/portal2026/customers", label: "Customers", adminOnly: true },
+  { href: "/portal2026/users", label: "Users", adminOnly: true },
+  { href: "/portal2026/audit-log", label: "Audit log", adminOnly: true },
+  { href: "/portal2026/settings", label: "Settings", adminOnly: true },
 ];
 
 export default function AdminNav({
@@ -37,18 +37,18 @@ export default function AdminNav({
 
   async function handleLogout() {
     await fetch("/api/admin/logout", { method: "POST" });
-    router.push("/admin/login");
+    router.push("/portal2026/login");
     router.refresh();
   }
 
   const isActive = (href: string) =>
-    href === "/admin" ? pathname === "/admin" : pathname.startsWith(href);
+    href === "/portal2026" ? pathname === "/portal2026" : pathname.startsWith(href);
 
   return (
     <>
       {/* Mobile top bar — sidebar itself is an off-canvas drawer below md */}
       <header className="flex items-center justify-between border-b border-walnut-100 bg-white/60 px-4 py-3 md:hidden">
-        <Link href="/admin" className="font-serif text-lg font-semibold text-walnut-600">
+        <Link href="/portal2026" className="font-serif text-lg font-semibold text-walnut-600">
           Admin
         </Link>
         <div className="flex items-center gap-2">
@@ -81,7 +81,7 @@ export default function AdminNav({
       >
         <div className="flex items-center justify-between px-6 py-6">
           <Link
-            href="/admin"
+            href="/portal2026"
             onClick={() => setMobileOpen(false)}
             className="font-serif text-lg font-semibold text-walnut-600"
           >
@@ -121,7 +121,7 @@ export default function AdminNav({
               )}
             </p>
           )}
-          <Link href="/admin/profile" className="text-sm text-ink/50 hover:text-walnut-600">
+          <Link href="/portal2026/profile" className="text-sm text-ink/50 hover:text-walnut-600">
             My profile
           </Link>
           <Link href="/" className="text-sm text-ink/50 hover:text-walnut-600">

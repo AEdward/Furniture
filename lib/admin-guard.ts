@@ -24,7 +24,7 @@ export async function requireAdminApi(): Promise<AdminUser | NextResponse> {
 export async function requireAdminPage(): Promise<AdminUser> {
   const user = await getCurrentAdminUser();
   if (!user || user.role !== "admin") {
-    redirect("/admin");
+    redirect("/portal2026");
   }
   return user;
 }

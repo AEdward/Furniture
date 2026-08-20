@@ -163,7 +163,7 @@ export default function NotificationBell({
           </div>
           <div className="border-t border-walnut-100 px-4 py-2 text-center">
             <Link
-              href={apiBase.startsWith("/api/admin") ? "/admin/notifications" : "/account/notifications"}
+              href={apiBase.startsWith("/api/admin") ? "/portal2026/notifications" : "/account/notifications"}
               onClick={() => setOpen(false)}
               className="text-xs font-medium text-walnut-600 hover:underline"
             >

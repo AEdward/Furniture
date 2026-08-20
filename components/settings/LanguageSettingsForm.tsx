@@ -21,7 +21,7 @@ export default function LanguageSettingsForm({ initial }: { initial: SiteSetting
       <div className={sectionClass}>
         <p className="text-xs text-ink/50">
           Manage which languages the storefront's language switcher offers. Fill in the actual
-          translated text at <a href="/admin/translations" className="font-medium text-walnut-600 hover:underline">Translations</a>.
+          translated text at <a href="/portal2026/translations" className="font-medium text-walnut-600 hover:underline">Translations</a>.
         </p>
         <label className="flex items-center gap-2 text-sm">
           <input type="checkbox" checked={translationEnabled} onChange={(e) => setTranslationEnabled(e.target.checked)} />

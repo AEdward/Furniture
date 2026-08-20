@@ -165,7 +165,7 @@ export default function ProductForm({ mode, initial }: Props) {
         setSubmitting(false);
         return;
       }
-      router.push("/admin/products");
+      router.push("/portal2026/products");
       router.refresh();
     } catch {
       setError("Network error — please try again.");
@@ -290,7 +290,7 @@ export default function ProductForm({ mode, initial }: Props) {
                     />
                     {mode === "edit" && (
                       <a
-                        href={`/admin/products/${initial!.slug}/stock`}
+                        href={`/portal2026/products/${initial!.slug}/stock`}
                         className="mt-1 block text-xs font-normal text-walnut-600 hover:underline"
                       >
                         Log a restock instead (keeps a history) →
@@ -539,7 +539,7 @@ export default function ProductForm({ mode, initial }: Props) {
         <button type="submit" disabled={submitting} className="btn-primary">
           {submitting ? "Saving…" : mode === "create" ? "Create product" : "Save changes"}
         </button>
-        <button type="button" onClick={() => router.push("/admin/products")} className="btn-secondary">
+        <button type="button" onClick={() => router.push("/portal2026/products")} className="btn-secondary">
           Cancel
         </button>
       </div>
