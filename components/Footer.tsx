@@ -86,7 +86,7 @@ export default function Footer({ settings }: { settings: SiteSettings }) {
         {/* Deliberately hardcoded, not part of SiteSettings — not editable from /admin/settings. */}
         <div className="border-t border-walnut-500/40 bg-walnut-800/40 py-2.5">
           <p className="container-shop text-center text-[11px] text-walnut-100/50">
-            Built by{" "}
+            Developed by{" "}
             <a
               href="https://meskedaytech.com"
               target="_blank"
